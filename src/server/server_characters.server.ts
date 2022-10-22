@@ -1,6 +1,7 @@
 import Signal from '@rbxts/signal';
 import Folders from 'shared/folders';
 import Network from 'shared/network';
+import Signals from './providers/signals';
 
 declare global {
 	interface BaseCharacter extends Model {
@@ -227,4 +228,23 @@ Client_RespawnRequest.SetCallback((player) => {
 	Character.HumanoidRootPart.SetNetworkOwner(player);
 
 	return GetClientInterface(CharacterInfo.ID);
+});
+
+Signals.CommandFired.Connect((player, cmd, arg0) => {
+	let player_character: CharController | undefined;
+	Characters.forEach((controller) => {
+		if (!controller.Alive || controller.PlayerUserId !== player.UserId) return;
+		player_character = controller;
+	});
+
+	if (cmd === 'takedmg' && player_character) {
+		const damage = tonumber(arg0);
+		if (damage === undefined) {
+			warn('invalid damage, got', string, type(string));
+			return;
+		}
+
+		player_character.TakeDamage(damage);
+		return;
+	}
 });

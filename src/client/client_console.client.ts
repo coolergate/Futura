@@ -18,6 +18,7 @@ const ConsoleCloseButton = ConsoleWindow.FindFirstChild('Close') as TextButton;
 const Server_ChatSendMessage = Network.Client.Get('ChatSendMessage');
 const Server_SystemMessage = Network.Client.Get('SystemChatMessage');
 const Server_PlayerChatted = Network.Client.Get('PlayerChatted');
+const Server_SendCommand = Network.Client.Get('SendCommand');
 
 ConsoleLogPrefab.Visible = false;
 ConsoleScreenGui.Enabled = false;
@@ -81,8 +82,17 @@ ConsoleScreenGui.GetPropertyChangedSignal('Enabled').Connect(() => {
 ConsoleInputBox.FocusLost.Connect((enterPressed) => {
 	if (!enterPressed) return;
 	const content = ConsoleInputBox.Text;
-	const firstCharacter = content.sub(1, 1);
-	const isCommand = firstCharacter === '/';
+	const isCommand = content.sub(1, 1) === '/';
+	const isServerCommand = content.sub(1, 2) === '//';
+
+	if (isServerCommand) {
+		const split = content.sub(3, content.size()).split(' ');
+		const param1 = split[0];
+		const param2 = split[1];
+		const param3 = split[3];
+		Server_SendCommand.SendToServer(param1, param2, param3);
+		return;
+	}
 
 	if (isCommand) {
 		Log.Info(content);

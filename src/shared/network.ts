@@ -14,6 +14,9 @@ const Network = Net.CreateDefinitions({
 	// Character events
 	RequestRespawn: Definitions.ServerFunction<() => ClientCharacterInfo | false>(),
 	CharacterStatusUpdated: Definitions.ServerToClientEvent<[NewInfo: ClientCharacterInfo]>(),
+
+	// Server-side commands
+	SendCommand: Definitions.ClientToServerEvent<[command: string, arg0: string, arg1?: string, arg2?: string]>(),
 });
 
 export = Network;
