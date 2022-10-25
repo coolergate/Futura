@@ -3,10 +3,7 @@ task.wait(1);
 import Network from 'shared/network';
 import Signals from './providers/signals';
 import Values from './providers/values';
-import console_cmds from './providers/cmds';
-import Log from '@rbxts/log';
 import Folders from 'shared/folders';
-import { Bin } from '@rbxts/bin';
 import RenderPriorities from './components/render';
 
 Signals.Start.Wait();

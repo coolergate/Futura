@@ -27,7 +27,6 @@
     "@rbxts/canim": "^0.2.1",
     "@rbxts/chain": "^1.0.1",
     "@rbxts/knit": "^0.0.21-alpha.0",
-    "@rbxts/log": "^0.6.3",
     "@rbxts/net": "^3.0.3",
     "@rbxts/signal": "^1.1.1",
     "@rbxts/t": "^3.0.0"

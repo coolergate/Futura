@@ -1,13 +1,11 @@
 // Downstreets main menu & console
 // coolergate#2031
 
-task.wait(1);
+task.wait(3);
 
-import { ILogEventEnricher, ILogEventSink, LogLevel } from '@rbxts/log/out/Core';
 import { KnitClient as Knit } from '@rbxts/knit';
 import console_cmds from './providers/cmds';
 import Signals from './providers/signals';
-import Log, { Logger } from '@rbxts/log';
 import Values from './providers/values';
 import Network from 'shared/network';
 import Folders from 'shared/folders';
@@ -23,8 +21,6 @@ const ScriptContext = game.GetService('ScriptContext');
 ScriptContext.Error.Connect((message, trace, container) => {
 	const source = container as Script | LocalScript;
 	if (!container) return;
-	Log.Error(message);
-	Log.Error(trace);
 	if (RunService.IsStudio()) source.Disabled = true;
 });
 
@@ -43,16 +39,19 @@ StarterGui.SetCoreGuiEnabled('All', false);
 // Actual preloading
 const content = ReplicatedStorage.GetDescendants();
 if (!RunService.IsStudio()) {
-	Log.Info('Pre-loading game assets');
+	Signals.RenderToConsole.Fire('ClientVerbose', 'Pre-loading game assets');
 	const start_time = os.time();
 	ContentProvider.PreloadAsync(content);
 	const duration = os.difftime(os.time(), start_time);
-	Log.Info(`Game assets loaded. Took: <font color="rgb(85,255,0)">${math.floor(duration)} seconds</font>`);
+	Signals.RenderToConsole.Fire(
+		'ClientVerbose',
+		`Game assets loaded. Took: <font color="rgb(85,255,0)">${math.floor(duration)} seconds</font>`,
+	);
 } else {
-	Log.Warn('Skipped game assets download. (User is in studio mode)');
+	Signals.RenderToConsole.Fire('ClientVerbose', 'Skipped game assets download. (User is in studio mode)');
 }
 
-Log.Info('Reading interface list...');
+Signals.RenderToConsole.Fire('ClientVerbose', 'Reading interface list...');
 Folders.CHudContent.GetChildren().forEach((element) => {
 	if (element.IsA('ScreenGui')) {
 		element.Enabled = true;
@@ -60,7 +59,7 @@ Folders.CHudContent.GetChildren().forEach((element) => {
 	}
 });
 
-Log.Info('Sending server login request.');
+Signals.RenderToConsole.Fire('ClientVerbose', 'Sending server login request.');
 Server_PlayerLogin.CallServer();
 
 Local_StartSignal.Fire();

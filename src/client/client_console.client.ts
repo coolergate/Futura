@@ -2,19 +2,16 @@ import Folders from 'shared/folders';
 import Network from 'shared/network';
 import Values from './providers/values';
 import console_cmds from './providers/cmds';
-import { ILogEventEnricher, ILogEventSink, LogLevel } from '@rbxts/log/out/Core';
-import Log, { Logger } from '@rbxts/log';
 import Signals from './providers/signals';
-import { LogConfiguration } from '@rbxts/log/out/Configuration';
 
 const Player = game.GetService('Players').LocalPlayer;
 const UserInputService = game.GetService('UserInputService');
 
 const ConsoleScreenGui = Folders.CHudContent.FindFirstChild('Console') as ScreenGui;
 const ConsoleWindow = ConsoleScreenGui.FindFirstChild('Window') as Frame;
-const ConsoleLogsFrame = ConsoleWindow.FindFirstChild('Logs') as Frame;
-const ConsoleLogPrefab = ConsoleLogsFrame.FindFirstChild('Prefab') as TextLabel;
-const ConsoleInputBox = ConsoleWindow.FindFirstChild('Input') as TextBox;
+const ConsoleContent = ConsoleWindow.FindFirstChild('Content') as Frame;
+const ConsoleLogPrefab = ConsoleContent.FindFirstChild('LogPrefab') as TextLabel;
+const ConsoleInputBox = ConsoleContent.FindFirstChild('Input') as TextBox;
 
 const Server_ChatSendMessage = Network.Client.Get('ChatSendMessage');
 const Server_SystemMessage = Network.Client.Get('SystemChatMessage');
@@ -22,18 +19,21 @@ const Server_SystemConsole = Network.Client.Get('SystemConsoleEvent');
 const Server_PlayerChatted = Network.Client.Get('PlayerChatted');
 const Server_ConsoleEvent = Network.Client.Get('ClientConsoleEvent');
 
+const Client_RenderToConsole = Signals.RenderToConsole;
+
+declare global {
+	type ConsoleLogType =
+		| 'ClientInfo'
+		| 'ServerInfo'
+		| 'ClientError'
+		| 'ServerError'
+		| 'ClientVerbose'
+		| 'ServerVerbose';
+}
+
 ConsoleLogPrefab.Visible = false;
 ConsoleScreenGui.Enabled = false;
 ConsoleScreenGui.Parent = Player.WaitForChild('PlayerGui');
-
-const colors = new Map<LogLevel, Color3>([
-	[LogLevel.Information, Color3.fromRGB(255, 255, 255)],
-	[LogLevel.Warning, Color3.fromRGB(255, 255, 127)],
-	[LogLevel.Error, Color3.fromRGB(218, 20, 41)],
-	[LogLevel.Fatal, Color3.fromRGB(218, 20, 41)],
-	[LogLevel.Debugging, Color3.fromRGB(148, 190, 15)],
-	[LogLevel.Verbose, Color3.fromRGB(85, 85, 127)],
-]);
 
 const custom_colors = new Map<string, Color3>([
 	['^0', new Color3()],
@@ -46,39 +46,78 @@ const custom_colors = new Map<string, Color3>([
 	['^7', new Color3(1, 1, 1)],
 ]);
 
-const custom_commands = new Map<string, Callback>();
+const custom_commands = new Map<string, Callback>([
+	[
+		'clear',
+		function () {
+			ConsoleContent.GetChildren().forEach((inst) => {
+				if (inst.IsA('TextLabel') && inst !== ConsoleLogPrefab) inst.Destroy();
+			});
+		},
+	],
+	[
+		'say',
+		function (content: string) {
+			Server_ChatSendMessage.SendToServer(content);
+			render('ServerInfo', `[chat] ${Player.DisplayName}: ${content}`);
+		},
+	],
+]);
 
 function SyntaxHighlight(message: string) {
+	message = message.gsub('\n', '<br />')[0];
 	const split = message.split(' ');
 }
 
-const RenderLogOnConsole: ILogEventSink = {
-	Emit(message) {
-		const level = message.Level;
-		const source = message.SourceContext;
-		const time = message.Timestamp;
-		const content = message.Template;
-		const new_log_message = ConsoleLogPrefab.Clone();
+function render(LogType: ConsoleLogType, Content: string) {
+	let first_character = '';
+	let message_color = '<font color="rgb(255,255,255)">';
+	switch (LogType) {
+		case 'ClientInfo': {
+			first_character = '<font color="rgb(120,255,255)">$ </font>';
+			break;
+		}
+		case 'ClientError': {
+			first_character = '<font color="rgb(255,46,49)">$! </font>';
+			message_color = '<font color="rgb(255,120,120)">';
+			break;
+		}
+		case 'ServerInfo': {
+			first_character = '<font color="rgb(100,255,100)"># </font>';
+			break;
+		}
+		case 'ServerError': {
+			first_character = '<font color="rgb(255,46,49)">#! </font>';
+			message_color = '<font color="rgb(255,120,120)">';
+			break;
+		}
+		case 'ClientVerbose': {
+			first_character = '<font color="rgb(120,120,120)">$ </font>';
+			message_color = '<font color="rgb(120,120,120)">';
+			break;
+		}
+		case 'ServerVerbose': {
+			first_character = '<font color="rgb(120,120,120)"># </font>';
+			message_color = '<font color="rgb(120,120,120)">';
+			break;
+		}
+	}
 
-		let next_index = 1;
-		ConsoleLogsFrame.GetChildren().forEach((inst) => {
-			if (inst.IsA('TextLabel') && inst !== ConsoleLogPrefab) {
-				if (inst.LayoutOrder > next_index) next_index = inst.LayoutOrder;
-			}
-		});
+	const prefab = ConsoleLogPrefab.Clone();
 
-		new_log_message.Visible = true;
-		new_log_message.Parent = ConsoleLogsFrame;
-		new_log_message.LayoutOrder = next_index + 1;
-		new_log_message.Name = '';
+	let av_index = 1;
+	ConsoleContent.GetChildren().forEach((inst) => {
+		if (inst.IsA('TextLabel') && inst !== ConsoleLogPrefab) {
+			if (inst.LayoutOrder >= av_index) av_index = inst.LayoutOrder + 1;
+		}
+	});
 
-		const message_color = colors.get(level)!;
-		new_log_message.Text = content;
-		new_log_message.TextColor3 = message_color;
-	},
-};
-
-Log.SetLogger(Logger.configure().WriteTo(RenderLogOnConsole).Create());
+	prefab.Visible = true;
+	prefab.Parent = ConsoleContent;
+	prefab.LayoutOrder = av_index;
+	prefab.Name = 'консоли';
+	prefab.Text = first_character + `${message_color}${Content}</font>`;
+}
 
 UserInputService.InputBegan.Connect((input, unavaiable) => {
 	if (!unavaiable && (input.KeyCode === Enum.KeyCode.RightShift || input.KeyCode === Enum.KeyCode.Insert)) {
@@ -96,60 +135,6 @@ ConsoleScreenGui.GetPropertyChangedSignal('Enabled').Connect(() => {
 	}
 });
 
-function HandleCommand(content: string) {
-	const isCommand = content.sub(1, 1) === '/';
-
-	if (!isCommand) {
-		Server_ChatSendMessage.SendToServer(content);
-		Log.Info(Player.DisplayName + ': ' + content);
-		return;
-	}
-
-	const split = content.sub(2, content.size()).split(' ');
-	const command = split[0]; // param (ex cg_fov)
-	let value = tostring(split[1]) as string | number | undefined; // value (ex 80)
-
-	const local_custom_command = custom_commands.get(command);
-	const modular_value = console_cmds.get(command);
-
-	Log.Info(`> ${command} ${value}`);
-
-	if (local_custom_command !== undefined) {
-		local_custom_command(value);
-		return;
-	}
-
-	if (modular_value !== undefined) {
-		const value_type = type(value);
-		const value_required = type(modular_value);
-		let check_success = false;
-		if (value_type !== value_required) {
-			if (value_required === 'number') {
-				const attempt = tonumber(value);
-				if (attempt !== undefined) {
-					value = attempt;
-					check_success = true;
-				}
-			}
-
-			if (!check_success) {
-				Log.Error('Value must be a [' + value_required + ']!');
-				return;
-			}
-		}
-
-		console_cmds.set(command, value);
-		//Log.Info(`> ${command} ${value} (${type(value)})`);
-		return;
-	}
-
-	const response = Server_ConsoleEvent.CallServer(command, [value as string]);
-	if (response !== undefined) Log.Verbose(response);
-	return;
-}
-
-Signals.SendConsoleCommand.Connect(HandleCommand);
-
 ConsoleInputBox.FocusLost.Connect((enterPressed) => {
 	if (!enterPressed || ConsoleInputBox.Text === '') return;
 	const content = ConsoleInputBox.Text;
@@ -158,4 +143,71 @@ ConsoleInputBox.FocusLost.Connect((enterPressed) => {
 	ConsoleInputBox.Text = '';
 });
 
-Server_SystemConsole.Connect((msg) => Log.Info(`server: ${msg}`));
+function HandleCommand(content: string) {
+	const cmd_isclient = content.sub(1, 2) === '$ ';
+	const cmd_isserver = content.sub(1, 2) === '# ';
+
+	if (!cmd_isclient && !cmd_isserver) {
+		custom_commands.get('say')!(content);
+		return;
+	}
+
+	const split = content.sub(3, content.size()).split(' ');
+	const command = split[0]; // param (ex cg_fov)
+	let value = tostring(split[1]) as string | number | undefined; // value (ex 80)
+
+	if (cmd_isserver) {
+		render('ServerInfo', `${command} ${value}`);
+		let Answer = '<i>No aswer from server</i>';
+		const response = Server_ConsoleEvent.CallServer(command, [value as string]);
+		if (response !== undefined) Answer = response;
+		render('ServerVerbose', Answer);
+		return;
+	}
+
+	if (cmd_isclient) {
+		const scr_value = console_cmds.get(command);
+		const scr_callback = custom_commands.get(command);
+
+		if (scr_value !== undefined) {
+			const scr_type = type(scr_value);
+			const scr_given = type(value);
+			let check_success = false;
+
+			if (value === 'nil') {
+				// client wants the value stored in such cmdval
+				render('ClientVerbose', `${command} = ${scr_value} [${scr_type}]`);
+				return;
+			}
+
+			if (scr_type !== scr_given) {
+				if (scr_type === 'number') {
+					const attempt = tonumber(value);
+					if (attempt !== undefined) {
+						value = attempt;
+						check_success = true;
+					}
+				}
+
+				if (!check_success) {
+					render('ClientError', `Given value must be a ${scr_type}, got ${scr_given}`);
+					return;
+				}
+			}
+
+			console_cmds.set(command, value);
+			render('ClientInfo', `${command} -> ${value}`);
+			return;
+		}
+
+		if (scr_callback !== undefined) {
+			scr_callback(value);
+			return;
+		}
+
+		render('ClientInfo', `${command} ${value}`);
+	}
+}
+
+Signals.SendConsoleCommand.Connect(HandleCommand);
+Client_RenderToConsole.Connect((log, msg) => render(log, msg));

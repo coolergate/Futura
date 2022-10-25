@@ -11,6 +11,7 @@ const Signals = {
 	CameraShoveRecoil: new Instance('BindableFunction'),
 
 	SendConsoleCommand: new Signal<(cmd: string) => void>(),
+	RenderToConsole: new Signal<(LogType: ConsoleLogType, Message: string) => void>(),
 };
 
 export = Signals;

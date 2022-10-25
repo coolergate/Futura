@@ -10,7 +10,7 @@ const Client_SystemChatMessage = Network.Server.Get('SystemChatMessage');
 
 Client_ConsoleEvent.SetCallback((player, command, args) => {
 	const userdata: PlayerData = Server_GetDataFromPlayer.Invoke(player.UserId);
-	if (!userdata) return 'unable to retrieve data.';
+	if (!userdata) return;
 
 	if (command === 'setname' && userdata.ConsoleLevel > 0) {
 		const old_username = userdata.Username;
@@ -18,8 +18,10 @@ Client_ConsoleEvent.SetCallback((player, command, args) => {
 		userdata.Username = new_username;
 		Client_SystemConsoleEvent.SendToAllPlayers(`${old_username} changed their name to ${new_username}`);
 		Client_SystemChatMessage.SendToAllPlayers(`${old_username} changed their name to ${new_username}`);
-		return;
+		return 'changed display name.';
 	}
 
-	return 'unknown command or level is lower than required.';
+	if (command === 'testnoreply') return;
+
+	return;
 });
