@@ -1,27 +1,25 @@
 import Network from 'shared/network';
 import Signals from './providers/signals';
 
-const Client_SendCommand = Network.Server.Get('SendCommand');
 const Server_CommandFired = Signals.CommandFired;
+const Server_GetDataFromPlayer = Signals.GetPlayerDataFromUserId;
 
-/*
-	User levels
-	3 = Owner
-	2 = Admin
-	1 = Player
-	0 = Banned
-*/
+const Client_ConsoleEvent = Network.Server.Get('ClientConsoleEvent');
+const Client_SystemConsoleEvent = Network.Server.Get('SystemConsoleEvent');
+const Client_SystemChatMessage = Network.Server.Get('SystemChatMessage');
 
-const admin_list = new Map<number, number>([
-	[3676469645, 3], // coolergate
-	[83009214, 3], // guilemos2006
-]);
+Client_ConsoleEvent.SetCallback((player, command, args) => {
+	const userdata: PlayerData = Server_GetDataFromPlayer.Invoke(player.UserId);
+	if (!userdata) return 'unable to retrieve data.';
 
-Client_SendCommand.Connect((sender, command, arg0, arg1, arg2) => {
-	// Check if sender is allowed to execute server commands
-	const user_level = admin_list.get(sender.UserId);
-	if (user_level === undefined || user_level <= 1) return;
+	if (command === 'setname' && userdata.ConsoleLevel > 0) {
+		const old_username = userdata.Username;
+		const new_username = args[0];
+		userdata.Username = new_username;
+		Client_SystemConsoleEvent.SendToAllPlayers(`${old_username} changed their name to ${new_username}`);
+		Client_SystemChatMessage.SendToAllPlayers(`${old_username} changed their name to ${new_username}`);
+		return;
+	}
 
-	Server_CommandFired.Fire(sender, command, arg0);
-	return 'true';
+	return 'unknown command or level is lower than required.';
 });

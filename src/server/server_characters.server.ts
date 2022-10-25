@@ -23,12 +23,6 @@ declare global {
 			Angle: Vector2;
 		};
 	}
-	interface ClientOthersInfo {
-		Id: string;
-		Health: 'High' | 'Low';
-		WeaponId: string;
-		IsMoving: false;
-	}
 }
 
 class CharController {
@@ -66,6 +60,8 @@ class CharController {
 		this.MaxHealth = 150;
 		this.Alive = true;
 		this.PlayerUserId = undefined;
+
+		Signals.ClearInventoryFromCharacter.Fire(this.Model);
 
 		const Humanoid = this.Model.WaitForChild('Humanoid') as Humanoid;
 		const HumanoidRootPart = this.Model.WaitForChild('HumanoidRootPart') as BasePart;
@@ -106,6 +102,8 @@ for (let index = 0; index < Players.MaxPlayers + 5; index++) {
 	Humanoid.BreakJointsOnDeath = false;
 	Humanoid.WalkSpeed = StarterPlayer.CharacterWalkSpeed;
 	Humanoid.JumpPower = StarterPlayer.CharacterJumpPower;
+	Humanoid.SetStateEnabled(Enum.HumanoidStateType.Physics, false);
+	Humanoid.SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false);
 
 	CharacterModel.Name = tostring(index);
 	CharacterModel.Parent = Folders.GEntities.char_players;
@@ -222,7 +220,7 @@ Client_RespawnRequest.SetCallback((player) => {
 		while (SpawnLocation !== undefined);
 	}
 
-	print('a');
+	Character.Humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
 	Character.HumanoidRootPart.CFrame = (SpawnLocation !== undefined && SpawnLocation.CFrame) || DefaultSpawnLocation;
 	Character.HumanoidRootPart.Anchored = false;
 	Character.HumanoidRootPart.SetNetworkOwner(player);
@@ -230,14 +228,14 @@ Client_RespawnRequest.SetCallback((player) => {
 	return GetClientInterface(CharacterInfo.ID);
 });
 
-Signals.CommandFired.Connect((player, cmd, arg0) => {
+Signals.CommandFired.Connect((player, userlvl, cmd, arg0) => {
 	let player_character: CharController | undefined;
 	Characters.forEach((controller) => {
 		if (!controller.Alive || controller.PlayerUserId !== player.UserId) return;
 		player_character = controller;
 	});
 
-	if (cmd === 'takedmg' && player_character) {
+	if (cmd === 'takedmg' && userlvl > 1 && player_character) {
 		const damage = tonumber(arg0);
 		if (damage === undefined) {
 			warn('invalid damage, got', string, type(string));
@@ -247,4 +245,35 @@ Signals.CommandFired.Connect((player, cmd, arg0) => {
 		player_character.TakeDamage(damage);
 		return;
 	}
+
+	if (cmd === 'reset' && userlvl > 0 && player_character) {
+		player_character.TakeDamage(player_character.Health);
+		return;
+	}
 });
+
+declare global {
+	interface CharacterFromUserId {
+		Model: BaseCharacter;
+		PlayerUserId: number;
+		CharacterId: number;
+		Health: number;
+		MaxHealth: number;
+		Alive: boolean;
+	}
+}
+Signals.GetCharacterFromUserId.OnInvoke = (userid: number) => {
+	let reply: CharacterFromUserId | undefined;
+	Characters.forEach((controller) => {
+		if (reply || controller.PlayerUserId !== userid) return;
+		reply = {
+			Model: controller.Model,
+			PlayerUserId: controller.PlayerUserId,
+			CharacterId: controller.ID,
+			Health: controller.Health,
+			MaxHealth: controller.MaxHealth,
+			Alive: controller.Alive,
+		};
+	});
+	return reply;
+};

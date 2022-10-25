@@ -3,6 +3,7 @@ const console_cmds = new Map<string, unknown>([
 	['cg_fov', 80],
 	['cg_hitsound', 1],
 	['cg_draw_tracers', 1],
+	['username', 'Player'],
 
 	// (render) values
 	['r_drawtracers_firstperson', 1],

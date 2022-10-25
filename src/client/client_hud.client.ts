@@ -36,7 +36,7 @@ RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt)
 	showfps_label.Visible = console_cmds.get('ui_showfps') === 1;
 	showpos_label.Visible = console_cmds.get('ui_showpos') === 1;
 
-	showfps_label.Text = tostring(frames_per_second) + ' fps on beta_baseplate';
+	showfps_label.Text = tostring(frames_per_second) + ' fps on prev_baseplate';
 	showfps_label.TextColor3 = equivalent_color;
 
 	GameplayScreenGui.Enabled = Character !== undefined && Character.Humanoid.Health > 0;

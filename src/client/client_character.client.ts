@@ -7,12 +7,16 @@ import console_cmds from './providers/cmds';
 import Log from '@rbxts/log';
 import Folders from 'shared/folders';
 import { Bin } from '@rbxts/bin';
+import RenderPriorities from './components/render';
 
 Signals.Start.Wait();
 
-const RunService = game.GetService('RunService');
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const PhysicsService = game.GetService('PhysicsService');
+const StarterPlayer = game.GetService('StarterPlayer');
+const StarterGui = game.GetService('StarterGui');
+const RunService = game.GetService('RunService');
+const Workspace = game.GetService('Workspace');
 
 const Server_RespawnRequest = Network.Client.Get('RequestRespawn');
 const Server_CharUpdated = Network.Client.Get('CharacterStatusUpdated');
@@ -81,34 +85,47 @@ Folders.GEntities.char_players.GetChildren().forEach((inst) => {
 			PhysicsService.SetPartCollisionGroup(descendant, 'GBaseCharacters');
 		}
 	});
-
-	// Load animations
-	const AnimationList = new Map<string, AnimationTrack>();
-	const Animations = Folders.GAnimations;
-	Animations.GetChildren().forEach((anim) => {
-		if (!anim.IsA('Animation')) return;
-		AnimationList.set(anim.Name, Animator.LoadAnimation(anim));
-	});
-
-	// Create new Bin
-	const CharacterBin = new Bin();
-
-	// Playing animations
-	const WalkAnimation = AnimationList.get('CharacterWalk');
-	CharacterBin.add(
-		RunService.RenderStepped.Connect(() => {
-			const Direction = Humanoid.MoveDirection;
-			if (!WalkAnimation) {
-				warn('Run animation doesnt exist');
-				return;
-			}
-			if (Direction.Magnitude > 0) {
-				if (!WalkAnimation.IsPlaying) WalkAnimation.Play();
-			} else {
-				if (WalkAnimation.IsPlaying) WalkAnimation.Stop();
-			}
-		}),
-	);
-
-	inst.Destroying.Connect(() => CharacterBin.destroy());
 });
+
+// Check if character is within a region
+
+const zoneCheckParams = new OverlapParams();
+zoneCheckParams.FilterDescendantsInstances = [Folders.GEntities.char_players];
+zoneCheckParams.FilterType = Enum.RaycastFilterType.Whitelist;
+
+RunService.BindToRenderStep('char_regioncheck', RenderPriorities.CharacterRegions, () => {
+	if (!Values.Character.Model || Values.Character.Health <= 0) {
+		Values.Character.Zone = undefined;
+		return;
+	}
+
+	const RootPart = Values.Character.Model.FindFirstChild('HumanoidRootPart');
+	if (!RootPart) return;
+
+	const func_entities = Folders.GMap.func_entities;
+
+	func_entities.GetChildren().forEach((inst) => {
+		if (!inst.IsA('BasePart') || Values.Character.Zone !== undefined) return;
+
+		const parts = Workspace.GetPartsInPart(inst, zoneCheckParams);
+		parts.forEach((instance) => {
+			if (
+				!instance.IsA('BasePart') ||
+				inst.Name.match('func_zone_')[0] === undefined ||
+				Values.Character.Zone !== undefined
+			)
+				return;
+
+			const parent = instance.Parent!;
+			if (parent === Values.Character.Model && instance.Name === 'HumanoidRootPart') {
+				Values.Character.Zone = instance.Name.gsub('func_zone_', '')[0];
+			}
+		});
+	});
+});
+
+const reset_bindableEvent = new Instance('BindableEvent');
+reset_bindableEvent.Event.Connect(() => {
+	Signals.SendConsoleCommand.Fire('//reset');
+});
+StarterGui.SetCore('ResetButtonCallback', reset_bindableEvent);

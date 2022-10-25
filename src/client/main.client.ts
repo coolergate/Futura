@@ -18,8 +18,15 @@ const RunService = game.GetService('RunService');
 const ContentProvider = game.GetService('ContentProvider');
 const StarterGui = game.GetService('StarterGui');
 const ReplicatedFirst = game.GetService('ReplicatedFirst');
-const TweenService = game.GetService('TweenService');
-const UserInputService = game.GetService('UserInputService');
+const ScriptContext = game.GetService('ScriptContext');
+
+ScriptContext.Error.Connect((message, trace, container) => {
+	const source = container as Script | LocalScript;
+	if (!container) return;
+	Log.Error(message);
+	Log.Error(trace);
+	if (RunService.IsStudio()) source.Disabled = true;
+});
 
 do task.wait();
 while (ReplicatedStorage.GetAttribute('Ready') !== true);
@@ -58,5 +65,4 @@ Server_PlayerLogin.CallServer();
 
 Local_StartSignal.Fire();
 task.wait(1);
-StarterGui.SetCore('ResetButtonCallback', false);
 Local_RequestRespawn.Invoke();

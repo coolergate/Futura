@@ -8,14 +8,15 @@ export = class {
 	readonly Pressed = new Signal();
 	readonly Released = new Signal();
 
-	constructor(action: string) {
+	constructor(action: string, toggle = false) {
 		UserInputService.InputBegan.Connect((input, busy) => {
 			if (busy) return;
 
 			const input_keycode = (input.KeyCode.Name !== 'Unknown' && input.KeyCode.Name) || input.UserInputType.Name;
 			const input_equivalentaction = Keybinds.get(input_keycode);
 			if (input_equivalentaction !== action) return;
-			this.Active = true;
+			if (toggle) this.Active !== this.Active;
+			else this.Active = true;
 			this.Pressed.Fire();
 		});
 		UserInputService.InputEnded.Connect((input, busy) => {
@@ -24,7 +25,7 @@ export = class {
 			const input_keycode = (input.KeyCode.Name !== 'Unknown' && input.KeyCode.Name) || input.UserInputType.Name;
 			const input_equivalentaction = Keybinds.get(input_keycode);
 			if (input_equivalentaction !== action) return;
-			this.Active = false;
+			if (!toggle) this.Active = false;
 			this.Released.Fire();
 		});
 	}

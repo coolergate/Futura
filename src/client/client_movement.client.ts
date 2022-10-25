@@ -14,7 +14,6 @@ const RunService = game.GetService('RunService');
 const Workspace = game.GetService('Workspace');
 
 const MAccel = 0.175;
-const MAirAccel = 0.025;
 
 const Directions = new Map<Input, Enum.NormalId>([
 	[new Input('move_forward'), Enum.NormalId.Front],
@@ -26,7 +25,6 @@ const Directions = new Map<Input, Enum.NormalId>([
 const JumpKeybind = new Input('jump');
 
 let MDirection = new Vector3();
-let MHumanoidGround: Enum.Material = Enum.Material.Air;
 let MGrounded = false;
 let MJumping = false;
 
@@ -57,11 +55,9 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	if (time_stamp < 1 / 60) return;
 	time_stamp = 0;
 
-	MHumanoidGround = Humanoid.FloorMaterial;
-	MGrounded = Humanoid.FloorMaterial.Name !== 'Air'; //Workspace.Raycast(HumanoidRootPart.Position, new Vector3(0, -5, 0), TracelineParams) !== undefined;
+	MGrounded = Workspace.Raycast(HumanoidRootPart.Position, new Vector3(0, -4.1, 0), TracelineParams) !== undefined;
 
 	if (MGrounded && !MJumping) MDirection = MDirection.Lerp(WorldDirection, MAccel);
-	else MDirection = MDirection.Lerp(WorldDirection, MAirAccel);
 
 	Humanoid.Move(MDirection, false);
 
@@ -70,11 +66,7 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 
 	if (JumpKeybind.Active && MGrounded && !MJumping) {
 		MJumping = true;
-		if (Humanoid.FloorMaterial.Name === 'Air') {
-			const Velocity = HumanoidRootPart.AssemblyLinearVelocity;
-			const newVelocity = new Vector3(0, Velocity.Y * math.sign(Velocity.Y), 0);
-			HumanoidRootPart.ApplyImpulse(newVelocity.mul(3));
-		} else Humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
+		if (Humanoid.FloorMaterial.Name !== 'Air') Humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
 		do RunService.RenderStepped.Wait();
 		while (!MGrounded);
 		MJumping = false;

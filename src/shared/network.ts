@@ -15,8 +15,17 @@ const Network = Net.CreateDefinitions({
 	RequestRespawn: Definitions.ServerFunction<() => ClientCharacterInfo | false>(),
 	CharacterStatusUpdated: Definitions.ServerToClientEvent<[NewInfo: ClientCharacterInfo]>(),
 
+	// Inventory events
+	ChangeWeapon: Definitions.ServerFunction<(weaponid: string) => WeaponInfo>(),
+	UpdateWeaponStats: Definitions.ClientToServerEvent<[UpdatedInfo: string]>(),
+	WeaponFired: Definitions.ClientToServerEvent<[weaponid: string, point: CFrame, client_hit: BaseCharacter[]]>(),
+
 	// Server-side commands
 	SendCommand: Definitions.ClientToServerEvent<[command: string, arg0: string, arg1?: string, arg2?: string]>(),
+
+	// Console events
+	ClientConsoleEvent: Definitions.ServerFunction<(command: string, args: string[]) => string | undefined>(),
+	SystemConsoleEvent: Definitions.ServerToClientEvent<[message: string]>(),
 });
 
 export = Network;

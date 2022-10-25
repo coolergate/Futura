@@ -9,6 +9,8 @@ const Signals = {
 	CharacterDied: new Signal(),
 
 	CameraShoveRecoil: new Instance('BindableFunction'),
+
+	SendConsoleCommand: new Signal<(cmd: string) => void>(),
 };
 
 export = Signals;

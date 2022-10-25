@@ -61,5 +61,5 @@ if (ServerFetchedLocation.status === 'success') {
 }
 ReplicatedStorage.SetAttribute('Region', gStringLocation);
 
-task.wait(10);
+task.wait(3);
 ReplicatedStorage.SetAttribute('Ready', true);

@@ -7,6 +7,7 @@ const Values = {
 		Health: 0,
 		MaxHealth: 150,
 		Model: undefined as BaseCharacter | undefined,
+		Zone: undefined as string | undefined,
 	},
 
 	// camera values
