@@ -22,13 +22,7 @@ const Server_ConsoleEvent = Network.Client.Get('ClientConsoleEvent');
 const Client_RenderToConsole = Signals.RenderToConsole;
 
 declare global {
-	type ConsoleLogType =
-		| 'ClientInfo'
-		| 'ServerInfo'
-		| 'ClientError'
-		| 'ServerError'
-		| 'ClientVerbose'
-		| 'ServerVerbose';
+	type ConsoleLogType = 'Info' | 'Error' | 'Warn' | 'Verbose' | 'Chat';
 }
 
 ConsoleLogPrefab.Visible = false;
@@ -59,48 +53,46 @@ const custom_commands = new Map<string, Callback>([
 		'say',
 		function (content: string) {
 			Server_ChatSendMessage.SendToServer(content);
-			render('ServerInfo', `[chat] ${Player.DisplayName}: ${content}`);
+			render('Chat', `${Player.DisplayName}: ${content}`);
 		},
 	],
 ]);
 
-function SyntaxHighlight(message: string) {
-	message = message.gsub('\n', '<br />')[0];
-	const split = message.split(' ');
-}
-
-function render(LogType: ConsoleLogType, Content: string) {
-	let first_character = '';
-	let message_color = '<font color="rgb(255,255,255)">';
+function render(LogType: ConsoleLogType, content: string) {
+	let start_params = '<font color="rgb(255,255,255)">';
+	let end_params = '</font>';
+	let cmd_chat = false;
 	switch (LogType) {
-		case 'ClientInfo': {
-			first_character = '<font color="rgb(120,255,255)">$ </font>';
+		case 'Info': {
+			/* start_params = '<font color="rgb(170,170,170)">/';
+			end_params = '</font>'; */
 			break;
 		}
-		case 'ClientError': {
-			first_character = '<font color="rgb(255,46,49)">$! </font>';
-			message_color = '<font color="rgb(255,120,120)">';
+		case 'Error': {
+			start_params = '<font color="rgb(255,0,0)"><i>';
+			end_params = '</i></font>';
 			break;
 		}
-		case 'ServerInfo': {
-			first_character = '<font color="rgb(100,255,100)"># </font>';
+		case 'Warn': {
+			start_params = '<font color="rgb(255,255,0)"><i>';
+			end_params = '</i></font>';
 			break;
 		}
-		case 'ServerError': {
-			first_character = '<font color="rgb(255,46,49)">#! </font>';
-			message_color = '<font color="rgb(255,120,120)">';
+		case 'Verbose': {
+			start_params = '<font color="rgb(85,85,127)">@<i>';
+			end_params = '</i></font>';
 			break;
 		}
-		case 'ClientVerbose': {
-			first_character = '<font color="rgb(120,120,120)">$ </font>';
-			message_color = '<font color="rgb(120,120,120)">';
+		case 'Chat': {
+			start_params = '[chat] ';
+			end_params = '';
+			cmd_chat = true;
 			break;
 		}
-		case 'ServerVerbose': {
-			first_character = '<font color="rgb(120,120,120)"># </font>';
-			message_color = '<font color="rgb(120,120,120)">';
-			break;
-		}
+	}
+
+	if (cmd_chat) {
+		// TODO
 	}
 
 	const prefab = ConsoleLogPrefab.Clone();
@@ -115,8 +107,8 @@ function render(LogType: ConsoleLogType, Content: string) {
 	prefab.Visible = true;
 	prefab.Parent = ConsoleContent;
 	prefab.LayoutOrder = av_index;
-	prefab.Name = 'консоли';
-	prefab.Text = first_character + `${message_color}${Content}</font>`;
+	prefab.Name = '';
+	prefab.Text = `${start_params}${content}${end_params}`;
 }
 
 UserInputService.InputBegan.Connect((input, unavaiable) => {
@@ -138,75 +130,70 @@ ConsoleScreenGui.GetPropertyChangedSignal('Enabled').Connect(() => {
 ConsoleInputBox.FocusLost.Connect((enterPressed) => {
 	if (!enterPressed || ConsoleInputBox.Text === '') return;
 	const content = ConsoleInputBox.Text;
+	const command = content.sub(1, 1) === '/';
 
-	HandleCommand(content);
+	if (command) {
+		render('Info', content);
+		HandleCommand(content);
+	} else {
+		render('Info', '/say ' + content);
+		HandleCommand('/say ' + content);
+	}
 	ConsoleInputBox.Text = '';
 });
 
 function HandleCommand(content: string) {
-	const cmd_isclient = content.sub(1, 2) === '$ ';
-	const cmd_isserver = content.sub(1, 2) === '# ';
-
-	if (!cmd_isclient && !cmd_isserver) {
-		custom_commands.get('say')!(content);
-		return;
-	}
-
-	const split = content.sub(3, content.size()).split(' ');
+	const split = content.sub(2, content.size()).split(' ');
 	const command = split[0]; // param (ex cg_fov)
-	let value = tostring(split[1]) as string | number | undefined; // value (ex 80)
+	const value = tostring(split[1]); // value (ex 80)
 
-	if (cmd_isserver) {
-		render('ServerInfo', `${command} ${value}`);
-		let Answer = '<i>No aswer from server</i>';
-		const response = Server_ConsoleEvent.CallServer(command, [value as string]);
-		if (response !== undefined) Answer = response;
-		render('ServerVerbose', Answer);
-		return;
-	}
-
-	if (cmd_isclient) {
+	// check to see if it is an value that can be changed
+	if (console_cmds.has(command)) {
 		const scr_value = console_cmds.get(command);
-		const scr_callback = custom_commands.get(command);
+		const scr_type = type(scr_value);
+		const scr_given = type(value);
+		let cValue = value as string | number;
+		let check_success = false;
 
-		if (scr_value !== undefined) {
-			const scr_type = type(scr_value);
-			const scr_given = type(value);
-			let check_success = false;
+		if (value === 'nil') {
+			// client wants the value stored in such cmdval
+			render('Info', `${command} value is ${scr_value} [${scr_type}]`);
+			return;
+		}
 
-			if (value === 'nil') {
-				// client wants the value stored in such cmdval
-				render('ClientVerbose', `${command} = ${scr_value} [${scr_type}]`);
+		if (scr_type !== scr_given) {
+			if (scr_type === 'number') {
+				const attempt = tonumber(value);
+				if (attempt !== undefined) {
+					cValue = attempt;
+					check_success = true;
+				}
+			}
+
+			if (!check_success) {
+				render('Error', `Wrong value type! given: ${scr_type}, got: ${scr_given}`);
 				return;
 			}
-
-			if (scr_type !== scr_given) {
-				if (scr_type === 'number') {
-					const attempt = tonumber(value);
-					if (attempt !== undefined) {
-						value = attempt;
-						check_success = true;
-					}
-				}
-
-				if (!check_success) {
-					render('ClientError', `Given value must be a ${scr_type}, got ${scr_given}`);
-					return;
-				}
-			}
-
-			console_cmds.set(command, value);
-			render('ClientInfo', `${command} -> ${value}`);
-			return;
 		}
 
-		if (scr_callback !== undefined) {
-			scr_callback(value);
-			return;
-		}
-
-		render('ClientInfo', `${command} ${value}`);
+		console_cmds.set(command, cValue);
+		return;
 	}
+
+	// else check if it is an callable function
+	if (custom_commands.has(command)) {
+		const arg = content.sub(command.size() + 3, content.size());
+		custom_commands.get(command)!(arg);
+		return;
+	}
+
+	const response = Server_ConsoleEvent.CallServer(command, [value as string]);
+	if (response !== undefined) {
+		render('Verbose', 'Server: ' + response);
+		return;
+	}
+
+	render('Error', 'Unknown or restricted command');
 }
 
 Signals.SendConsoleCommand.Connect(HandleCommand);

@@ -39,19 +39,19 @@ StarterGui.SetCoreGuiEnabled('All', false);
 // Actual preloading
 const content = ReplicatedStorage.GetDescendants();
 if (!RunService.IsStudio()) {
-	Signals.RenderToConsole.Fire('ClientVerbose', 'Pre-loading game assets');
+	Signals.RenderToConsole.Fire('Verbose', 'Pre-loading game assets');
 	const start_time = os.time();
 	ContentProvider.PreloadAsync(content);
 	const duration = os.difftime(os.time(), start_time);
 	Signals.RenderToConsole.Fire(
-		'ClientVerbose',
+		'Verbose',
 		`Game assets loaded. Took: <font color="rgb(85,255,0)">${math.floor(duration)} seconds</font>`,
 	);
 } else {
-	Signals.RenderToConsole.Fire('ClientVerbose', 'Skipped game assets download. (User is in studio mode)');
+	Signals.RenderToConsole.Fire('Warn', 'Skipped game assets download. (User is in studio mode)');
 }
 
-Signals.RenderToConsole.Fire('ClientVerbose', 'Reading interface list...');
+Signals.RenderToConsole.Fire('Verbose', 'Reading interface list...');
 Folders.CHudContent.GetChildren().forEach((element) => {
 	if (element.IsA('ScreenGui')) {
 		element.Enabled = true;
@@ -59,7 +59,7 @@ Folders.CHudContent.GetChildren().forEach((element) => {
 	}
 });
 
-Signals.RenderToConsole.Fire('ClientVerbose', 'Sending server login request.');
+Signals.RenderToConsole.Fire('Verbose', 'Sending server login request.');
 Server_PlayerLogin.CallServer();
 
 Local_StartSignal.Fire();
