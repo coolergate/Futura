@@ -1,4 +1,4 @@
-import Folders from 'shared/folders';
+import { Folders } from 'shared/global_resources';
 
 // Services
 const Players = game.GetService('Players');
@@ -21,7 +21,7 @@ PhysicsService.CollisionGroupSetCollidable('CViewmodels', 'Default', false);
 StarterGui.GetChildren().forEach((inst) => {
 	if (inst.IsA('ScreenGui')) {
 		inst.Enabled = false;
-		inst.Parent = Folders.CHudContent;
+		inst.Parent = Folders.Storage.UserInterface;
 	}
 });
 

@@ -1,5 +1,4 @@
-import Folders from 'shared/folders';
-import Network from 'shared/network';
+import { Folders, Remotes } from 'shared/global_resources';
 import Values from './providers/values';
 import console_cmds from './providers/cmds';
 import Signals from './providers/signals';
@@ -7,17 +6,17 @@ import Signals from './providers/signals';
 const Player = game.GetService('Players').LocalPlayer;
 const UserInputService = game.GetService('UserInputService');
 
-const ConsoleScreenGui = Folders.CHudContent.FindFirstChild('Console') as ScreenGui;
+const ConsoleScreenGui = Folders.Storage.UserInterface.FindFirstChild('Console') as ScreenGui;
 const ConsoleWindow = ConsoleScreenGui.FindFirstChild('Window') as Frame;
 const ConsoleContent = ConsoleWindow.FindFirstChild('Content') as Frame;
 const ConsoleLogPrefab = ConsoleContent.FindFirstChild('LogPrefab') as TextLabel;
 const ConsoleInputBox = ConsoleContent.FindFirstChild('Input') as TextBox;
 
-const Server_ChatSendMessage = Network.Client.Get('ChatSendMessage');
-const Server_SystemMessage = Network.Client.Get('SystemChatMessage');
-const Server_SystemConsole = Network.Client.Get('SystemConsoleEvent');
-const Server_PlayerChatted = Network.Client.Get('PlayerChatted');
-const Server_ConsoleEvent = Network.Client.Get('ClientConsoleEvent');
+const Server_ChatSendMessage = Remotes.Client.Get('ChatSendMessage');
+const Server_SystemMessage = Remotes.Client.Get('SystemChatMessage');
+const Server_SystemConsole = Remotes.Client.Get('SystemConsoleEvent');
+const Server_PlayerChatted = Remotes.Client.Get('PlayerChatted');
+const Server_ConsoleEvent = Remotes.Client.Get('ClientConsoleEvent');
 
 const Client_RenderToConsole = Signals.RenderToConsole;
 

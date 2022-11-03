@@ -7,8 +7,7 @@ import { KnitClient as Knit } from '@rbxts/knit';
 import console_cmds from './providers/cmds';
 import Signals from './providers/signals';
 import Values from './providers/values';
-import Network from 'shared/network';
-import Folders from 'shared/folders';
+import { Folders, Remotes } from 'shared/global_resources';
 
 const Player = game.GetService('Players').LocalPlayer;
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
@@ -27,8 +26,7 @@ ScriptContext.Error.Connect((message, trace, container) => {
 do task.wait();
 while (ReplicatedStorage.GetAttribute('Ready') !== true);
 
-const Server_PlayerLogin = Network.Client.Get('PlayerLogin');
-const Server_RespawnRequest = Network.Client.Get('RequestRespawn');
+const Server_PlayerLogin = Remotes.Client.Get('PlayerLogin');
 
 const Local_StartSignal = Signals.Start;
 const Local_RequestRespawn = Signals.CharacterRequestRespawn;
@@ -52,7 +50,7 @@ if (!RunService.IsStudio()) {
 }
 
 Signals.RenderToConsole.Fire('Verbose', 'Reading interface list...');
-Folders.CHudContent.GetChildren().forEach((element) => {
+Folders.Storage.UserInterface.GetChildren().forEach((element) => {
 	if (element.IsA('ScreenGui')) {
 		element.Enabled = true;
 		element.Parent = Player.WaitForChild('PlayerGui');

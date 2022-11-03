@@ -9,13 +9,13 @@ const Signals = {
 	PlayerRemoved: new Signal<(id: number, data: PlayerData) => void>(),
 	GetPlayerDataFromUserId: new Instance('BindableFunction'),
 
-	GetCharacterFromUserId: new Instance('BindableFunction'),
-	SetupInventoryForCharacter: new Instance('BindableFunction'),
-	CharacterCreated: new Signal<(Character: BaseCharacter) => void>(),
-
-	ClearInventoryFromCharacter: new Signal<(char: BaseCharacter) => void>(),
+	GetEntityFromUserId: new Instance('BindableFunction'),
+	PlayerEntityCreated: new Signal<(Entity: PlayerEntityInfo) => void>(),
+	PlayerEntitySpawned: new Signal<(Entity: PlayerEntityInfo) => void>(),
+	PlayerEntityDied: new Signal<(Entity: PlayerEntityInfo) => void>(),
 
 	CommandFired: new Signal<(player: Player, userlvl: number, cmd: string, arg0: string) => void>(),
+	BindCommandToConsole: new Signal<(name: string, callback: Callback) => void>(),
 };
 
 export = Signals;

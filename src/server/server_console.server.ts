@@ -1,12 +1,15 @@
-import Network from 'shared/network';
+import { Remotes } from 'shared/global_resources';
 import Signals from './providers/signals';
 
 const Server_CommandFired = Signals.CommandFired;
+const Server_BindCommand = Signals.BindCommandToConsole;
 const Server_GetDataFromPlayer = Signals.GetPlayerDataFromUserId;
 
-const Client_ConsoleEvent = Network.Server.Get('ClientConsoleEvent');
-const Client_SystemConsoleEvent = Network.Server.Get('SystemConsoleEvent');
-const Client_SystemChatMessage = Network.Server.Get('SystemChatMessage');
+const Client_ConsoleEvent = Remotes.Server.Get('ClientConsoleEvent');
+const Client_SystemConsoleEvent = Remotes.Server.Get('SystemConsoleEvent');
+const Client_SystemChatMessage = Remotes.Server.Get('SystemChatMessage');
+
+const bound_commands = new Map<string, Callback>();
 
 Client_ConsoleEvent.SetCallback((player, command, args) => {
 	const userdata: PlayerData = Server_GetDataFromPlayer.Invoke(player.UserId);
@@ -23,5 +26,12 @@ Client_ConsoleEvent.SetCallback((player, command, args) => {
 
 	if (command === 'testnoreply') return;
 
+	// check if a bound command exists
+	if (bound_commands.has(command) && userdata.ConsoleLevel > 1) {
+		return bound_commands.get(command)!(player, args);
+	}
+
 	return;
 });
+
+Server_BindCommand.Connect((name, callback) => bound_commands.set(name, callback));

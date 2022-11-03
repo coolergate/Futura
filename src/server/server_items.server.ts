@@ -1,4 +1,3 @@
-import Network from 'shared/network';
 import { GetWeapons } from 'shared/providers/weapons';
 import Signals from './providers/signals';
 import GenerateString from 'shared/modules/randomstring';
@@ -8,7 +7,7 @@ declare global {
 	interface ItemInfo {
 		DisplayName: string;
 		ItemId: string | undefined;
-		ItemOwner?: BaseCharacter;
+		ItemOwner?: string;
 		Slot: ItemSlot;
 	}
 	interface WeaponInfo extends ItemInfo {
@@ -25,9 +24,11 @@ declare global {
 		Holding: string | undefined;
 	}
 }
-
+/*
 const ItemsList = new Map<string, ItemInfo | WeaponInfo>();
 const Inventories = new Map<BaseCharacter, CharInventory>();
+
+const Client_InventoryChanged = Network.Server.Get('InventoryChanged');
 
 function SetupItem(item: ItemInfo | WeaponInfo, character: BaseCharacter) {
 	const id = GenerateString(17);
@@ -36,6 +37,27 @@ function SetupItem(item: ItemInfo | WeaponInfo, character: BaseCharacter) {
 	ItemsList.set(id, item);
 	return id;
 }
+
+Signals.BindCommandToConsole.Fire('giveitem', (player: Player, args: string[]) => {
+	const character: CharacterFromUserId = Signals.GetCharacterFromUserId.Invoke(player.UserId);
+	if (!character || !character.Alive) {
+		return 'No character found.';
+	}
+
+	const inventory = Inventories.get(character.Model);
+	if (!inventory) {
+		return 'No inventory has been set up for your character';
+	}
+
+	const weapon = GetWeapons().get(args[0]);
+	if (!weapon) {
+		warn('no such weapon:', weapon);
+		return;
+	}
+	const setup_item = SetupItem(weapon, character.Model);
+	inventory.Weapons.set(weapon.Slot, setup_item);
+	return 'Gave weapon: ' + weapon.DisplayName;
+});
 
 Signals.CommandFired.Connect((player, userlvl, cmd, arg0) => {
 	const character: CharacterFromUserId = Signals.GetCharacterFromUserId.Invoke(player.UserId);
@@ -91,3 +113,4 @@ Signals.ClearInventoryFromCharacter.Connect((char) => {
 		inv.Backpack.clear();
 	}
 });
+*/

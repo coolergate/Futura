@@ -26,7 +26,7 @@ const showfps_label = OverlayScreenGui.FindFirstChild('showfps') as TextLabel;
 const showpos_label = OverlayScreenGui.FindFirstChild('showpos') as TextLabel;
 
 RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt) => {
-	const Character = Values.CCurrentCharacter;
+	const Character = Values.Character;
 
 	const frames_per_second = math.ceil(1 / dt);
 	let equivalent_color: Color3 = fps_cores[0];
@@ -39,11 +39,11 @@ RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt)
 	showfps_label.Text = tostring(frames_per_second) + ' fps on prev_baseplate';
 	showfps_label.TextColor3 = equivalent_color;
 
-	GameplayScreenGui.Enabled = Character !== undefined && Character.Humanoid.Health > 0;
+	GameplayScreenGui.Enabled = Character !== undefined && Character.Health > 0;
 });
 
 RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, (dt) => {
-	const Character = Values.CCurrentCharacter;
+	const Character = Values.Character;
 	if (!GameplayScreenGui.Enabled || !Character) return;
 
 	const HealthLabel = HealthFrame.FindFirstChild('HealthAmount') as TextLabel;
@@ -51,6 +51,6 @@ RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, (d
 });
 
 RunService.BindToRenderStep('interface_overlay', RenderPriorities.Interface, (dt) => {
-	UserInputService.MouseIconEnabled = !Values.CCameraUnlock.isEmpty() || Values.CCurrentCharacter === undefined;
+	UserInputService.MouseIconEnabled = !Values.CCameraUnlock.isEmpty() || Values.Character.CollisionBox === undefined;
 	Overlay_Crosshair.Visible = !UserInputService.MouseIconEnabled;
 });

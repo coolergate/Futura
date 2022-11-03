@@ -1,4 +1,4 @@
-import Network from 'shared/network';
+import { Remotes } from 'shared/global_resources';
 import Signals from './providers/signals';
 
 const Players = game.GetService('Players');
@@ -7,12 +7,12 @@ const DataStoreService = game.GetService('DataStoreService');
 
 const ConsoleLevelDataStore = DataStoreService.GetDataStore('UserConsoleLevel');
 
-const Client_PlayerReport = Network.Server.Get('PlayerReport');
-const Client_PlayerJoined = Network.Server.Get('PlayerJoined');
-const Client_PlayerLeft = Network.Server.Get('PlayerLeft');
-const Client_PlayerLogin = Network.Server.Get('PlayerLogin');
-const Client_PlayerChatted = Network.Server.Get('PlayerChatted');
-const Client_PlayerSentMessage = Network.Server.Get('ChatSendMessage');
+const Client_PlayerReport = Remotes.Server.Get('PlayerReport');
+const Client_PlayerJoined = Remotes.Server.Get('PlayerJoined');
+const Client_PlayerLeft = Remotes.Server.Get('PlayerLeft');
+const Client_PlayerLogin = Remotes.Server.Get('PlayerLogin');
+const Client_PlayerChatted = Remotes.Server.Get('PlayerChatted');
+const Client_PlayerSentMessage = Remotes.Server.Get('ChatSendMessage');
 
 const Server_PlayerAdded = Signals.PlayerAdded;
 const Server_PlayerRemoved = Signals.PlayerRemoved;

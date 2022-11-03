@@ -1,14 +1,18 @@
+//========= Copyright GGC Studios, All rights reserved. ============//
+// Purpose: Store script values to be used with other scripts		//
+//==================================================================//
+
 const Values = {
 	// character values
-	CCurrentCharacter: undefined as BaseCharacter | undefined,
-	CCharacterSpeed: new Vector3(), // AssemblyLinearVelocity
-	CCharacterMovement: new Vector3(), // World MoveDirection
 	Character: {
 		Health: 0,
 		MaxHealth: 150,
-		Model: undefined as BaseCharacter | undefined,
-		Zone: undefined as string | undefined,
+		CollisionBox: undefined as PlayerCollisionBox | undefined,
+		Id: '',
 	},
+
+	// Movement values
+	MovementInputRequest: false,
 
 	// camera values
 	CCameraCFrame: new CFrame(),

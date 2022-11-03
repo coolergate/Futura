@@ -2,7 +2,7 @@ task.wait(1);
 
 import RenderPriorities from './components/render';
 import console_cmds from './providers/cmds';
-import Folders from 'shared/folders';
+import { Folders } from 'shared/global_resources';
 import Values from './providers/values';
 import Signals from './providers/signals';
 
@@ -23,7 +23,7 @@ const TweeningRecoil = false;
 const RecoverTime = 0.25;
 
 RunService.BindToRenderStep('CCameraInput', RenderPriorities.CameraInput, () => {
-	if (Values.CCurrentCharacter === undefined || !Values.CCameraEnable || !Values.CCameraUnlock.isEmpty())
+	if (Values.Character.CollisionBox === undefined || !Values.CCameraEnable || !Values.CCameraUnlock.isEmpty())
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 	else UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
 
@@ -40,28 +40,36 @@ RunService.BindToRenderStep('CCameraInput', RenderPriorities.CameraInput, () => 
 
 RunService.BindToRenderStep('CCameraRender', RenderPriorities.CameraRender, (dt) => {
 	Camera!.CameraType = Enum.CameraType.Scriptable;
-	if (Values.CCurrentCharacter === undefined) return;
-	const Character = Values.CCurrentCharacter;
-	const CharacterHead = Character.Head;
+	if (Values.Character.CollisionBox === undefined) return;
 
 	if (!TweeningRecoil) {
 		Recoil.Value = Recoil.Value.Lerp(new Vector3(), RecoverTime * (dt * 60));
 		TargetRecoil = Recoil.Value;
 	}
 
-	const CharacterMovement = Values.CCharacterMovement;
+	const CharacterMovement = Values.Character.CollisionBox.AssemblyLinearVelocity;
 	const CameraLookCF = CFrame.Angles(0, CameraRotation.X, 0).mul(CFrame.Angles(CameraRotation.Y, 0, 0));
 
-	const Dir = CameraLookCF.LookVector.mul(new Vector3(1, 0, 1)).Dot(CharacterMovement);
+	const Dir = math.clamp(
+		CameraLookCF.mul(CFrame.Angles(0, math.rad(90), 0))
+			.LookVector.mul(new Vector3(1, 0, 1))
+			.Dot(CharacterMovement),
+		-0.5,
+		0.5,
+	);
 
-	const FinalCFrame = new CFrame(CharacterHead.Position).mul(CameraLookCF).mul(CFrame.Angles(0, 0, math.rad(Dir)));
+	const FinalCFrame = new CFrame(Values.Character.CollisionBox.CameraAttachment.WorldPosition)
+		.mul(CameraLookCF)
+		.mul(CFrame.Angles(0, 0, math.rad(Dir)));
 
 	if (Values.CCameraEnable) {
 		if (Values.CCameraLockTo !== undefined) Camera!.CFrame = Values.CCameraLockTo.CFrame;
-		else
+		else {
 			Camera!.CFrame = FinalCFrame.mul(CFrame.Angles(Recoil.Value.Y, 0, 0))
 				.mul(CFrame.Angles(0, Recoil.Value.X, 0))
 				.mul(CFrame.Angles(0, 0, Recoil.Value.Z));
+			const [x, y, z] = Camera!.CFrame.ToOrientation();
+		}
 	}
 	Camera!.FieldOfView = console_cmds.get('cg_fov') as number;
 	Values.CCameraCFrame = FinalCFrame;
