@@ -85,7 +85,14 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 			LastWrldDir = WorldDirection;
 		}
 
-		if (vel <= wish_velocity) CollisionBox.ApplyImpulse(WorldDirection.mul(wish_velocity).mul(2));
+		if (vel <= wish_velocity) CollisionBox.ApplyImpulse(WorldDirection.mul(wish_velocity).mul(3));
+
+		if (vel > wish_velocity + 3) {
+			const discount = wish_velocity - vel;
+			const current_dir = CollisionBox.AssemblyLinearVelocity;
+			CollisionBox.ApplyImpulse(current_dir.Unit.mul(discount).mul(4));
+			print('discount force:', discount);
+		}
 	}
 
 	if (vel !== last_vel) {
@@ -94,7 +101,7 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	}
 	if (JumpKeybind.Active && Grounded && !Jumping) {
 		Jumping = true;
-		CollisionBox.ApplyImpulse(new Vector3(0, 300, 0));
+		CollisionBox.ApplyImpulse(new Vector3(0, 500, 0));
 		do RunService.RenderStepped.Wait();
 		while (!Grounded);
 		Jumping = false;

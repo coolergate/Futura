@@ -47,20 +47,8 @@ RunService.BindToRenderStep('CCameraRender', RenderPriorities.CameraRender, (dt)
 		TargetRecoil = Recoil.Value;
 	}
 
-	const CharacterMovement = Values.Character.CollisionBox.AssemblyLinearVelocity;
 	const CameraLookCF = CFrame.Angles(0, CameraRotation.X, 0).mul(CFrame.Angles(CameraRotation.Y, 0, 0));
-
-	const Dir = math.clamp(
-		CameraLookCF.mul(CFrame.Angles(0, math.rad(90), 0))
-			.LookVector.mul(new Vector3(1, 0, 1))
-			.Dot(CharacterMovement),
-		-0.5,
-		0.5,
-	);
-
-	const FinalCFrame = new CFrame(Values.Character.CollisionBox.CameraAttachment.WorldPosition)
-		.mul(CameraLookCF)
-		.mul(CFrame.Angles(0, 0, math.rad(Dir)));
+	const FinalCFrame = new CFrame(Values.Character.CollisionBox.CameraAttachment.WorldPosition).mul(CameraLookCF);
 
 	if (Values.CCameraEnable) {
 		if (Values.CCameraLockTo !== undefined) Camera!.CFrame = Values.CCameraLockTo.CFrame;
