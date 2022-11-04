@@ -22,6 +22,7 @@ let LastWrldDir = new Vector3();
 let FrameTime = 0;
 let Grounded = false;
 let Jumping = false;
+let NextFrameSkipJump = false;
 
 const Directions = new Map<Input, Enum.NormalId>([
 	[new Input('move_forward'), Enum.NormalId.Front],
@@ -40,13 +41,33 @@ TracelineParams.FilterDescendantsInstances = [
 ];
 TracelineParams.FilterType = Enum.RaycastFilterType.Blacklist;
 
+const overlap_params = new OverlapParams();
+overlap_params.FilterDescendantsInstances = [Folders.World.Map.Props, Folders.World.Map.Parts];
+overlap_params.FilterType = Enum.RaycastFilterType.Whitelist;
+
 function number_lerp(a: number, b: number, t: number) {
 	return a + (b - a) * t;
 }
 
-let last_vel = 0; // temp
+function CollisionBoxFloorCheck(): boolean {
+	const CollisionBox = Values.Character.CollisionBox;
+	if (!CollisionBox) return false;
+
+	return (
+		Workspace.GetPartBoundsInBox(
+			new CFrame(CollisionBox.CFrame.Position.sub(new Vector3(0, 2.5, 0))),
+			new Vector3(1.5, 0.25, 1.5),
+			overlap_params,
+		).isEmpty() === false
+	);
+}
+
+RunService.Heartbeat.Connect(() => {
+	if (Values.Character.CollisionBox)
+		Values.Character.CollisionBox.CFrame = new CFrame(Values.Character.CollisionBox.CFrame.Position);
+});
+
 RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement, (dt) => {
-	// (coolergate) fps cap
 	if (!Values.Character.CollisionBox) return;
 
 	const CollisionBox = Values.Character.CollisionBox;
@@ -68,42 +89,40 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	let WorldDirection = CameraWorldDirection.VectorToWorldSpace(WishDir);
 	if (WorldDirection.Magnitude > 0) WorldDirection = WorldDirection.Unit.mul(new Vector3(1, 0, 1));
 
-	CollisionBox.CFrame = new CFrame(CollisionBox.CFrame.Position);
-
 	FrameTime += dt;
 	if (FrameTime < 1 / 60) return;
 	FrameTime = 0;
 
-	Grounded =
-		Workspace.Raycast(CollisionBox.CFrame.Position, new Vector3(0, -1, 0).mul(2.55), TracelineParams) !== undefined;
+	Grounded = CollisionBoxFloorCheck();
 
 	let wish_velocity = 0;
 	const vel = math.round(CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1)).Magnitude);
+
 	if (Grounded) {
-		if (InputRequest) {
-			wish_velocity = StarterPlayer.CharacterWalkSpeed;
-			LastWrldDir = WorldDirection;
-		}
+		if (Jumping) {
+			if (!NextFrameSkipJump) {
+				Jumping = false;
+				CollisionBox.AssemblyLinearVelocity = CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1));
+			} else NextFrameSkipJump = false;
+		} else {
+			if (InputRequest) {
+				wish_velocity = StarterPlayer.CharacterWalkSpeed;
+				LastWrldDir = WorldDirection;
+			}
 
-		if (vel <= wish_velocity) CollisionBox.ApplyImpulse(WorldDirection.mul(wish_velocity).mul(3));
+			if (vel <= wish_velocity) CollisionBox.ApplyImpulse(WorldDirection.mul(wish_velocity).mul(1.5));
 
-		if (vel > wish_velocity + 3) {
-			const discount = wish_velocity - vel;
-			const current_dir = CollisionBox.AssemblyLinearVelocity;
-			CollisionBox.ApplyImpulse(current_dir.Unit.mul(discount).mul(4));
-			print('discount force:', discount);
+			if (vel > wish_velocity + 3) {
+				const discount = wish_velocity - vel;
+				const current_dir = CollisionBox.AssemblyLinearVelocity;
+				CollisionBox.ApplyImpulse(current_dir.Unit.mul(discount).mul(2));
+			}
 		}
 	}
 
-	if (vel !== last_vel) {
-		print(vel, wish_velocity);
-		last_vel = vel;
-	}
 	if (JumpKeybind.Active && Grounded && !Jumping) {
 		Jumping = true;
-		CollisionBox.ApplyImpulse(new Vector3(0, 500, 0));
-		do RunService.RenderStepped.Wait();
-		while (!Grounded);
-		Jumping = false;
+		NextFrameSkipJump = true;
+		CollisionBox.ApplyImpulse(new Vector3(0, 200, 0));
 	}
 });

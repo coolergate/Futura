@@ -57,7 +57,7 @@ class PlayerEntityController {
 	readonly EntityDied = new Signal();
 
 	constructor() {
-		const CustomPhysicalProperties = new PhysicalProperties(1, 0.25, 0, 1, 100);
+		const CustomPhysicalProperties = new PhysicalProperties(0.5, 0.25, 0, 1, 100);
 
 		this.CollisionBox = new Instance('Part', PlayersCollisionModels) as PlayerCollisionBox;
 		this.CollisionBox.Size = new Vector3(2, 5, 2);
