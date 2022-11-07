@@ -56,7 +56,7 @@ function CollisionBoxFloorCheck(): boolean {
 	return (
 		Workspace.GetPartBoundsInBox(
 			new CFrame(CollisionBox.CFrame.Position.sub(new Vector3(0, 2.5, 0))),
-			new Vector3(1.5, 0.25, 1.5),
+			new Vector3(1.5, 0.5, 1.5),
 			overlap_params,
 		).isEmpty() === false
 	);

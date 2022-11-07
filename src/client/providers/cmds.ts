@@ -12,7 +12,6 @@ const console_cmds = new Map<string, unknown>([
 
 	// (user interface) values
 	['ui_enabled', 1],
-	['ui_showpos', 0],
 	['ui_showfps', 0],
 	['ui_killnotf', 1],
 	['ui_damagenumbers', 1],

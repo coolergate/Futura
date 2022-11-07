@@ -23,7 +23,6 @@ const Overlay_DeadIndicator = Overlay_Crosshair.FindFirstChild('skull') as Image
 
 const fps_cores = [new Color3(0, 0.8, 0), new Color3(1, 0.67, 0), new Color3(1, 0, 0)];
 const showfps_label = OverlayScreenGui.FindFirstChild('showfps') as TextLabel;
-const showpos_label = OverlayScreenGui.FindFirstChild('showpos') as TextLabel;
 
 RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt) => {
 	const Character = Values.Character;
@@ -34,7 +33,6 @@ RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt)
 	else if (frames_per_second <= 28) equivalent_color = fps_cores[2];
 
 	showfps_label.Visible = console_cmds.get('ui_showfps') === 1;
-	showpos_label.Visible = console_cmds.get('ui_showpos') === 1;
 
 	showfps_label.Text = tostring(frames_per_second) + ' fps on prev_baseplate';
 	showfps_label.TextColor3 = equivalent_color;

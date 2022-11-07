@@ -13,7 +13,7 @@ const bound_commands = new Map<string, Callback>();
 
 Client_ConsoleEvent.SetCallback((player, command, args) => {
 	const userdata: PlayerData = Server_GetDataFromPlayer.Invoke(player.UserId);
-	if (!userdata) return;
+	if (!userdata) return 'no player data.';
 
 	if (command === 'setname' && userdata.ConsoleLevel > 0) {
 		const old_username = userdata.Username;
