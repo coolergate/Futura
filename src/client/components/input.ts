@@ -1,5 +1,5 @@
 import Signal from '@rbxts/signal';
-import Keybinds from 'client/providers/keybinds';
+import Keybinds from 'client/providers/buttons';
 
 const UserInputService = game.GetService('UserInputService');
 

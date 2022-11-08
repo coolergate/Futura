@@ -1,10 +1,18 @@
-task.wait(1);
+//    █████████    █████████    █████████
+//   ███░░░░░███  ███░░░░░███  ███░░░░░███
+//  ███     ░░░  ███     ░░░  ███     ░░░
+// ░███         ░███         ░███
+// ░███    █████░███    █████░███
+// ░░███  ░░███ ░░███  ░░███ ░░███     ███
+//  ░░█████████  ░░█████████  ░░█████████
+//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
+//
+// Purpose: Control world camera
 
 import RenderPriorities from './components/render';
-import console_cmds from './providers/cmds';
-import { Folders } from 'shared/global_resources';
 import Values from './providers/values';
 import Signals from './providers/signals';
+import { ConVar } from 'shared/components/vars';
 
 Signals.Start.Wait();
 
@@ -12,7 +20,7 @@ const Player = game.GetService('Players').LocalPlayer;
 const RunService = game.GetService('RunService');
 const UserInputService = game.GetService('UserInputService');
 
-const Camera = game.GetService('Workspace').CurrentCamera;
+const Camera = game.GetService('Workspace').CurrentCamera!;
 const CameraVerticalClamp = math.rad(90);
 let CameraRotation = new Vector2();
 let CameraLastRotation = new Vector2();
@@ -22,7 +30,13 @@ let TargetRecoil = new Vector3();
 const TweeningRecoil = false;
 const RecoverTime = 0.25;
 
+const client_fov = new ConVar('fov', 80, "Change player's FOV");
+const menu_fov = new ConVar('fov_menu', 70, '', ['Readonly']);
+const camera_mode = new ConVar('cam_mode', 1, '', ['Hidden']);
+
 RunService.BindToRenderStep('CCameraInput', RenderPriorities.CameraInput, () => {
+	Camera.FieldOfView = client_fov.value as number;
+
 	if (Values.Character.CollisionBox === undefined || !Values.CCameraEnable || !Values.CCameraUnlock.isEmpty())
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 	else UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
@@ -59,6 +73,5 @@ RunService.BindToRenderStep('CCameraRender', RenderPriorities.CameraRender, (dt)
 			const [x, y, z] = Camera!.CFrame.ToOrientation();
 		}
 	}
-	Camera!.FieldOfView = console_cmds.get('cg_fov') as number;
 	Values.CCameraCFrame = FinalCFrame;
 });

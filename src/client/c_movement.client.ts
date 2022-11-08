@@ -1,11 +1,17 @@
-//========= Copyright GGC Studios, All rights reserved. ============//
-// Purpose: Movement for the client's assigned humanoid controller	//
-//==================================================================//
+//    █████████    █████████    █████████
+//   ███░░░░░███  ███░░░░░███  ███░░░░░███
+//  ███     ░░░  ███     ░░░  ███     ░░░
+// ░███         ░███         ░███
+// ░███    █████░███    █████░███
+// ░░███  ░░███ ░░███  ░░███ ░░███     ███
+//  ░░█████████  ░░█████████  ░░█████████
+//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
+//
+// Purpose:
 
 task.wait(1);
 
 import RenderPriorities from './components/render';
-import console_cmds from './providers/cmds';
 import Signals from './providers/signals';
 import Values from './providers/values';
 import Input from './components/input';
@@ -56,7 +62,7 @@ function CollisionBoxFloorCheck(): boolean {
 	return (
 		Workspace.GetPartBoundsInBox(
 			new CFrame(CollisionBox.CFrame.Position.sub(new Vector3(0, 2.5, 0))),
-			new Vector3(1.5, 0.5, 1.5),
+			new Vector3(1.75, 0.5, 1.75),
 			overlap_params,
 		).isEmpty() === false
 	);
@@ -66,6 +72,8 @@ RunService.Heartbeat.Connect(() => {
 	if (Values.Character.CollisionBox)
 		Values.Character.CollisionBox.CFrame = new CFrame(Values.Character.CollisionBox.CFrame.Position);
 });
+
+let LastVel = 0;
 
 RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement, (dt) => {
 	if (!Values.Character.CollisionBox) return;
@@ -110,14 +118,21 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 				LastWrldDir = WorldDirection;
 			}
 
-			if (vel <= wish_velocity) CollisionBox.ApplyImpulse(WorldDirection.mul(wish_velocity).mul(1.5));
+			CollisionBox.Force.LineDirection = WorldDirection;
+			CollisionBox.Force.LineVelocity = math.round(wish_velocity * WorldDirection.Magnitude);
 
-			if (vel > wish_velocity + 3) {
+			if (vel > wish_velocity) {
+				// try to slow down the player
 				const discount = wish_velocity - vel;
 				const current_dir = CollisionBox.AssemblyLinearVelocity;
-				CollisionBox.ApplyImpulse(current_dir.Unit.mul(discount).mul(2));
+				CollisionBox.ApplyImpulse(current_dir.Unit.mul(discount));
 			}
 		}
+	}
+
+	if (vel !== LastVel) {
+		print(vel);
+		LastVel = vel;
 	}
 
 	if (JumpKeybind.Active && Grounded && !Jumping) {

@@ -41,6 +41,7 @@ declare global {
 	interface PlayerCollisionBox extends Part {
 		CameraAttachment: Attachment;
 		MainAttachment: Attachment;
+		Force: LinearVelocity;
 	}
 	type EntityType = 'Player';
 }
@@ -72,6 +73,13 @@ class PlayerEntityController {
 		const CameraAttachment = new Instance('Attachment', this.CollisionBox);
 		CameraAttachment.Position = new Vector3(0, 2, 0);
 		CameraAttachment.Name = 'CameraAttachment';
+
+		const force = new Instance('LinearVelocity', this.CollisionBox);
+		force.Enabled = false;
+		force.Attachment0 = MainAttachment;
+		force.VelocityConstraintMode = Enum.VelocityConstraintMode.Line;
+		force.Name = 'Force';
+		force.Enabled = true;
 	}
 
 	TakeDamage(amount: number) {

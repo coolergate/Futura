@@ -1,7 +1,7 @@
 task.wait(1);
 
+import { ConVar } from 'shared/components/vars';
 import RenderPriorities from './components/render';
-import console_cmds from './providers/cmds';
 import Signals from './providers/signals';
 import Values from './providers/values';
 
@@ -24,6 +24,9 @@ const Overlay_DeadIndicator = Overlay_Crosshair.FindFirstChild('skull') as Image
 const fps_cores = [new Color3(0, 0.8, 0), new Color3(1, 0.67, 0), new Color3(1, 0, 0)];
 const showfps_label = OverlayScreenGui.FindFirstChild('showfps') as TextLabel;
 
+const cl_showfps = new ConVar('cl_showfps', false, 'Toggle FPS meter');
+const cl_hidenames = new ConVar('cl_hidenames', false, 'Streamer mode');
+
 RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt) => {
 	const Character = Values.Character;
 
@@ -32,7 +35,7 @@ RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt)
 	if (frames_per_second <= 45 && frames_per_second >= 29) equivalent_color = fps_cores[1];
 	else if (frames_per_second <= 28) equivalent_color = fps_cores[2];
 
-	showfps_label.Visible = console_cmds.get('ui_showfps') === 1;
+	showfps_label.Visible = cl_showfps.value === true;
 
 	showfps_label.Text = tostring(frames_per_second) + ' fps on prev_baseplate';
 	showfps_label.TextColor3 = equivalent_color;

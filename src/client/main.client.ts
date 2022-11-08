@@ -1,12 +1,19 @@
-//========= Copyright GGC Studios, All rights reserved. ============//
-// Purpose: Initialize player's client and console					//
-//==================================================================//
+//    █████████    █████████    █████████
+//   ███░░░░░███  ███░░░░░███  ███░░░░░███
+//  ███     ░░░  ███     ░░░  ███     ░░░
+// ░███         ░███         ░███
+// ░███    █████░███    █████░███
+// ░░███  ░░███ ░░███  ░░███ ░░███     ███
+//  ░░█████████  ░░█████████  ░░█████████
+//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
+//
+// Purpose: Initialize user's client and console.
 
-import console_cmds from './providers/cmds';
 import Signals from './providers/signals';
 import Values from './providers/values';
 import { Folders, Remotes } from 'shared/global_resources';
 import placeinfo from 'shared/components/placeinfo';
+import { CreatedVars } from 'shared/components/vars';
 
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const UserInputService = game.GetService('UserInputService');
@@ -120,36 +127,59 @@ function HandleCommand(content: string) {
 	const command = split[0];
 	const value = tostring(split[1]);
 
-	// check to see if it is an value that can be changed
-	if (console_cmds.has(command)) {
-		const scr_value = console_cmds.get(command);
-		const scr_type = type(scr_value);
-		const scr_given = type(value);
-		let cValue = value as string | number;
-		let check_success = false;
-
+	// TODO Check ConVars
+	const equivalent_ConVar = CreatedVars.find((val, index, obj) => {
+		return val.name === command;
+	});
+	if (equivalent_ConVar) {
+		if (equivalent_ConVar.attributes.has('Hidden')) {
+			render('Error', 'Unknown or restricted command');
+			return;
+		}
 		if (value === 'nil') {
-			// client wants the value stored in such cmdval
-			render('Info', `"${command}" is:"${scr_value}" type:"${scr_type}"`);
+			let description = equivalent_ConVar.description;
+			let attributes = '';
+
+			equivalent_ConVar.attributes.forEach((_, key) => {
+				attributes = attributes + key + ', ';
+			});
+			if (description === '') description = 'None';
+
+			render(
+				'Info',
+				`${equivalent_ConVar.name} is:"${equivalent_ConVar.value}", default:"${equivalent_ConVar.original_value}"`,
+			);
+			render('Info', `Attributes: ${attributes}`);
+			render('Info', `Desc: ${equivalent_ConVar.description}`);
 			return;
 		}
 
-		if (scr_type !== scr_given) {
-			if (scr_type === 'number') {
-				const attempt = tonumber(value);
-				if (attempt !== undefined) {
-					cValue = attempt;
-					check_success = true;
-				}
-			}
+		if (equivalent_ConVar.attributes.has('Readonly')) {
+			render('Error', 'Variable is read-only.');
+			return;
+		}
 
-			if (!check_success) {
-				render('Error', `Wrong value type! requires:"${scr_type}", got:"${scr_given}"`);
-				return;
+		switch (equivalent_ConVar.value_type) {
+			case 'number': {
+				const attempt = tonumber(value);
+				if (attempt === undefined) {
+					render('Error', `Value must be a "${equivalent_ConVar.value_type}", got "string" !`);
+					return;
+				}
+				equivalent_ConVar.value = attempt;
+				break;
+			}
+			case 'function': {
+				split.remove(0);
+				const func = equivalent_ConVar.value as Callback;
+				func(split);
+				break;
+			}
+			default: {
+				render('Error', `Variable has unknown value type. "${equivalent_ConVar.value_type}"`);
 			}
 		}
 
-		console_cmds.set(command, cValue);
 		return;
 	}
 
