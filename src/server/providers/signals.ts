@@ -1,8 +1,5 @@
 import Signal from '@rbxts/signal';
-
-class LocalFunction<params, response> {
-	Call!: (...params: params[]) => response;
-}
+import { ConVar } from 'shared/components/vars';
 
 const Signals = {
 	PlayerAdded: new Signal<(id: number, data: PlayerData) => void>(),
@@ -14,8 +11,7 @@ const Signals = {
 	PlayerEntitySpawned: new Signal<(Entity: PlayerEntityInfo) => void>(),
 	PlayerEntityDied: new Signal<(Entity: PlayerEntityInfo) => void>(),
 
-	CommandFired: new Signal<(player: Player, userlvl: number, cmd: string, arg0: string) => void>(),
-	BindCommandToConsole: new Signal<(name: string, callback: Callback) => void>(),
+	BindConsoleCVar: new Signal<(ConVar: ConVar<unknown>) => void>(),
 };
 
 export = Signals;

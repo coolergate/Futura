@@ -1,9 +1,22 @@
 import Signal from '@rbxts/signal';
-import Keybinds from 'client/providers/buttons';
 
 const UserInputService = game.GetService('UserInputService');
+export const Keybinds = new Map<string, string>([
+	// movement
+	['Space', 'jump'],
+	['W', 'move_forward'],
+	['S', 'move_back'],
+	['A', 'move_left'],
+	['D', 'move_right'],
 
-export = class {
+	// weapons
+	['MouseButton1', 'attack'],
+	['One', 'slot1'],
+	['Two', 'slot2'],
+	['Three', 'slot3'],
+]);
+
+export class Input {
 	Active = false;
 	readonly Pressed = new Signal();
 	readonly Released = new Signal();
@@ -29,4 +42,4 @@ export = class {
 			this.Released.Fire();
 		});
 	}
-};
+}

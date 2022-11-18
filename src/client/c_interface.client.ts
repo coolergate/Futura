@@ -1,7 +1,17 @@
-task.wait(1);
+//    █████████    █████████    █████████
+//   ███░░░░░███  ███░░░░░███  ███░░░░░███
+//  ███     ░░░  ███     ░░░  ███     ░░░
+// ░███         ░███         ░███
+// ░███    █████░███    █████░███
+// ░░███  ░░███ ░░███  ░░███ ░░███     ███
+//  ░░█████████  ░░█████████  ░░█████████
+//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
+//
+// Purpose: User interface manager
 
 import { ConVar } from 'shared/components/vars';
-import RenderPriorities from './components/render';
+import { Folders } from 'shared/global_resources';
+import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';
 
@@ -12,46 +22,73 @@ const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
 const RunService = game.GetService('RunService');
 const UserInputService = game.GetService('UserInputService');
 
-const OverlayScreenGui = PlayerGui.WaitForChild('Overlay') as ScreenGui;
-const GameplayScreenGui = PlayerGui.WaitForChild('Gameplay') as ScreenGui;
+//=============================================================================
+// ConVars
+//=============================================================================
+const cl_crosshair_size = new ConVar('crosshair_size', 40, 'Crosshair size');
+const cl_crosshair_img = new ConVar('crosshair_image', 4698797324, 'Crosshair image');
+const cl_crosshair = new ConVar('crosshair', 1, 'Toggle crosshair');
+const cl_hidenames = new ConVar('cl_hidenames', 0, 'Streamer mode');
+const cl_showfps = new ConVar('cl_showfps', 0, 'Toggle FPS meter');
+const cl_drawhud = new ConVar('cl_drawhud', 1, 'Draw HUD');
 
-const HealthFrame = GameplayScreenGui.FindFirstChild('Health') as Frame;
-const WeaponFrame = GameplayScreenGui.FindFirstChild('Weapon') as Frame;
+//=============================================================================
+// Retrieve interface elements
+//=============================================================================
+const GameScreenGui = PlayerGui.FindFirstChild('Game') as ScreenGui;
+const MenuScreenGui = PlayerGui.FindFirstChild('Menu') as ScreenGui;
 
-const Overlay_Crosshair = OverlayScreenGui.FindFirstChild('Crosshair') as Frame;
-const Overlay_DeadIndicator = Overlay_Crosshair.FindFirstChild('skull') as ImageLabel;
+const GameplayFrame = GameScreenGui.FindFirstChild('Gameplay') as Frame;
+const OverlayFrame = GameScreenGui.FindFirstChild('Overlay') as Frame;
 
-const fps_cores = [new Color3(0, 0.8, 0), new Color3(1, 0.67, 0), new Color3(1, 0, 0)];
-const showfps_label = OverlayScreenGui.FindFirstChild('showfps') as TextLabel;
-
-const cl_showfps = new ConVar('cl_showfps', false, 'Toggle FPS meter');
-const cl_hidenames = new ConVar('cl_hidenames', false, 'Streamer mode');
+interface BaseBasicMeter extends Frame {
+	AmountBar: Frame;
+	Amount: TextLabel;
+	Label: TextLabel;
+}
+const HealthMeter = GameplayFrame.FindFirstChild('Health') as BaseBasicMeter;
+const LevelXPMeter = GameplayFrame.FindFirstChild('UserLvl') as BaseBasicMeter;
+const Crosshair = OverlayFrame.FindFirstChild('Crosshair') as ImageLabel;
 
 RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt) => {
 	const Character = Values.Character;
-
-	const frames_per_second = math.ceil(1 / dt);
-	let equivalent_color: Color3 = fps_cores[0];
-	if (frames_per_second <= 45 && frames_per_second >= 29) equivalent_color = fps_cores[1];
-	else if (frames_per_second <= 28) equivalent_color = fps_cores[2];
-
-	showfps_label.Visible = cl_showfps.value === true;
-
-	showfps_label.Text = tostring(frames_per_second) + ' fps on prev_baseplate';
-	showfps_label.TextColor3 = equivalent_color;
-
-	GameplayScreenGui.Enabled = Character !== undefined && Character.Health > 0;
+	GameScreenGui.Enabled = Character !== undefined && Character.Health > 0;
 });
 
 RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, (dt) => {
 	const Character = Values.Character;
-	if (!GameplayScreenGui.Enabled || !Character) return;
+	if (!GameScreenGui.Enabled || !Character) return;
 
-	const HealthLabel = HealthFrame.FindFirstChild('HealthAmount') as TextLabel;
-	HealthLabel.Text = tostring(Values.Character.Health);
+	// Health meter
+	const CurrentHealth = Values.Character.Health;
+	const CurerntMaxHealth = Values.Character.MaxHealth;
+
+	HealthMeter.AmountBar.Size = new UDim2(CurrentHealth / CurerntMaxHealth, 0, 0, 4);
+	HealthMeter.Amount.Text = `${tostring(CurrentHealth)}/${tostring(CurerntMaxHealth)}`;
 });
 
 RunService.BindToRenderStep('interface_overlay', RenderPriorities.Interface, (dt) => {
 	UserInputService.MouseIconEnabled = !Values.CCameraUnlock.isEmpty() || Values.Character.CollisionBox === undefined;
-	Overlay_Crosshair.Visible = !UserInputService.MouseIconEnabled;
+	Crosshair.Visible = UserInputService.MouseIconEnabled === false && cl_crosshair.value === 1;
+});
+
+RunService.RenderStepped.Connect((dt) => {
+	if (cl_showfps.value === 1) {
+		let fps_meter_label = OverlayFrame.FindFirstChild('showfps') as TextLabel | undefined;
+		if (!fps_meter_label) {
+			fps_meter_label = new Instance('TextLabel', OverlayFrame);
+			fps_meter_label.AnchorPoint = new Vector2(1, 0);
+			fps_meter_label.BackgroundTransparency = 1;
+			fps_meter_label.Position = new UDim2(1, -5, 0, 5);
+			fps_meter_label.Size = new UDim2();
+			fps_meter_label.Font = Enum.Font.RobotoMono;
+			fps_meter_label.RichText = true;
+			fps_meter_label.Text = `undefined`;
+			fps_meter_label.Name = 'showfps';
+			fps_meter_label.TextStrokeTransparency = 0.95;
+		}
+
+		const amount_fps = math.round(1 / dt);
+		fps_meter_label.Text = tostring(amount_fps) + 'fps on ${ENV_MAPNAME}';
+	} else OverlayFrame.FindFirstChild('showfps')?.Destroy();
 });

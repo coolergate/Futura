@@ -61,5 +61,13 @@ if (ServerFetchedLocation.status === 'success') {
 }
 ReplicatedStorage.SetAttribute('Region', gStringLocation);
 
+game.GetService('ServerScriptService')
+	.GetDescendants()
+	.forEach((inst) => {
+		if (inst.IsA('ModuleScript')) {
+			require(inst);
+		}
+	});
+
 task.wait(3);
 ReplicatedStorage.SetAttribute('Ready', true);

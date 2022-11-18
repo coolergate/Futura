@@ -1,17 +1,17 @@
 import Signal from '@rbxts/signal';
 
-export const CreatedVars = new Array<ConVar>();
+export const CreatedVars = new Array<ConVar<unknown>>();
 
-export class ConVar {
+export class ConVar<T> {
 	readonly name: string;
 	readonly description: string;
 	readonly attributes: Map<ConVarType, boolean>;
-	value: unknown;
+	value: T;
 	value_type: keyof CheckablePrimitives;
 
-	readonly original_value: unknown;
+	readonly original_value: T;
 
-	constructor(consolecmd: string, value: unknown, description: string, attributes?: ConVarType[]) {
+	constructor(consolecmd: string, value: T, description: string, attributes?: ConVarType[]) {
 		this.name = consolecmd;
 		this.value = value;
 		this.value_type = type(value);

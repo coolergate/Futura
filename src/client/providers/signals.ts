@@ -1,6 +1,7 @@
 import Signal from '@rbxts/signal';
 
 const Signals = {
+	Load: new Signal(),
 	Start: new Signal(),
 
 	CharacterRequestRespawn: new Instance('BindableFunction'),

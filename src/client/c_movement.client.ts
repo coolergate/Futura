@@ -11,25 +11,28 @@
 
 task.wait(1);
 
-import RenderPriorities from './components/render';
+import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';
-import Input from './components/input';
-import Traceline from './components/traceline';
+import { Input } from './modules/input';
 import { Folders } from 'shared/global_resources';
+import { ConVar } from 'shared/components/vars';
 
-Signals.Start.Wait();
-
-const RunService = game.GetService('RunService');
-const Workspace = game.GetService('Workspace');
-const StarterPlayer = game.GetService('StarterPlayer');
-
+Signals.Load.Wait();
 let LastWrldDir = new Vector3();
 let FrameTime = 0;
 let Grounded = false;
 let Jumping = false;
 let NextFrameSkipJump = false;
 
+//=============================================================================
+// ConVars
+//=============================================================================
+const cmov_duck_method = new ConVar('cmov_duck_method', 0, ''); // 0 is hold, 1 is toggle, 2 is analogic (gamepad only)
+
+//=============================================================================
+// Keybinds
+//=============================================================================
 const Directions = new Map<Input, Enum.NormalId>([
 	[new Input('move_forward'), Enum.NormalId.Front],
 	[new Input('move_back'), Enum.NormalId.Back],
@@ -38,34 +41,14 @@ const Directions = new Map<Input, Enum.NormalId>([
 ]);
 const JumpKeybind = new Input('jump');
 
-const TracelineParams = new RaycastParams();
-TracelineParams.FilterDescendantsInstances = [
-	Folders.World.Filter,
-	Folders.World.Map.Spawns,
-	Folders.Server,
-	Folders.Client,
-];
-TracelineParams.FilterType = Enum.RaycastFilterType.Blacklist;
+Signals.Start.Wait();
 
-const overlap_params = new OverlapParams();
-overlap_params.FilterDescendantsInstances = [Folders.World.Map.Props, Folders.World.Map.Parts];
-overlap_params.FilterType = Enum.RaycastFilterType.Whitelist;
+const RunService = game.GetService('RunService');
+const Workspace = game.GetService('Workspace');
+const StarterPlayer = game.GetService('StarterPlayer');
 
 function number_lerp(a: number, b: number, t: number) {
 	return a + (b - a) * t;
-}
-
-function CollisionBoxFloorCheck(): boolean {
-	const CollisionBox = Values.Character.CollisionBox;
-	if (!CollisionBox) return false;
-
-	return (
-		Workspace.GetPartBoundsInBox(
-			new CFrame(CollisionBox.CFrame.Position.sub(new Vector3(0, 2.5, 0))),
-			new Vector3(1.75, 0.5, 1.75),
-			overlap_params,
-		).isEmpty() === false
-	);
 }
 
 RunService.Heartbeat.Connect(() => {
@@ -80,8 +63,6 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 
 	const CollisionBox = Values.Character.CollisionBox;
 	let InputRequest = false;
-
-	// TODO Controller input
 
 	let WishDir = new Vector3();
 	Directions.forEach((value, input) => {
@@ -101,7 +82,7 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	if (FrameTime < 1 / 60) return;
 	FrameTime = 0;
 
-	Grounded = CollisionBoxFloorCheck();
+	Grounded = CollisionBox.AssemblyLinearVelocity.Y * math.sign(CollisionBox.AssemblyLinearVelocity.Y) <= 2; //CollisionBoxFloorCheck();
 
 	let wish_velocity = 0;
 	const vel = math.round(CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1)).Magnitude);
@@ -118,14 +99,16 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 				LastWrldDir = WorldDirection;
 			}
 
-			CollisionBox.Force.LineDirection = WorldDirection;
-			CollisionBox.Force.LineVelocity = math.round(wish_velocity * WorldDirection.Magnitude);
-
 			if (vel > wish_velocity) {
 				// try to slow down the player
 				const discount = wish_velocity - vel;
 				const current_dir = CollisionBox.AssemblyLinearVelocity;
-				CollisionBox.ApplyImpulse(current_dir.Unit.mul(discount));
+
+				CollisionBox.Force.LineDirection = current_dir;
+				CollisionBox.Force.LineVelocity = discount;
+			} else {
+				CollisionBox.Force.LineDirection = WorldDirection;
+				CollisionBox.Force.LineVelocity = wish_velocity;
 			}
 		}
 	}

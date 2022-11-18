@@ -9,7 +9,7 @@
 //
 // Purpose: Control world camera
 
-import RenderPriorities from './components/render';
+import RenderPriorities from './modules/render';
 import Values from './providers/values';
 import Signals from './providers/signals';
 import { ConVar } from 'shared/components/vars';

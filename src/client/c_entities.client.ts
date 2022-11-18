@@ -3,7 +3,7 @@ task.wait(1);
 import Signals from './providers/signals';
 import Values from './providers/values';
 import { Folders, EntityNetwork, Remotes } from 'shared/global_resources';
-import RenderPriorities from './components/render';
+import RenderPriorities from './modules/render';
 import GenerateString from 'shared/modules/randomstring';
 
 Signals.Start.Wait();

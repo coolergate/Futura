@@ -1,6 +1,13 @@
-//========= Copyright GGC Studios, All rights reserved. ============//
-// Purpose: Manage entities in the game world 						//
-//==================================================================//
+//    █████████    █████████    █████████
+//   ███░░░░░███  ███░░░░░███  ███░░░░░███
+//  ███     ░░░  ███     ░░░  ███     ░░░
+// ░███         ░███         ░███
+// ░███    █████░███    █████░███
+// ░░███  ░░███ ░░███  ░░███ ░░███     ███
+//  ░░█████████  ░░█████████  ░░█████████
+//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
+//
+// Purpose: Manage entities in the game.
 
 import Signals from './providers/signals';
 import { Folders, EntityNetwork } from 'shared/global_resources';
@@ -104,6 +111,7 @@ class PlayerEntityController {
 		this.IsAlive = true;
 		this.UserId = undefined;
 
+		this.CollisionBox.Anchored = false;
 		this.CollisionBox.SetNetworkOwner();
 		this.CollisionBox.Anchored = true;
 		this.CollisionBox.CFrame = new CFrame(0, 10000, 0);
@@ -113,14 +121,12 @@ class PlayerEntityController {
 // Create the players entity controllers
 // Get server size and add five extra, it might happen that roblox will let more players
 // to join the server no matter its max size
-/*
+
 for (let index = 0; index < Players.MaxPlayers + 5; index++) {
 	const Controller = new PlayerEntityController();
+	Controller.Reset();
 	PlrEntitiesList.set(Controller.Id, Controller);
-}*/
-
-const Controller = new PlayerEntityController();
-PlrEntitiesList.set(Controller.Id, Controller);
+}
 
 function GenerateInfoFromPlayerController(controller: PlayerEntityController): PlayerEntityInfo {
 	return {
@@ -179,17 +185,6 @@ Client_RespawnRequest.SetCallback((player) => {
 	);
 	return GenerateInfoFromPlayerController(Controller);
 });
-
-Signals.GetPlayerDataFromUserId.OnInvoke = (userid: number) => {
-	let reply: PlayerEntityInfo | undefined;
-	PlrEntitiesList.forEach((controller) => {
-		if (reply) return;
-		if (controller.UserId === userid) {
-			GenerateInfoFromPlayerController(controller);
-		}
-	});
-	return reply;
-};
 
 // Create a player's humanoid description when they join
 const descriptions_folder = new Instance('Folder', Folders.Server.Objects);
