@@ -9,7 +9,7 @@
 //
 // Purpose:
 
-import { Folders, Remotes } from 'shared/global_resources';
+import { Folders } from 'shared/global_resources';
 import Signals from './providers/signals';
 
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
@@ -24,11 +24,14 @@ while (ReplicatedStorage.GetAttribute('Ready') !== true);
 
 const LoadingInterface = Folders.Storage.UserInterface.FindFirstChild('Loading') as ScreenGui;
 LoadingInterface.Parent = Player.WaitForChild('PlayerGui');
+LoadingInterface.Enabled = true;
 StarterGui.SetCoreGuiEnabled('All', false);
 
 task.wait(2);
 ContentProvider.PreloadAsync(ReplicatedStorage.GetDescendants());
-Remotes.Client.Get('PlayerLogin').CallServer();
+
+import Network from 'shared/network';
+Network.PlayerLogin.InvokeServer().await();
 
 Folders.Storage.UserInterface.GetChildren().forEach((element) => {
 	if (element.IsA('ScreenGui')) {
@@ -40,4 +43,4 @@ Folders.Storage.UserInterface.GetChildren().forEach((element) => {
 Signals.Start.Fire();
 LoadingInterface.Destroy();
 task.wait(1);
-Signals.CharacterRequestRespawn.Invoke();
+Signals.Character_SendRespawnRequest.Call();

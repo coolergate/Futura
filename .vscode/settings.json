@@ -12,5 +12,5 @@
 	"eslint.run": "onType",
 	"eslint.format.enable": true,
 	"commentTranslate.source": "Google",
-	"commentTranslate.targetLanguage": "ru"
+	"commentTranslate.targetLanguage": "en"
 }

@@ -1,4 +1,5 @@
 import { Folders } from 'shared/global_resources';
+import Signals from './providers/signals';
 
 // Services
 const Players = game.GetService('Players');
@@ -61,13 +62,19 @@ if (ServerFetchedLocation.status === 'success') {
 }
 ReplicatedStorage.SetAttribute('Region', gStringLocation);
 
-game.GetService('ServerScriptService')
+// Execute scripts
+script
+	.Parent!.WaitForChild('components')
 	.GetDescendants()
 	.forEach((inst) => {
-		if (inst.IsA('ModuleScript')) {
-			require(inst);
-		}
+		if (inst.IsA('ModuleScript'))
+			coroutine.wrap(() => {
+				require(inst);
+			})();
 	});
+task.wait(1);
+
+Signals.Start.Fire();
 
 task.wait(3);
 ReplicatedStorage.SetAttribute('Ready', true);

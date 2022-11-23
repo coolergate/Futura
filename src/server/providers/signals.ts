@@ -2,6 +2,9 @@ import Signal from '@rbxts/signal';
 import { ConVar } from 'shared/components/vars';
 
 const Signals = {
+	Load: new Signal(),
+	Start: new Signal(),
+
 	PlayerAdded: new Signal<(id: number, data: PlayerData) => void>(),
 	PlayerRemoved: new Signal<(id: number, data: PlayerData) => void>(),
 	GetPlayerDataFromUserId: new Instance('BindableFunction'),

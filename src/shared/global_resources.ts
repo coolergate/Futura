@@ -1,5 +1,3 @@
-import Net, { Definitions } from '@rbxts/net';
-
 const Workspace = game.GetService('Workspace');
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 
@@ -30,13 +28,10 @@ export const Folders = {
 		Sounds: Folder;
 		UserInterface: Folder;
 	},
-	Network: ReplicatedStorage.WaitForChild('Network') as Folder & {
-		Entities: Folder;
-		Objects: Folder;
-	},
 };
 
 // Networking
+/*
 export const Remotes = Net.CreateDefinitions({
 	// Player events
 	PlayerLogin: Definitions.ServerFunction(),
@@ -63,3 +58,4 @@ export const EntityNetwork = Net.CreateDefinitions({
 	RetrieveNewEntity: Definitions.ServerFunction<() => PlayerEntityInfo | void>(),
 	GetPlayersEntities: Definitions.ServerFunction<() => PlayerEntityInfoQuick[]>(),
 });
+*/

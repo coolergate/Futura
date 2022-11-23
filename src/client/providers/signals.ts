@@ -1,4 +1,5 @@
 import Signal from '@rbxts/signal';
+import { LocalSignal, LocalFunction } from 'shared/local_network';
 
 const Signals = {
 	Load: new Signal(),
@@ -13,6 +14,8 @@ const Signals = {
 
 	SendConsoleCommand: new Signal<(cmd: string) => void>(),
 	RenderToConsole: new Signal<(LogType: ConsoleLogType, Message: string) => void>(),
+
+	Character_SendRespawnRequest: new LocalFunction<[], boolean>(),
 };
 
 export = Signals;

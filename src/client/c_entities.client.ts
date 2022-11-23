@@ -2,9 +2,10 @@ task.wait(1);
 
 import Signals from './providers/signals';
 import Values from './providers/values';
-import { Folders, EntityNetwork, Remotes } from 'shared/global_resources';
+import { Folders } from 'shared/global_resources';
 import RenderPriorities from './modules/render';
 import GenerateString from 'shared/modules/randomstring';
+import Network from 'shared/network';
 
 Signals.Start.Wait();
 
@@ -16,10 +17,12 @@ const StarterGui = game.GetService('StarterGui');
 const RunService = game.GetService('RunService');
 const Workspace = game.GetService('Workspace');
 
-const Server_RespawnRequest = EntityNetwork.Client.Get('RetrieveNewEntity');
-const Server_EntityUpdated = EntityNetwork.Client.Get('EntityInfoChanged');
-const Server_EntitySpawned = EntityNetwork.Client.Get('PlayerEntitySpawned');
-const Server_RetrieveExistingEntities = EntityNetwork.Client.Get('GetPlayersEntities');
+const Server_RespawnRequest = Network.Ent_Character_RequestRespawn;
+const Server_EntityUpdated = Network.Ent_Character_InfoChanged;
+const Server_EntitySpawned = Network.Ent_Character_Spawned;
+const Server_RetrieveExistingEntities = Network.Ent_Character_GetAll;
+
+const Client_RespawnRequest = Signals.Character_SendRespawnRequest;
 
 const CharactersModelFolder = new Instance('Folder', Folders.Client.Objects);
 CharactersModelFolder.Name = 'CharacterModels';
@@ -71,17 +74,18 @@ function CreateHumanoidModelFromDescription(Description = DefDescription) {
 	return CharacterModel;
 }
 
-Signals.CharacterRequestRespawn.OnInvoke = function () {
-	const info = Server_RespawnRequest.CallServer();
-	if (!info) return;
+Signals.Character_SendRespawnRequest.Handle = function () {
+	const info = Server_RespawnRequest.InvokeServer().await()[1] as PlayerEntityInfo | undefined;
+	if (!info) return false;
 
 	Values.Character.Health = info.Health;
 	Values.Character.MaxHealth = info.MaxHealth;
 	Values.Character.CollisionBox = info.CollisionBox;
 	Values.Character.Id = info.Id;
+	return true;
 };
 
-Server_EntityUpdated.Connect((Info) => {
+Server_EntityUpdated.OnClientPost = (Info) => {
 	// Check health
 	if (Info.Health !== Values.Character.Health) {
 		if (Info.Health === 0) {
@@ -96,7 +100,7 @@ Server_EntityUpdated.Connect((Info) => {
 		Values.Character.Health = NewHealth;
 		Values.Character.MaxHealth = Info.MaxHealth;
 	}
-});
+};
 
 const reset_bindableEvent = new Instance('BindableEvent');
 reset_bindableEvent.Event.Connect(() => {

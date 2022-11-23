@@ -11,9 +11,10 @@
 
 import Signals from './providers/signals';
 import { CreatedVars } from 'shared/components/vars';
-import { Folders, Remotes } from 'shared/global_resources';
+import { Folders } from 'shared/global_resources';
 import placeinfo from 'shared/components/placeinfo';
 import Values from 'client/providers/values';
+import Network from 'shared/network';
 
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const UserInputService = game.GetService('UserInputService');
@@ -22,13 +23,7 @@ const ReplicatedFirst = game.GetService('ReplicatedFirst');
 const StarterGui = game.GetService('StarterGui');
 const Player = game.GetService('Players').LocalPlayer;
 
-const Server_ChatSendMessage = Remotes.Client.Get('ChatSendMessage');
-const Server_SystemMessage = Remotes.Client.Get('SystemChatMessage');
-const Server_SystemConsole = Remotes.Client.Get('SystemConsoleEvent');
-const Server_PlayerChatted = Remotes.Client.Get('PlayerChatted');
-const Server_ConsoleEvent = Remotes.Client.Get('ClientConsoleEvent');
-const Server_PlayerLogin = Remotes.Client.Get('PlayerLogin');
-
+const net_ConsoleArg = Network.Console_SendArg;
 const Local_RenderToConsole = Signals.RenderToConsole;
 
 // CONSOLE SECTION START \\
@@ -186,8 +181,8 @@ function HandleCommand(content: string) {
 		return;
 	}
 
-	const response = Server_ConsoleEvent.CallServer(command, [value as string]);
-	if (response !== undefined) {
+	const [server_recieved, response] = net_ConsoleArg.InvokeServer(command, [value as string]).await();
+	if (response !== undefined && type(response) === 'string') {
 		render('Info', '[Server] ' + response);
 		return;
 	}
@@ -206,7 +201,7 @@ custom_commands.set('clear', function () {
 	});
 });
 custom_commands.set('say', function (content: string) {
-	Server_ChatSendMessage.SendToServer(content);
+	net_ConsoleArg.InvokeServer('say', [content]);
 	render('Chat', `${Player.DisplayName}: ${content}`);
 });
 custom_commands.set('echo', function (content: string) {

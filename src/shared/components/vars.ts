@@ -32,5 +32,5 @@ export class ConVar<T> {
 }
 
 declare global {
-	type ConVarType = 'Hidden' | 'Readonly';
+	type ConVarType = 'Hidden' | 'Readonly' | 'ServerOnly';
 }

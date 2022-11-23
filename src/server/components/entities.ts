@@ -9,26 +9,44 @@
 //
 // Purpose: Manage entities in the game.
 
-import Signals from './providers/signals';
-import { Folders, EntityNetwork } from 'shared/global_resources';
+import Signals from '../providers/signals';
+import { ConVar } from 'shared/components/vars';
+import { Folders } from 'shared/global_resources';
 import Signal from '@rbxts/signal';
 import GenerateString from 'shared/modules/randomstring';
 
 const Players = game.GetService('Players');
 const StarterPlayer = game.GetService('StarterPlayer');
 
-const Client_InfoChanged = EntityNetwork.Server.Get('EntityInfoChanged');
-const Client_RespawnRequest = EntityNetwork.Server.Get('RetrieveNewEntity');
-const Client_PlayerEntitySpawned = EntityNetwork.Server.Get('PlayerEntitySpawned');
+//=============================================================================
+// Remotes & Signals
+//=============================================================================
+import Network from 'shared/network';
+const Client_InfoChanged = Network.Ent_Character_InfoChanged;
+const Client_RespawnRequest = Network.Ent_Character_RequestRespawn;
+const Client_PlayerEntitySpawned = Network.Ent_Character_Spawned;
 
+//=============================================================================
+// ConVars & Statements
+//=============================================================================
 const PlrEntitiesList = new Map<string, PlayerEntityController>();
-
 const PlayersCollisionModels = new Instance('Folder', Folders.World.Entities);
 PlayersCollisionModels.Name = 'PlayersCollisionModels';
 
+//=============================================================================
+// Entities
+//=============================================================================
 declare global {
-	interface PlayerEntityInfo {
+	interface BaseEntity {
 		Id: string;
+	}
+}
+
+//=============================================================================
+// Player entities
+//=============================================================================
+declare global {
+	interface PlayerEntityInfo extends BaseEntity {
 		Alive: boolean;
 		Health: number;
 		MaxHealth: number;
@@ -55,6 +73,7 @@ declare global {
 
 class PlayerEntityController {
 	IsAlive = false;
+	Armor = 0;
 	Health = 150;
 	MaxHealth = 150;
 
@@ -101,7 +120,7 @@ class PlayerEntityController {
 		if (this.UserId !== undefined) {
 			const equivalent_player = Players.GetPlayerByUserId(this.UserId);
 			if (equivalent_player) {
-				Client_InfoChanged.SendToPlayer(equivalent_player, GenerateInfoFromPlayerController(this));
+				Client_InfoChanged.PostClient([equivalent_player], GenerateInfoFromPlayerController(this));
 			}
 		}
 	}
@@ -140,7 +159,7 @@ function GenerateInfoFromPlayerController(controller: PlayerEntityController): P
 
 // When a player sends a respawn request, the server will search for an avaiable controller
 // If none is found then wait until one is free
-Client_RespawnRequest.SetCallback((player) => {
+Client_RespawnRequest.OnServerInvoke = (player) => {
 	let Controller: PlayerEntityController | undefined;
 	do {
 		let cancel_search = false;
@@ -178,13 +197,13 @@ Client_RespawnRequest.SetCallback((player) => {
 	Controller.CollisionBox.Anchored = false;
 	Controller.CollisionBox.SetNetworkOwner(player);
 
-	Client_PlayerEntitySpawned.SendToAllPlayersExcept(
-		player,
+	Client_PlayerEntitySpawned.PostClient(
+		[player],
 		Controller.Id,
 		descriptions_folder.FindFirstChild(tostring(player.UserId)) as HumanoidDescription | undefined,
 	);
 	return GenerateInfoFromPlayerController(Controller);
-});
+};
 
 // Create a player's humanoid description when they join
 const descriptions_folder = new Instance('Folder', Folders.Server.Objects);

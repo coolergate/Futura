@@ -101,11 +101,11 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 
 			if (vel > wish_velocity) {
 				// try to slow down the player
-				const discount = wish_velocity - vel;
-				const current_dir = CollisionBox.AssemblyLinearVelocity;
+				let discount = wish_velocity - vel;
+				discount = discount * math.sign(discount);
 
-				CollisionBox.Force.LineDirection = current_dir;
-				CollisionBox.Force.LineVelocity = discount;
+				const current_dir = CollisionBox.AssemblyLinearVelocity.Unit;
+				CollisionBox.AssemblyLinearVelocity = current_dir.mul(discount).mul(-1);
 			} else {
 				CollisionBox.Force.LineDirection = WorldDirection;
 				CollisionBox.Force.LineVelocity = wish_velocity;
