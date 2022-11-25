@@ -18,7 +18,6 @@ import { Input } from './modules/input';
 import { Folders } from 'shared/global_resources';
 import { ConVar } from 'shared/components/vars';
 
-Signals.Load.Wait();
 let LastWrldDir = new Vector3();
 let FrameTime = 0;
 let Grounded = false;
@@ -86,7 +85,6 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 
 	let wish_velocity = 0;
 	const vel = math.round(CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1)).Magnitude);
-
 	if (Grounded) {
 		if (Jumping) {
 			if (!NextFrameSkipJump) {
@@ -99,17 +97,8 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 				LastWrldDir = WorldDirection;
 			}
 
-			if (vel > wish_velocity) {
-				// try to slow down the player
-				let discount = wish_velocity - vel;
-				discount = discount * math.sign(discount);
-
-				const current_dir = CollisionBox.AssemblyLinearVelocity.Unit;
-				CollisionBox.AssemblyLinearVelocity = current_dir.mul(discount).mul(-1);
-			} else {
-				CollisionBox.Force.LineDirection = WorldDirection;
-				CollisionBox.Force.LineVelocity = wish_velocity;
-			}
+			CollisionBox.Force.LineDirection = WorldDirection;
+			CollisionBox.Force.LineVelocity = wish_velocity;
 		}
 	}
 

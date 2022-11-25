@@ -2,7 +2,6 @@ import Signal from '@rbxts/signal';
 import { LocalSignal, LocalFunction } from 'shared/local_network';
 
 const Signals = {
-	Load: new Signal(),
 	Start: new Signal(),
 
 	CharacterRequestRespawn: new Instance('BindableFunction'),
