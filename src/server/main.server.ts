@@ -72,9 +72,6 @@ script
 				require(inst);
 			})();
 	});
+
 task.wait(1);
-
-Signals.Start.Fire();
-
-task.wait(3);
 ReplicatedStorage.SetAttribute('Ready', true);

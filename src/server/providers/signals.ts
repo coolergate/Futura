@@ -1,20 +1,15 @@
-import Signal from '@rbxts/signal';
+import { LocalSignal, LocalFunction } from 'shared/local_network';
 import { ConVar } from 'shared/components/vars';
 
 const Signals = {
-	Load: new Signal(),
-	Start: new Signal(),
+	PlayerAdded: new LocalSignal<[id: number, data: PlayerData]>(),
+	PlayerRemoved: new LocalSignal<[id: number, data: PlayerData]>(),
+	GetPlayerDataFromUserId: new LocalFunction<[UserId: number], PlayerData | undefined>(),
 
-	PlayerAdded: new Signal<(id: number, data: PlayerData) => void>(),
-	PlayerRemoved: new Signal<(id: number, data: PlayerData) => void>(),
-	GetPlayerDataFromUserId: new Instance('BindableFunction'),
-
-	GetEntityFromUserId: new Instance('BindableFunction'),
-	PlayerEntityCreated: new Signal<(Entity: PlayerEntityInfo) => void>(),
-	PlayerEntitySpawned: new Signal<(Entity: PlayerEntityInfo) => void>(),
-	PlayerEntityDied: new Signal<(Entity: PlayerEntityInfo) => void>(),
-
-	BindConsoleCVar: new Signal<(ConVar: ConVar<unknown>) => void>(),
+	GetEntityFromUserId: new LocalFunction<[UserId: number, Entity: PlayerEntityInfo], PlayerEntityInfo | undefined>(),
+	PlayerEntityCreated: new LocalSignal<[Entity: PlayerEntityInfo]>(),
+	PlayerEntitySpawned: new LocalSignal<[Entity: PlayerEntityInfo]>(),
+	PlayerEntityDied: new LocalSignal<[Entity: PlayerEntityInfo]>(),
 };
 
 export = Signals;

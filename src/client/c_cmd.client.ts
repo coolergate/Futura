@@ -10,7 +10,7 @@
 // Purpose: Client's console
 
 import Signals from './providers/signals';
-import { CreatedVars } from 'shared/components/vars';
+import { ConVar, CreatedVars } from 'shared/components/vars';
 import { Folders } from 'shared/global_resources';
 import placeinfo from 'shared/components/placeinfo';
 import Values from 'client/providers/values';
@@ -24,15 +24,115 @@ const StarterGui = game.GetService('StarterGui');
 const Player = game.GetService('Players').LocalPlayer;
 
 const net_ConsoleArg = Network.Console_SendArg;
+const net_GetCommands = Network.Console_GetServerArgs;
 const Local_RenderToConsole = Signals.RenderToConsole;
 
-// CONSOLE SECTION START \\
+//=============================================================================
+// Server & Client cmd list
+//=============================================================================
+const ClientCommands = new Map<string, Callback>();
+const ServerCommands = new Array<string>();
+
+function update_server_commands() {
+	net_GetCommands.InvokeServer().andThen((list) => {
+		list.forEach((str) => {
+			if (!ServerCommands.includes(str)) ServerCommands.insert(0, str);
+		});
+		ServerCommands.forEach((str, index) => {
+			if (!list.includes(str)) ServerCommands.remove(index);
+		});
+	});
+}
+update_server_commands();
+
+//=============================================================================
+// Rendering messages
+//=============================================================================
+interface ConsoleMessageInfo {
+	content: string;
+	mode: ConsoleMessageType;
+	time: string;
+}
+declare global {
+	type ConsoleMessageType = 'Info' | 'Error' | 'Warn' | 'UserInput' | 'Chat';
+}
+
+const LoggedMessages = new Array<TextLabel>();
+const MessageQueue = new Array<ConsoleMessageInfo>();
+const custom_colors = new Map<number, Color3>([
+	[0, new Color3(0, 0, 0)], // black (cannot be used in names)
+	[1, new Color3(1, 0, 0)], // red
+	[2, new Color3(0, 1, 0)], // green
+	[3, new Color3(1, 1, 0)], // yellow
+	[4, new Color3(0, 0, 1)], // blue
+	[5, new Color3(0, 1, 1)], // cyan
+	[6, new Color3(1, 0, 1)], // magenta
+	[7, new Color3(1, 1, 1)], // white (default)
+]);
+
+function RenderMessage(Mode: ConsoleMessageType, Content: string) {
+	const CustomColorSplit = Content.split('^');
+	let FinalMessage = '';
+	let Color: Color3;
+	switch (Mode) {
+		case 'Error': {
+			Color = Color3.fromRGB(255, 170, 170);
+			break;
+		}
+		case 'Warn': {
+			Color = Color3.fromRGB(255, 255, 180);
+			break;
+		}
+		case 'Chat': {
+			FinalMessage = '[chat] ';
+			break;
+		}
+		case 'UserInput': {
+			FinalMessage = `<font color="#${ConsoleInputUsername.TextColor3.ToHex()}">${
+				ConsoleInputUsername.Text
+			}</font>`;
+			break;
+		}
+		default:
+			Color = Color3.fromRGB(255, 255, 180);
+	}
+
+	if (CustomColorSplit.size() > 0)
+		CustomColorSplit.forEach((str) => {
+			const to_number = tonumber(str.sub(1, 1));
+			if (to_number === undefined) FinalMessage = FinalMessage + str;
+			else {
+				const equivalent_color = custom_colors.get(to_number);
+				if (equivalent_color === undefined) FinalMessage = FinalMessage + str.sub(2, str.size());
+				else {
+					const sub = str.sub(2, str.size());
+					FinalMessage = FinalMessage + `<font color="#${equivalent_color.ToHex()}">${sub}</font>`;
+				}
+			}
+		});
+	else FinalMessage = Content;
+
+	const prefab = ConsoleLogPrefab.Clone();
+	prefab.Visible = true;
+	prefab.Parent = ConsoleContent;
+	prefab.LayoutOrder = getnextindex();
+	prefab.Name = '';
+	prefab.Text = FinalMessage;
+
+	LoggedMessages.insert(0, prefab);
+
+	ConsoleContent.CanvasPosition = new Vector2(0, 1e23);
+}
+
+//=============================================================================
+// Build interface
+//=============================================================================
 const ConsoleScreenGui = Folders.Storage.UserInterface.FindFirstChild('Console') as ScreenGui;
 const ConsoleWindow = ConsoleScreenGui.FindFirstChild('Window') as Frame;
 const ConsoleContent = ConsoleWindow.FindFirstChild('Content') as ScrollingFrame;
 const ConsoleLogPrefab = ConsoleContent.FindFirstChild('LogPrefab') as TextLabel;
 
-const ConsoleInputFrame = ConsoleContent.FindFirstChild('InputFrame') as Frame;
+const ConsoleInputFrame = ConsoleWindow.FindFirstChild('InputFrame') as Frame;
 const ConsoleInputUsername = ConsoleInputFrame.FindFirstChildOfClass('TextLabel')!;
 const ConsoleInputBox = ConsoleInputFrame.FindFirstChildOfClass('TextBox')!;
 
@@ -40,20 +140,6 @@ ConsoleLogPrefab.Visible = false;
 ConsoleScreenGui.Enabled = false;
 ConsoleScreenGui.Parent = Player.WaitForChild('PlayerGui');
 
-ConsoleInputUsername.Text = `${Player.Name}@${placeinfo.name}$ `;
-ConsoleInputBox.Size = new UDim2(1, -ConsoleInputUsername.AbsoluteSize.X, 0, 0);
-
-const custom_commands = new Map<string, Callback>();
-const custom_colors = new Map<string, Color3>([
-	['^0', new Color3(0, 0, 0)],
-	['^1', new Color3(1, 0, 0)],
-	['^2', new Color3(0, 1, 0)],
-	['^3', new Color3(1, 1, 0)],
-	['^4', new Color3(0, 0, 1)],
-	['^5', new Color3(0, 1, 1)],
-	['^6', new Color3(1, 0, 1)],
-	['^7', new Color3(1, 1, 1)],
-]);
 function getnextindex(): number {
 	let av_index = 1;
 	ConsoleContent.GetChildren().forEach((inst) => {
@@ -63,71 +149,17 @@ function getnextindex(): number {
 	});
 	return av_index;
 }
-function render(LogType: ConsoleLogType | 'userinput', content: string) {
-	let start_params = '';
-	let end_params = '';
-	let cmd_chat = false;
-	switch (LogType) {
-		case 'Info': {
-			start_params = '<font color="rgb(170,170,170)">';
-			end_params = '</font>';
-			break;
-		}
-		case 'Error': {
-			start_params = '<font color="rgb(255,170,170)"><i>';
-			end_params = '</i></font>';
-			break;
-		}
-		case 'Warn': {
-			start_params = '<font color="rgb(255,255,180)"><i>';
-			end_params = '</i></font>';
-			break;
-		}
-		case 'Chat': {
-			start_params = '(chat) ';
-			end_params = '';
-			cmd_chat = true;
-			break;
-		}
-		case 'Success': {
-			start_params = '<font color="rgb(170, 255, 170)"><i>';
-			end_params = '</i></font>';
-			cmd_chat = true;
-			break;
-		}
-		case 'userinput': {
-			start_params =
-				'<font color="rgb(255, 170, 127)">' +
-				ConsoleInputUsername.Text +
-				'</font><font color="rgb(255,255,255)">';
-			end_params = '</font>';
-		}
-	}
 
-	const prefab = ConsoleLogPrefab.Clone();
-	prefab.Visible = true;
-	prefab.Parent = ConsoleContent;
-	prefab.LayoutOrder = getnextindex();
-	prefab.Name = '';
-	prefab.Text = `${start_params}${content}${end_params}`;
-
-	ConsoleContent.CanvasPosition = new Vector2(0, ConsoleContent.AbsoluteCanvasSize.Y * 2);
-}
-
-function HandleCommand(content: string) {
-	const split = content.split(' ');
-	const command = split[0];
-	const value = tostring(split[1]);
+function Handle(content: string) {
+	const args = content.split(' ');
+	const command = tostring(args[0]);
+	args.remove(0);
 
 	const equivalent_ConVar = CreatedVars.find((val, index, obj) => {
 		return val.name === command;
 	});
-	if (equivalent_ConVar) {
-		if (equivalent_ConVar.attributes.has('Hidden')) {
-			render('Error', 'Unknown or restricted command');
-			return;
-		}
-		if (value === 'nil') {
+	if (equivalent_ConVar && !equivalent_ConVar.attributes.has('Hidden')) {
+		if (args[0] === undefined) {
 			let description = equivalent_ConVar.description;
 			let attributes = '';
 
@@ -136,38 +168,37 @@ function HandleCommand(content: string) {
 			});
 			if (description === '') description = 'None';
 
-			render(
+			RenderMessage(
 				'Info',
 				`${equivalent_ConVar.name} is:"${equivalent_ConVar.value}", default:"${equivalent_ConVar.original_value}"`,
 			);
-			render('Info', `Attributes: ${attributes}`);
-			render('Info', `Desc: ${equivalent_ConVar.description}`);
+			RenderMessage('Info', `Attributes: ${attributes}`);
+			RenderMessage('Info', `Desc: ${equivalent_ConVar.description}`);
 			return;
 		}
 
 		if (equivalent_ConVar.attributes.has('Readonly')) {
-			render('Error', 'Variable is read-only.');
+			RenderMessage('Error', 'Variable is read-only.');
 			return;
 		}
 
 		switch (equivalent_ConVar.value_type) {
 			case 'number': {
-				const attempt = tonumber(value);
+				const attempt = tonumber(args[0]);
 				if (attempt === undefined) {
-					render('Error', `Value must be a "${equivalent_ConVar.value_type}", got "string" !`);
+					RenderMessage('Error', `Value must be a "${equivalent_ConVar.value_type}", got "string" !`);
 					return;
 				}
 				equivalent_ConVar.value = attempt;
 				break;
 			}
 			case 'function': {
-				split.remove(0);
 				const func = equivalent_ConVar.value as Callback;
-				func(split);
+				func(args);
 				break;
 			}
 			default: {
-				render('Error', `Variable has unknown value type. "${equivalent_ConVar.value_type}"`);
+				RenderMessage('Error', `Variable has unknown value type. "${equivalent_ConVar.value_type}"`);
 			}
 		}
 
@@ -175,47 +206,47 @@ function HandleCommand(content: string) {
 	}
 
 	// else check if it is an callable function
-	if (custom_commands.has(command)) {
+	if (ClientCommands.has(command)) {
 		const arg = content.sub(command.size() + 2, content.size());
-		custom_commands.get(command)!(arg);
+		ClientCommands.get(command)!(arg);
 		return;
 	}
 
-	const [server_recieved, response] = net_ConsoleArg.InvokeServer(command, [value as string]).await();
-	if (response !== undefined && type(response) === 'string') {
-		render('Info', '[Server] ' + response);
-		return;
+	// check if it's an server command
+	if (ServerCommands.includes(command)) {
+		const [server_recieved, response] = net_ConsoleArg.InvokeServer(command, [args[0] as string]).await();
+		if (response !== undefined) {
+			RenderMessage('Info', tostring(response));
+			return;
+		}
 	}
 
-	render('Error', 'Unknown or restricted command');
+	RenderMessage('Error', 'Unknown or restricted command');
 }
 
-declare global {
-	type ConsoleLogType = 'Info' | 'Error' | 'Warn' | 'Success' | 'Chat';
-}
-
-custom_commands.set('clear', function () {
+ClientCommands.set('clear', function () {
 	ConsoleContent.GetChildren().forEach((inst) => {
 		if ((inst.IsA('TextLabel') || inst.IsA('Frame')) && inst !== ConsoleInputFrame && inst !== ConsoleLogPrefab)
 			inst.Destroy();
 	});
 });
-custom_commands.set('say', function (content: string) {
+ClientCommands.set('say', function (content: string) {
 	net_ConsoleArg.InvokeServer('say', [content]);
-	render('Chat', `${Player.DisplayName}: ${content}`);
+	RenderMessage('Chat', `${Player.DisplayName}: ${content}`);
 });
-custom_commands.set('echo', function (content: string) {
-	render('Info', content);
+ClientCommands.set('echo', function (content: string) {
+	RenderMessage('Info', content);
 });
-custom_commands.set('close', function (content: string) {
+ClientCommands.set('close', function (content: string) {
 	ConsoleScreenGui.Enabled = false;
 });
-custom_commands.set('exit', function (content: string) {
+ClientCommands.set('exit', function (content: string) {
 	ConsoleScreenGui.Enabled = false;
 });
-custom_commands.set('version', function (content: string) {
-	render('Info', `Game: "${placeinfo.name}" ver. ${placeinfo.version}`);
+ClientCommands.set('version', function (content: string) {
+	RenderMessage('Info', `Game: "${placeinfo.name}" ver. ${placeinfo.version}`);
 });
+ClientCommands.set('setsize', function (content: string) {});
 
 UserInputService.InputBegan.Connect((input, unavaiable) => {
 	if (
@@ -243,8 +274,8 @@ ConsoleInputBox.FocusLost.Connect((enterPressed) => {
 	ConsoleInputBox.TextEditable = false;
 	const content = ConsoleInputBox.Text;
 	if (enterPressed) {
-		render('userinput', content);
-		HandleCommand(content);
+		RenderMessage('UserInput', content);
+		Handle(content);
 	}
 
 	ConsoleInputBox.TextEditable = true;
@@ -255,6 +286,3 @@ ConsoleInputBox.FocusLost.Connect((enterPressed) => {
 		ConsoleInputBox.Text = '';
 	}
 });
-
-Signals.SendConsoleCommand.Connect(HandleCommand);
-Local_RenderToConsole.Connect((log, msg) => render(log, msg));

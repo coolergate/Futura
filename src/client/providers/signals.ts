@@ -13,7 +13,7 @@ const Signals = {
 	CameraShoveRecoil: new Instance('BindableFunction'),
 
 	SendConsoleCommand: new Signal<(cmd: string) => void>(),
-	RenderToConsole: new Signal<(LogType: ConsoleLogType, Message: string) => void>(),
+	RenderToConsole: new Signal<(LogType: ConsoleMessageType, Message: string) => void>(),
 
 	Character_SendRespawnRequest: new LocalFunction<[], boolean>(),
 };

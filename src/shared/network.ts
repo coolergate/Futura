@@ -14,14 +14,8 @@ const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const RunService = game.GetService('RunService');
 const Players = game.GetService('Players');
 
-const NetworkFolder =
-	(RunService.IsClient() && (ReplicatedStorage.WaitForChild('Network') as Folder)) ||
-	(ReplicatedStorage.FindFirstChild('Network') as Folder | undefined) ||
-	new Instance('Folder', ReplicatedStorage);
-NetworkFolder.Name = 'Network';
-
-const RemoteEvents = manager(NetworkFolder, '', 'RemoteEvent');
-const RemoteFunctions = manager(NetworkFolder, '', 'RemoteFunction');
+const RemoteEvents = manager(ReplicatedStorage, 'Network', 'RemoteEvent');
+const RemoteFunctions = manager(ReplicatedStorage, 'Network', 'RemoteFunction');
 let next_index = 0;
 
 type NetworkMode = 'ClientToServer' | 'ServerToClient';
@@ -36,13 +30,13 @@ class Remote<headers extends unknown[]> {
 	// * Server
 	OnServerPost = undefined as ((user: Player, ...args: headers) => void) | undefined;
 	PostClient(users: Player[], ...data: headers) {
-		assert(RunService.IsServer(), 'server-side only.');
+		assert(RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
 		users.forEach((user) => {
 			this.Instance.FireClient(user, ...data);
 		});
 	}
 	PostAllClients(block: Player[] | undefined, ...data: headers) {
-		assert(RunService.IsServer(), 'server-side only.');
+		assert(RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
 		Players.GetPlayers().forEach((user) => {
 			if (block !== undefined && block.includes(user)) return;
 			this.Instance.FireClient(user, ...data);
@@ -52,7 +46,7 @@ class Remote<headers extends unknown[]> {
 	// * Client
 	OnClientPost = undefined as ((...args: headers) => void) | undefined;
 	PostServer(...args: headers) {
-		assert(RunService.IsServer(), 'client-side only.');
+		assert(RunService.IsServer(), 'client-side only.' + ' (' + tostring(this.Instance.Name) + ')');
 		this.Instance.FireServer(...args);
 	}
 
@@ -63,14 +57,12 @@ class Remote<headers extends unknown[]> {
 
 		if (RunService.IsServer())
 			this.Instance.OnServerEvent.Connect((player, ...data) => {
-				if (this.NetMode !== 'ClientToServer') return;
-				assert(this.OnServerPost, 'OnServerPost has not been declared!');
+				if (this.NetMode !== 'ClientToServer' || this.OnServerPost === undefined) return;
 				this.OnServerPost(player, ...(data as headers));
 			});
 		else
 			this.Instance.OnClientEvent.Connect((...data) => {
-				if (this.NetMode !== 'ServerToClient') return;
-				assert(this.OnClientPost, 'OnClientPost has not been declared!');
+				if (this.NetMode !== 'ServerToClient' || this.OnClientPost === undefined) return;
 				this.OnClientPost(...(data as headers));
 			});
 	}
@@ -101,12 +93,15 @@ class Function<headers extends unknown[], response> {
 
 		if (RunService.IsServer())
 			this.Instance.OnServerInvoke = function (player, ...data) {
-				assert(this.OnServerInvoke, 'OnServerInvoke has not been declared!');
+				assert(this.OnServerInvoke, 'OnServerInvoke has not been declared!' + ' (' + tostring(this.Name) + ')');
 				return this.OnServerInvoke(player, ...(data as headers)) as response;
 			};
 		else
 			this.Instance.OnClientInvoke = (...data: headers) => {
-				assert(this.OnClientInvoke, 'OnClientInvoke has not been declared!');
+				assert(
+					this.OnClientInvoke,
+					'OnClientInvoke has not been declared!' + ' (' + tostring(this.Instance.Name) + ')',
+				);
 				return this.OnClientInvoke(...(data as headers));
 			};
 	}
@@ -121,7 +116,8 @@ const Network = {
 	Chat_Send: new Function<[message: string], void>(),
 	Chat_Revieve: new Remote<[message: string]>('ServerToClient'),
 
-	Console_SendArg: new Function<[argument: string, value: unknown[]], [response: string]>(),
+	Console_SendArg: new Function<[argument: string, value: unknown[]], string | undefined | void>(),
+	Console_GetServerArgs: new Function<[], string[]>(),
 
 	Ent_Character_Spawned: new Remote('ServerToClient'),
 	Ent_Character_InfoChanged: new Remote<[Info: PlayerEntityInfo]>('ServerToClient'),
