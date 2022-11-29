@@ -70,6 +70,19 @@ Folders.Storage.UserInterface.GetChildren().forEach((element) => {
 	}
 });
 
+//=============================================================================
+// Start components and stand-alone scripts
+//=============================================================================
+const folder = Player.WaitForChild('PlayerScripts').WaitForChild('TS').FindFirstChild('components') as Folder;
+const components = new Array<CBaseControllerInfo>();
+folder.GetChildren().forEach((inst) => {
+	if (!inst.IsA('ModuleScript')) return;
+	const module = require(inst) as CBaseControllerInfo;
+	components.insert(0, module);
+	module.Init();
+});
+components.forEach((component) => coroutine.wrap(component.Start)());
+
 Signals.Start.Fire();
 task.wait(1);
 

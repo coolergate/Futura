@@ -120,8 +120,8 @@ const Network = {
 	Console_GetServerArgs: new Function<[], string[]>(),
 
 	Ent_Character_Spawned: new Remote('ServerToClient'),
-	Ent_Character_InfoChanged: new Remote<[Info: PlayerEntityInfo]>('ServerToClient'),
-	Ent_Character_RequestRespawn: new Function<[], PlayerEntityInfo | void>(),
+	Ent_Character_InfoChanged: new Remote<[Info: PlayerEntityInfo_1]>('ServerToClient'),
+	Ent_Character_RequestRespawn: new Function<[], PlayerEntityInfo_1 | void>(),
 	Ent_Character_GetAll: new Function(),
 };
 export = Network;
