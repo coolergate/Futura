@@ -73,6 +73,14 @@ Folders.Storage.UserInterface.GetChildren().forEach((element) => {
 //=============================================================================
 // Start components and stand-alone scripts
 //=============================================================================
+declare global {
+	type CBaseControllerInfo = {
+		Name: string;
+		Init(): void;
+		Start(): void;
+		Update(): void;
+	};
+}
 type controller_type = { Main: CBaseControllerInfo };
 
 const folder = Player.WaitForChild('PlayerScripts').WaitForChild('TS').FindFirstChild('components') as Folder;
