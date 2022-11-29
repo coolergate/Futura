@@ -73,15 +73,22 @@ Folders.Storage.UserInterface.GetChildren().forEach((element) => {
 //=============================================================================
 // Start components and stand-alone scripts
 //=============================================================================
+type controller_type = { Main: CBaseControllerInfo };
+
 const folder = Player.WaitForChild('PlayerScripts').WaitForChild('TS').FindFirstChild('components') as Folder;
-const components = new Array<CBaseControllerInfo>();
+const components = new Array<controller_type>();
 folder.GetChildren().forEach((inst) => {
 	if (!inst.IsA('ModuleScript')) return;
-	const module = require(inst) as CBaseControllerInfo;
+	const module = require(inst) as controller_type;
+	if (module.Main === undefined) {
+		warn('Module missing "Main" class constructor');
+		return;
+	}
+
 	components.insert(0, module);
-	module.Init();
+	module.Main.Init();
 });
-components.forEach((component) => coroutine.wrap(component.Start)());
+components.forEach((component) => coroutine.wrap(() => component.Main.Start())());
 
 Signals.Start.Fire();
 task.wait(1);
