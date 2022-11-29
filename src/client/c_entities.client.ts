@@ -28,7 +28,7 @@ const CharactersModelFolder = new Instance('Folder', Folders.Client.Objects);
 CharactersModelFolder.Name = 'CharacterModels';
 const PlrCollisionBoxEntities = Folders.World.Entities.WaitForChild('PlayersCollisionModels') as Folder;
 
-const PlayersEntityList = new Map<string, PlayerEntityInfoQuick>();
+const PlayersEntityList = new Map<string, PlayerEntityInfo_2>();
 
 // Create characters based on server size //
 const DefDescription = Players.GetHumanoidDescriptionFromUserId(3676469645);
@@ -75,7 +75,7 @@ function CreateHumanoidModelFromDescription(Description = DefDescription) {
 }
 
 Signals.Character_SendRespawnRequest.Handle = function () {
-	const info = Server_RespawnRequest.InvokeServer().await()[1] as PlayerEntityInfo | undefined;
+	const info = Server_RespawnRequest.InvokeServer().await()[1] as PlayerEntityInfo_1 | undefined;
 	if (!info) return false;
 
 	Values.Character.Health = info.Health;
