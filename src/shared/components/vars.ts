@@ -34,3 +34,12 @@ export class ConVar<T> {
 declare global {
 	type ConVarType = 'Hidden' | 'Readonly' | 'ClientAccess' | 'ServerOnly';
 }
+
+export function GetCVar(name: string) {
+	let equivalent: ConVar<unknown> | undefined;
+	CreatedVars.forEach((cvar) => {
+		if (equivalent) return;
+		if (cvar.name === name) equivalent = cvar;
+	});
+	return equivalent;
+}

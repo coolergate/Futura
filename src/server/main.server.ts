@@ -1,5 +1,16 @@
+//    █████████    █████████    █████████
+//   ███░░░░░███  ███░░░░░███  ███░░░░░███
+//  ███     ░░░  ███     ░░░  ███     ░░░
+// ░███         ░███         ░███
+// ░███    █████░███    █████░███
+// ░░███  ░░███ ░░███  ░░███ ░░███     ███
+//  ░░█████████  ░░█████████  ░░█████████
+//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
+//
+// Purpose: Startup server
+
 import { Folders } from 'shared/global_resources';
-import Signals from './providers/signals';
+import * as Defined from 'shared/gamedefined';
 
 // Services
 const Players = game.GetService('Players');
@@ -10,14 +21,31 @@ const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const Workspace = game.GetService('Workspace');
 const StarterGui = game.GetService('StarterGui');
 
+// Create collision groups
 PhysicsService.CreateCollisionGroup('GBaseCharacters');
-PhysicsService.RegisterCollisionGroup('GBaseCharacters');
 PhysicsService.CreateCollisionGroup('CViewmodels');
+PhysicsService.RegisterCollisionGroup('GBaseCharacters');
 PhysicsService.RegisterCollisionGroup('CViewmodels');
-
 PhysicsService.CollisionGroupSetCollidable('GBaseCharacters', 'CViewmodels', false);
 PhysicsService.CollisionGroupSetCollidable('GBaseCharacters', 'GBaseCharacters', false);
 PhysicsService.CollisionGroupSetCollidable('CViewmodels', 'Default', false);
+
+// Workspace folders to ignore before deleting
+const Work_Ignore: string[] = ['World', 'Terrain', 'Server', 'Client'];
+Workspace.GetChildren().forEach((inst) => {
+	if (inst.IsA('Terrain')) return;
+
+	if (inst.Name.sub(1, 1) === '_') {
+		inst.Destroy();
+		return;
+	}
+
+	if (inst.IsA('Folder')) {
+		const equivalent_repl = ReplicatedStorage.FindFirstChild(inst.Name);
+		if (equivalent_repl) inst.GetChildren().forEach((desc) => (desc.Parent = equivalent_repl));
+		if (!Work_Ignore.includes(inst.Name)) inst.Destroy();
+	}
+});
 
 StarterGui.GetChildren().forEach((inst) => {
 	if (inst.IsA('ScreenGui')) {
@@ -26,21 +54,7 @@ StarterGui.GetChildren().forEach((inst) => {
 	}
 });
 
-Workspace.GetChildren().forEach((inst) => {
-	if (inst.IsA('Terrain')) return;
-	if (inst.Name.sub(1, 1) === '_' || !inst.IsA('Folder')) {
-		inst.Destroy();
-		return;
-	}
-
-	if (ReplicatedStorage.FindFirstChild(inst.Name)) {
-		const folder = ReplicatedStorage.FindFirstChild(inst.Name)!;
-		inst.GetChildren().forEach((inst) => {
-			inst.Parent = folder;
-		});
-	}
-});
-
+// Get server location
 interface GameServerFetch {
 	status: string;
 	country: string;
@@ -51,18 +65,15 @@ interface GameServerFetch {
 	timezone: string;
 	query: string;
 }
-
 const ServerGet = HttpService.GetAsync('http://ip-api.com/json/', true);
 const ServerFetchedLocation = HttpService.JSONDecode(ServerGet) as GameServerFetch;
 let gStringLocation = 'Unknown, Unknown';
-if (ServerFetchedLocation.status === 'success') {
-	gStringLocation = `${ServerFetchedLocation.countryCode}, ${ServerFetchedLocation.regionName}`;
-} else {
-	warn(`IP Fetch replied with "${ServerFetchedLocation.status}"`);
-}
-ReplicatedStorage.SetAttribute('Region', gStringLocation);
+ServerFetchedLocation.status === 'success'
+	? (gStringLocation = `${ServerFetchedLocation.countryCode}, ${ServerFetchedLocation.regionName}`)
+	: (gStringLocation = '??, ??');
+Defined.SetServerLocation(gStringLocation);
 
-// Execute scripts
+// Startup scripts
 script
 	.Parent!.WaitForChild('components')
 	.GetDescendants()
@@ -74,4 +85,4 @@ script
 	});
 
 task.wait(1);
-ReplicatedStorage.SetAttribute('Ready', true);
+ReplicatedStorage.SetAttribute('Running', true); // gamedefined.ts

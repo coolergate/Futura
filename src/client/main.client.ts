@@ -21,7 +21,7 @@ const Player = game.GetService('Players').LocalPlayer;
 // ^ but there is an issue with studio that the player logs on
 // ^ before Players.PlayerAdded is called
 do task.wait(1);
-while (ReplicatedStorage.GetAttribute('Ready') !== true);
+while (ReplicatedStorage.GetAttribute('Running') !== true);
 
 //=============================================================================
 // Loading screen

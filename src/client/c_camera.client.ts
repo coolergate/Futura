@@ -12,7 +12,7 @@
 import RenderPriorities from './modules/render';
 import Values from './providers/values';
 import Signals from './providers/signals';
-import { ConVar } from 'shared/components/vars';
+import { ConVar, GetCVar } from 'shared/components/vars';
 
 Signals.Start.Wait();
 
@@ -41,7 +41,8 @@ RunService.BindToRenderStep('CCameraInput', RenderPriorities.CameraInput, () => 
 		UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 	else UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
 
-	const delta = UserInputService.GetMouseDelta();
+	const Thumbstick2 = GetCVar('joy_thumbstick2') as ConVar<Vector3>;
+	const delta = new Vector2(Thumbstick2.value.X, Thumbstick2.value.Y).add(UserInputService.GetMouseDelta());
 
 	CameraLastRotation = CameraRotation;
 	const rotation_x = CameraRotation.X - math.rad(delta.X);

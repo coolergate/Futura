@@ -14,9 +14,13 @@ task.wait(1);
 import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';
+import { ConVar, CreatedVars, GetCVar } from 'shared/components/vars';
 import { Input } from './modules/input';
-import { Folders } from 'shared/global_resources';
-import { ConVar } from 'shared/components/vars';
+
+const UserInputService = game.GetService('UserInputService');
+const StarterPlayer = game.GetService('StarterPlayer');
+const RunService = game.GetService('RunService');
+const Workspace = game.GetService('Workspace');
 
 let LastWrldDir = new Vector3();
 let FrameTime = 0;
@@ -30,7 +34,7 @@ let NextFrameSkipJump = false;
 const cmov_duck_method = new ConVar('cmov_duck_method', 0, ''); // 0 is hold, 1 is toggle, 2 is analogic (gamepad only)
 
 //=============================================================================
-// Keybinds
+// Input directions
 //=============================================================================
 const Directions = new Map<Input, Enum.NormalId>([
 	[new Input('move_forward'), Enum.NormalId.Front],
@@ -41,10 +45,6 @@ const Directions = new Map<Input, Enum.NormalId>([
 const JumpKeybind = new Input('jump');
 
 Signals.Start.Wait();
-
-const RunService = game.GetService('RunService');
-const Workspace = game.GetService('Workspace');
-const StarterPlayer = game.GetService('StarterPlayer');
 
 function number_lerp(a: number, b: number, t: number) {
 	return a + (b - a) * t;
@@ -61,13 +61,13 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	if (!Values.Character.CollisionBox) return;
 
 	const CollisionBox = Values.Character.CollisionBox;
-	let InputRequest = false;
 
-	let WishDir = new Vector3();
+	// Wish direction
+	const Thumbstick1 = GetCVar('joy_thumbstick1') as ConVar<Vector3>;
+	let WishDir = new Vector3(Thumbstick1.value.X, 0, -Thumbstick1.value.Y);
 	Directions.forEach((value, input) => {
 		if (!input.Active) return;
 		WishDir = WishDir.add(Vector3.FromNormalId(value));
-		InputRequest = true;
 	});
 	if (WishDir.Magnitude > 0) WishDir = WishDir.Unit.mul(new Vector3(1, 0, 1));
 
@@ -92,7 +92,7 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 				CollisionBox.AssemblyLinearVelocity = CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1));
 			} else NextFrameSkipJump = false;
 		} else {
-			if (InputRequest) {
+			if (WishDir.Magnitude > 0) {
 				wish_velocity = StarterPlayer.CharacterWalkSpeed;
 				LastWrldDir = WorldDirection;
 			}

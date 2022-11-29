@@ -1,6 +1,17 @@
-import Signal from '@rbxts/signal';
+//    █████████    █████████    █████████
+//   ███░░░░░███  ███░░░░░███  ███░░░░░███
+//  ███     ░░░  ███     ░░░  ███     ░░░
+// ░███         ░███         ░███
+// ░███    █████░███    █████░███
+// ░░███  ░░███ ░░███  ░░███ ░░███     ███
+//  ░░█████████  ░░█████████  ░░█████████
+//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
+//
+// Purpose: Client input constructor
 
+import { LocalSignal } from 'shared/local_network';
 const UserInputService = game.GetService('UserInputService');
+
 export const Keybinds = new Map<string, string>([
 	// movement
 	['Space', 'jump'],
@@ -18,8 +29,8 @@ export const Keybinds = new Map<string, string>([
 
 export class Input {
 	Active = false;
-	readonly Pressed = new Signal();
-	readonly Released = new Signal();
+	readonly Pressed = new LocalSignal();
+	readonly Released = new LocalSignal();
 
 	constructor(action: string, toggle = false) {
 		UserInputService.InputBegan.Connect((input, busy) => {

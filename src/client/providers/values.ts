@@ -20,10 +20,6 @@ const Values = {
 	CCameraEnable: true,
 	CCameraUnlock: new Map<string, boolean>(),
 	CCameraLockTo: undefined as BasePart | undefined,
-
-	// controller values
-	LeftThumbstickValue: new Vector2(),
-	RightThumbstickValue: new Vector2(),
 };
 
 export = Values;
