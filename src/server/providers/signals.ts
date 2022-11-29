@@ -6,10 +6,13 @@ const Signals = {
 	PlayerRemoved: new LocalSignal<[id: number, data: PlayerData]>(),
 	GetPlayerDataFromUserId: new LocalFunction<[UserId: number], PlayerData | undefined>(),
 
-	GetEntityFromUserId: new LocalFunction<[UserId: number, Entity: PlayerEntityInfo], PlayerEntityInfo | undefined>(),
-	PlayerEntityCreated: new LocalSignal<[Entity: PlayerEntityInfo]>(),
-	PlayerEntitySpawned: new LocalSignal<[Entity: PlayerEntityInfo]>(),
-	PlayerEntityDied: new LocalSignal<[Entity: PlayerEntityInfo]>(),
+	GetEntityFromUserId: new LocalFunction<
+		[UserId: number, Entity: PlayerEntityInfo_1],
+		PlayerEntityInfo_1 | undefined
+	>(),
+	PlayerEntityCreated: new LocalSignal<[Entity: PlayerEntityInfo_1]>(),
+	PlayerEntitySpawned: new LocalSignal<[Entity: PlayerEntityInfo_1]>(),
+	PlayerEntityDied: new LocalSignal<[Entity: PlayerEntityInfo_1]>(),
 };
 
 export = Signals;
