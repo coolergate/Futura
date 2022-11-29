@@ -8,20 +8,35 @@
 //   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
 //
 // Purpose: Remotes for communication between server and client(s)
-import manager from '@rbxts/extendable-resources';
-
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const RunService = game.GetService('RunService');
 const Players = game.GetService('Players');
 
-const RemoteEvents = manager(ReplicatedStorage, 'Network', 'RemoteEvent');
-const RemoteFunctions = manager(ReplicatedStorage, 'Network', 'RemoteFunction');
+const network_folder =
+	(RunService.IsClient() && (ReplicatedStorage.WaitForChild('Network') as Folder)) ||
+	(ReplicatedStorage.FindFirstChild('Network') as Folder) ||
+	new Instance('Folder', ReplicatedStorage);
+network_folder.Name = 'Network';
 let next_index = 0;
+
+function Manager(index: number, mode: 'RemoteFunction' | 'RemoteEvent'): RemoteEvent | RemoteFunction {
+	let instance = network_folder.FindFirstChild(tostring(index)) as RemoteEvent | RemoteFunction;
+	if (RunService.IsClient()) {
+		if (instance) return instance;
+		else return network_folder.WaitForChild(tostring(index)) as RemoteEvent | RemoteFunction;
+	}
+
+	if (!instance) {
+		instance = new Instance(mode, network_folder);
+		instance.Name = tostring(index);
+	}
+	return instance;
+}
 
 type NetworkMode = 'ClientToServer' | 'ServerToClient';
 
 //=============================================================================
-// Remote constructor, NetworkMode defines how it works (self explanatory)
+// Remote constructor defined by NetworkMode
 //=============================================================================
 class Remote<headers extends unknown[]> {
 	private Instance: RemoteEvent;
@@ -52,7 +67,7 @@ class Remote<headers extends unknown[]> {
 
 	constructor(NetworkMode: NetworkMode) {
 		this.NetMode = NetworkMode;
-		this.Instance = RemoteEvents(tostring(next_index));
+		this.Instance = Manager(next_index, 'RemoteEvent') as RemoteEvent;
 		next_index++;
 
 		if (RunService.IsServer())
@@ -88,7 +103,7 @@ class Function<headers extends unknown[], response> {
 	}
 
 	constructor() {
-		this.Instance = RemoteFunctions(tostring(next_index));
+		this.Instance = Manager(next_index, 'RemoteFunction') as RemoteFunction;
 		next_index++;
 
 		if (RunService.IsServer())
@@ -123,5 +138,8 @@ const Network = {
 	Ent_Character_InfoChanged: new Remote<[Info: PlayerEntityInfo_1]>('ServerToClient'),
 	Ent_Character_RequestRespawn: new Function<[], PlayerEntityInfo_1 | void>(),
 	Ent_Character_GetAll: new Function(),
+
+	// Loading data
+	GetInterfaceInfo: new Function<[], [content: ScreenGui[]]>(),
 };
 export = Network;
