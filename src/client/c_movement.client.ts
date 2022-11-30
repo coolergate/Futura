@@ -14,7 +14,7 @@ task.wait(1);
 import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';
-import { ConVar, CreatedVars, GetCVar } from 'shared/components/vars';
+import { ConVar, GetCVar } from 'shared/components/vars';
 import { Input } from './modules/input';
 
 const UserInputService = game.GetService('UserInputService');
@@ -45,10 +45,6 @@ const Directions = new Map<Input, Enum.NormalId>([
 const JumpKeybind = new Input('jump');
 
 Signals.Start.Wait();
-
-function number_lerp(a: number, b: number, t: number) {
-	return a + (b - a) * t;
-}
 
 RunService.Heartbeat.Connect(() => {
 	if (Values.Character.CollisionBox)

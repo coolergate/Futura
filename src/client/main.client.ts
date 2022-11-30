@@ -10,12 +10,12 @@
 // Purpose: Startup script.
 
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
-const UserInputService = game.GetService('UserInputService');
 const ContentProvider = game.GetService('ContentProvider');
-const ReplicatedFirst = game.GetService('ReplicatedFirst');
 const TweenService = game.GetService('TweenService');
+const RunService = game.GetService('RunService');
 const StarterGui = game.GetService('StarterGui');
 const Player = game.GetService('Players').LocalPlayer;
+const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
 
 // ^ Wait until the server is ready, should be in normal game
 // ^ but there is an issue with studio that the player logs on
@@ -27,15 +27,22 @@ while (ReplicatedStorage.GetAttribute('Running') !== true);
 // Loading screen
 //=============================================================================
 import { Folders } from 'shared/global_resources';
-const LoadingInterface = Folders.Storage.UserInterface.FindFirstChild('Loading') as ScreenGui;
-const LoadingInterfaceCanvas = LoadingInterface.FindFirstChildOfClass('CanvasGroup')!;
+
+Folders.Storage.UserInterface.GetChildren().forEach((element) => {
+	if (element.IsA('ScreenGui')) {
+		element.Enabled = true;
+		element.Parent = PlayerGui;
+	}
+});
+
+const InterfaceHolder = PlayerGui.FindFirstChild('Main') as ScreenGui;
+const LoadingInterfaceCanvas = InterfaceHolder.FindFirstChild('LoadingOverlay') as CanvasGroup;
 {
-	LoadingInterface.Parent = Player.WaitForChild('PlayerGui');
-	LoadingInterface.Enabled = true;
+	LoadingInterfaceCanvas.Visible = true;
 	StarterGui.SetCoreGuiEnabled('All', false);
 
 	let CurrentTween: Tween | undefined;
-	const TextGradient = LoadingInterface.FindFirstChild('UIGradient', true) as UIGradient;
+	const TextGradient = LoadingInterfaceCanvas.FindFirstChild('UIGradient', true) as UIGradient;
 	TextGradient.Offset = new Vector2(-1, 0);
 
 	coroutine.wrap(() => {
@@ -63,41 +70,6 @@ task.wait(2);
 ContentProvider.PreloadAsync(ReplicatedStorage.GetDescendants());
 Network.PlayerLogin.InvokeServer().await();
 
-Folders.Storage.UserInterface.GetChildren().forEach((element) => {
-	if (element.IsA('ScreenGui')) {
-		element.Enabled = true;
-		element.Parent = Player.WaitForChild('PlayerGui');
-	}
-});
-
-//=============================================================================
-// Start components and stand-alone scripts
-//=============================================================================
-declare global {
-	type CBaseControllerInfo = {
-		Name: string;
-		Init(): void;
-		Start(): void;
-		Update(): void;
-	};
-}
-type controller_type = { Main: CBaseControllerInfo };
-
-const folder = Player.WaitForChild('PlayerScripts').WaitForChild('TS').FindFirstChild('components') as Folder;
-const components = new Array<controller_type>();
-folder.GetChildren().forEach((inst) => {
-	if (!inst.IsA('ModuleScript')) return;
-	const module = require(inst) as controller_type;
-	if (module.Main === undefined) {
-		warn('Module missing "Main" class constructor');
-		return;
-	}
-
-	components.insert(0, module);
-	module.Main.Init();
-});
-components.forEach((component) => coroutine.wrap(() => component.Main.Start())());
-
 Signals.Start.Fire();
 task.wait(1);
 
@@ -106,7 +78,7 @@ LoadingScreenFadeOut.Play();
 LoadingScreenFadeOut.Completed.Wait();
 
 task.wait(1);
-LoadingInterface.Destroy();
+LoadingInterfaceCanvas.Destroy();
 
 // ! Temporary. will be moved over to another script
 Signals.Character_SendRespawnRequest.Call();

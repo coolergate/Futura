@@ -35,11 +35,9 @@ const cl_drawhud = new ConVar('cl_drawhud', 1, 'Draw HUD');
 //=============================================================================
 // Retrieve interface elements
 //=============================================================================
-const GameScreenGui = PlayerGui.FindFirstChild('Game') as ScreenGui;
-const MenuScreenGui = PlayerGui.FindFirstChild('Menu') as ScreenGui;
-
-const GameplayFrame = GameScreenGui.FindFirstChild('Gameplay') as Frame;
-const OverlayFrame = GameScreenGui.FindFirstChild('Overlay') as Frame;
+const Holder = PlayerGui.WaitForChild('Main') as ScreenGui;
+const GameplayFrame = Holder.FindFirstChild('Game') as Frame;
+const OverlayFrame = Holder.FindFirstChild('GameOverlay') as Frame;
 
 interface BaseBasicMeter extends Frame {
 	AmountBar: Frame;
@@ -52,12 +50,12 @@ const Crosshair = OverlayFrame.FindFirstChild('Crosshair') as ImageLabel;
 
 RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt) => {
 	const Character = Values.Character;
-	GameScreenGui.Enabled = Character !== undefined && Character.Health > 0;
+	GameplayFrame.Visible = Character !== undefined && Character.Health > 0;
 });
 
 RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, (dt) => {
 	const Character = Values.Character;
-	if (!GameScreenGui.Enabled || !Character) return;
+	if (!GameplayFrame.Visible || !Character) return;
 
 	// Health meter
 	const CurrentHealth = Values.Character.Health;

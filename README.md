@@ -3,13 +3,6 @@ Semi-Engine for [**Roblox-TS**](https://roblox-ts.com/) made by [*GGC Studios*.]
 > Contains code used in Roblox Downstreets.
 > Framework unfinished!
 
-### Client controller
-Required functions: ( Called from `client/main.client.ts` )
-- `Init(): void` - Yields
-- `Start(): void` - Coroutine called
-- `Update(): void` - Called every frame
-- `FixedUpdate(): void` - Called every frame at 60FPS
----
 ### Network
 `shared/network.ts` houses all the networking components.
 Components can be created with the classes:

@@ -127,8 +127,7 @@ function RenderMessage(Mode: ConsoleMessageType, Content: string) {
 //=============================================================================
 // Interface
 //=============================================================================
-const ConsoleScreenGui = Folders.Storage.UserInterface.FindFirstChild('Console') as ScreenGui;
-const ConsoleWindow = ConsoleScreenGui.FindFirstChild('Window') as Frame;
+const ConsoleWindow = Player.WaitForChild('PlayerGui').WaitForChild('Main').FindFirstChild('ConsoleWindow') as Frame;
 const ConsoleContent = ConsoleWindow.FindFirstChild('Content') as ScrollingFrame;
 const ConsoleLogPrefab = ConsoleContent.FindFirstChild('LogPrefab') as TextLabel;
 
@@ -137,8 +136,7 @@ const ConsoleInputUsername = ConsoleInputFrame.FindFirstChildOfClass('TextLabel'
 const ConsoleInputBox = ConsoleInputFrame.FindFirstChildOfClass('TextBox')!;
 
 ConsoleLogPrefab.Visible = false;
-ConsoleScreenGui.Enabled = false;
-ConsoleScreenGui.Parent = Player.WaitForChild('PlayerGui');
+ConsoleWindow.Visible = false;
 
 function getnextindex(): number {
 	let av_index = 1;
@@ -238,10 +236,10 @@ ClientCommands.set('echo', function (content: string) {
 	RenderMessage('Info', content);
 });
 ClientCommands.set('close', function (content: string) {
-	ConsoleScreenGui.Enabled = false;
+	ConsoleWindow.Visible = false;
 });
 ClientCommands.set('exit', function (content: string) {
-	ConsoleScreenGui.Enabled = false;
+	ConsoleWindow.Visible = false;
 });
 ClientCommands.set('version', function (content: string) {
 	RenderMessage('Info', `Game: "${placeinfo.name}" ver. ${placeinfo.version}`);
@@ -254,12 +252,12 @@ UserInputService.InputBegan.Connect((input, unavaiable) => {
 		input.KeyCode === Enum.KeyCode.Insert ||
 		input.KeyCode === Enum.KeyCode.F2
 	) {
-		ConsoleScreenGui.Enabled = !ConsoleScreenGui.Enabled;
+		ConsoleWindow.Visible = !ConsoleWindow.Visible;
 	}
 });
 
-ConsoleScreenGui.GetPropertyChangedSignal('Enabled').Connect(() => {
-	if (ConsoleScreenGui.Enabled) {
+ConsoleWindow.GetPropertyChangedSignal('Visible').Connect(() => {
+	if (ConsoleWindow.Visible) {
 		ConsoleInputBox.TextEditable = true;
 		ConsoleInputBox.CaptureFocus();
 		Values.CCameraUnlock.set('Console', true);
