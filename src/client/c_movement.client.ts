@@ -16,13 +16,14 @@ import Signals from './providers/signals';
 import Values from './providers/values';
 import { ConVar, GetCVar } from 'shared/components/vars';
 import { Input } from './modules/input';
+import { Folders } from 'shared/global_resources';
 
 const UserInputService = game.GetService('UserInputService');
 const StarterPlayer = game.GetService('StarterPlayer');
 const RunService = game.GetService('RunService');
 const Workspace = game.GetService('Workspace');
 
-let LastWrldDir = new Vector3();
+let LastDirection = new Vector3();
 let FrameTime = 0;
 let Grounded = false;
 let Jumping = false;
@@ -44,7 +45,28 @@ const Directions = new Map<Input, Enum.NormalId>([
 ]);
 const JumpKeybind = new Input('jump');
 
+const GroundCheckParams = new OverlapParams();
+GroundCheckParams.FilterDescendantsInstances = [Folders.World.Map.Parts];
+GroundCheckParams.MaxParts = 1;
+GroundCheckParams.FilterType = Enum.RaycastFilterType.Whitelist;
+
 Signals.Start.Wait();
+
+function IsGrounded(): boolean {
+	if (!Values.Character.CollisionBox) return false;
+
+	const CollisionBox_Size_Y = Values.Character.CollisionBox.Size.Y;
+	const CollisionBox_CFrame = Values.Character.CollisionBox.CFrame;
+
+	const cast = Workspace.GetPartBoundsInBox(
+		new CFrame(CollisionBox_CFrame.Position).sub(new Vector3(0, CollisionBox_Size_Y / 2, 0)),
+		new Vector3(1.5, 0.25, 1.5),
+		GroundCheckParams,
+	);
+
+	if (cast.size() > 0) return true;
+	return false;
+}
 
 RunService.Heartbeat.Connect(() => {
 	if (Values.Character.CollisionBox)
@@ -77,24 +99,23 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	if (FrameTime < 1 / 60) return;
 	FrameTime = 0;
 
-	Grounded = CollisionBox.AssemblyLinearVelocity.Y * math.sign(CollisionBox.AssemblyLinearVelocity.Y) <= 2; //CollisionBoxFloorCheck();
+	const Velocity = CollisionBox.AssemblyLinearVelocity;
+	Grounded = IsGrounded();
 
 	let wish_velocity = 0;
 	const vel = math.round(CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1)).Magnitude);
 	if (Grounded) {
-		if (Jumping) {
-			if (!NextFrameSkipJump) {
-				Jumping = false;
-				CollisionBox.AssemblyLinearVelocity = CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1));
-			} else NextFrameSkipJump = false;
-		} else {
+		if (Jumping) NextFrameSkipJump === false ? (Jumping = false) : (NextFrameSkipJump = false);
+		else {
 			if (WishDir.Magnitude > 0) {
 				wish_velocity = StarterPlayer.CharacterWalkSpeed;
-				LastWrldDir = WorldDirection;
+				LastDirection = WorldDirection;
 			}
 
-			CollisionBox.Force.LineDirection = WorldDirection;
-			CollisionBox.Force.LineVelocity = wish_velocity;
+			CollisionBox.Force.LineDirection = LastDirection;
+			Velocity.Magnitude < wish_velocity
+				? (CollisionBox.Force.LineVelocity = wish_velocity)
+				: (CollisionBox.Force.LineVelocity = 0);
 		}
 	}
 
