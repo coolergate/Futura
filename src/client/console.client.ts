@@ -125,7 +125,7 @@ function RenderMessage(Mode: ConsoleMessageType, Content: string) {
 }
 
 //=============================================================================
-// Build interface
+// Interface
 //=============================================================================
 const ConsoleScreenGui = Folders.Storage.UserInterface.FindFirstChild('Console') as ScreenGui;
 const ConsoleWindow = ConsoleScreenGui.FindFirstChild('Window') as Frame;
