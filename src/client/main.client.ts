@@ -56,7 +56,7 @@ const LoadingInterfaceCanvas = InterfaceHolder.FindFirstChild('LoadingOverlay') 
 				CurrentTween?.Destroy();
 				CurrentTween = undefined;
 			} else task.wait();
-		} while (Player.WaitForChild('PlayerGui').FindFirstChild('Loading') !== undefined);
+		} while (LoadingInterfaceCanvas !== undefined);
 	})();
 }
 
