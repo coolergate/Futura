@@ -113,7 +113,7 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 			}
 
 			CollisionBox.Force.LineDirection = LastDirection;
-			Velocity.Magnitude < wish_velocity
+			Velocity.Magnitude <= wish_velocity
 				? (CollisionBox.Force.LineVelocity = wish_velocity)
 				: (CollisionBox.Force.LineVelocity = 0);
 		}
