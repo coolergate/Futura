@@ -48,12 +48,12 @@ const HealthMeter = GameplayFrame.FindFirstChild('Health') as BaseBasicMeter;
 const LevelXPMeter = GameplayFrame.FindFirstChild('UserLvl') as BaseBasicMeter;
 const Crosshair = OverlayFrame.FindFirstChild('Crosshair') as ImageLabel;
 
-RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, (dt) => {
+RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, dt => {
 	const Character = Values.Character;
 	GameplayFrame.Visible = Character !== undefined && Character.Health > 0;
 });
 
-RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, (dt) => {
+RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, dt => {
 	const Character = Values.Character;
 	if (!GameplayFrame.Visible || !Character) return;
 
@@ -65,12 +65,12 @@ RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, (d
 	HealthMeter.Amount.Text = `${tostring(CurrentHealth)}/${tostring(CurerntMaxHealth)}`;
 });
 
-RunService.BindToRenderStep('interface_overlay', RenderPriorities.Interface, (dt) => {
+RunService.BindToRenderStep('interface_overlay', RenderPriorities.Interface, dt => {
 	UserInputService.MouseIconEnabled = !Values.CCameraUnlock.isEmpty() || Values.Character.CollisionBox === undefined;
 	Crosshair.Visible = UserInputService.MouseIconEnabled === false && cl_crosshair.value === 1;
 });
 
-RunService.RenderStepped.Connect((dt) => {
+RunService.RenderStepped.Connect(dt => {
 	if (cl_showfps.value === 1) {
 		let fps_meter_label = OverlayFrame.FindFirstChild('showfps') as TextLabel | undefined;
 		if (!fps_meter_label) {

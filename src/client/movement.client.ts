@@ -75,7 +75,7 @@ RunService.Heartbeat.Connect(() => {
 
 let LastVel = 0;
 
-RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement, (dt) => {
+RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement, dt => {
 	if (!Values.Character.CollisionBox) return;
 
 	const CollisionBox = Values.Character.CollisionBox;

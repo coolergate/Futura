@@ -53,7 +53,7 @@ RunService.BindToRenderStep('CCameraInput', RenderPriorities.CameraInput, () => 
 	CameraRotation = new Vector2(rotation_x, rotation_y);
 });
 
-RunService.BindToRenderStep('CCameraRender', RenderPriorities.CameraRender, (dt) => {
+RunService.BindToRenderStep('CCameraRender', RenderPriorities.CameraRender, dt => {
 	Camera!.CameraType = Enum.CameraType.Scriptable;
 	if (Values.Character.CollisionBox === undefined) return;
 

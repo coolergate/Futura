@@ -32,7 +32,7 @@ Net_RecieveCommand.OnServerInvoke = (player, command, args) => {
 
 	let equivalent_convar: ConVar<unknown> | undefined;
 
-	CreatedVars.forEach((cvar) => {
+	CreatedVars.forEach(cvar => {
 		if (equivalent_convar !== undefined) return;
 		if (cvar.attributes.has('ClientAccess') && cvar.name === command) equivalent_convar = cvar;
 	});
@@ -48,7 +48,7 @@ Net_RecieveCommand.OnServerInvoke = (player, command, args) => {
 
 Network.Console_GetServerArgs.OnServerInvoke = () => {
 	const list = new Array<string>();
-	CreatedVars.forEach((convar) => {
+	CreatedVars.forEach(convar => {
 		if (convar.attributes.has('ClientAccess')) list.insert(0, convar.name);
 	});
 	return list;

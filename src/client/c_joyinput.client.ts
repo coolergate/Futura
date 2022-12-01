@@ -21,7 +21,7 @@ const Thumbstick1 = new ConVar('joy_thumbstick1', new Vector3(), '', ['Hidden'])
 const Thumbstick2 = new ConVar('joy_thumbstick2', new Vector3(), '', ['Hidden']);
 
 RunService.BindToRenderStep('joy_input', RenderPriorities.UserInput + 1, () => {
-	UserInputService.GetGamepadState('Gamepad1').forEach((obj) => {
+	UserInputService.GetGamepadState('Gamepad1').forEach(obj => {
 		// thumbsticks
 		if (obj.KeyCode.Name === 'Thumbstick1') {
 			if (obj.Position.Magnitude < thumbsticks_deadzone.value) obj.Position = new Vector3();

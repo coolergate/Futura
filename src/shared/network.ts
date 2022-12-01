@@ -46,13 +46,13 @@ class Remote<headers extends unknown[]> {
 	OnServerPost = undefined as ((user: Player, ...args: headers) => void) | undefined;
 	PostClient(users: Player[], ...data: headers) {
 		assert(RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
-		users.forEach((user) => {
+		users.forEach(user => {
 			this.Instance.FireClient(user, ...data);
 		});
 	}
 	PostAllClients(block: Player[] | undefined, ...data: headers) {
 		assert(RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
-		Players.GetPlayers().forEach((user) => {
+		Players.GetPlayers().forEach(user => {
 			if (block !== undefined && block.includes(user)) return;
 			this.Instance.FireClient(user, ...data);
 		});
@@ -89,7 +89,7 @@ class Function<headers extends unknown[], response> {
 	// * Server
 	OnServerInvoke = undefined as ((user: Player, ...args: headers) => response) | undefined;
 	InvokeClient(user: Player, ...data: headers) {
-		return new Promise<response>((resolve) => {
+		return new Promise<response>(resolve => {
 			resolve(this.Instance.InvokeClient(user, ...data) as response);
 		});
 	}
@@ -97,7 +97,7 @@ class Function<headers extends unknown[], response> {
 	// * Client
 	OnClientInvoke = undefined as ((...args: headers) => response) | undefined;
 	InvokeServer(...args: headers) {
-		return new Promise<response>((resolve) => {
+		return new Promise<response>(resolve => {
 			resolve(this.Instance.InvokeServer(...args));
 		});
 	}

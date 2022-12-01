@@ -34,8 +34,8 @@ const ClientCommands = new Map<string, Callback>();
 const ServerCommands = new Array<string>();
 
 function update_server_commands() {
-	net_GetCommands.InvokeServer().andThen((list) => {
-		list.forEach((str) => {
+	net_GetCommands.InvokeServer().andThen(list => {
+		list.forEach(str => {
 			if (!ServerCommands.includes(str)) ServerCommands.insert(0, str);
 		});
 		ServerCommands.forEach((str, index) => {
@@ -98,7 +98,7 @@ function RenderMessage(Mode: ConsoleMessageType, Content: string) {
 	}
 
 	if (CustomColorSplit.size() > 0)
-		CustomColorSplit.forEach((str) => {
+		CustomColorSplit.forEach(str => {
 			const to_number = tonumber(str.sub(1, 1));
 			if (to_number === undefined) FinalMessage = FinalMessage + str;
 			else {
@@ -140,7 +140,7 @@ ConsoleWindow.Visible = false;
 
 function getnextindex(): number {
 	let av_index = 1;
-	ConsoleContent.GetChildren().forEach((inst) => {
+	ConsoleContent.GetChildren().forEach(inst => {
 		if (inst !== ConsoleLogPrefab && inst !== ConsoleInputFrame && (inst.IsA('TextLabel') || inst.IsA('Frame'))) {
 			if (inst.LayoutOrder >= av_index) av_index = inst.LayoutOrder + 1;
 		}
@@ -223,7 +223,7 @@ function Handle(content: string) {
 }
 
 ClientCommands.set('clear', function () {
-	ConsoleContent.GetChildren().forEach((inst) => {
+	ConsoleContent.GetChildren().forEach(inst => {
 		if ((inst.IsA('TextLabel') || inst.IsA('Frame')) && inst !== ConsoleInputFrame && inst !== ConsoleLogPrefab)
 			inst.Destroy();
 	});
@@ -268,7 +268,7 @@ ConsoleWindow.GetPropertyChangedSignal('Visible').Connect(() => {
 	}
 });
 
-ConsoleInputBox.FocusLost.Connect((enterPressed) => {
+ConsoleInputBox.FocusLost.Connect(enterPressed => {
 	ConsoleInputBox.TextEditable = false;
 	const content = ConsoleInputBox.Text;
 	if (enterPressed) {

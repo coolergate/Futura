@@ -27,7 +27,7 @@ export class LocalFunction<headers extends unknown[], response> {
 
 	Call(...args: headers) {
 		assert(this.Handle, 'LocalFunction Handle callback has not been defined.');
-		return new Promise<response>((resolve) => {
+		return new Promise<response>(resolve => {
 			resolve(this.Handle!(...args));
 		});
 	}

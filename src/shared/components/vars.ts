@@ -19,7 +19,7 @@ export class ConVar<T> {
 		this.original_value = value;
 
 		this.attributes = new Map();
-		attributes?.forEach((attr) => {
+		attributes?.forEach(attr => {
 			this.attributes.set(attr, true);
 		});
 
@@ -37,7 +37,7 @@ declare global {
 
 export function GetCVar(name: string) {
 	let equivalent: ConVar<unknown> | undefined;
-	CreatedVars.forEach((cvar) => {
+	CreatedVars.forEach(cvar => {
 		if (equivalent) return;
 		if (cvar.name === name) equivalent = cvar;
 	});

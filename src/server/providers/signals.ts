@@ -1,5 +1,4 @@
 import { LocalSignal, LocalFunction } from 'shared/local_network';
-import { ConVar } from 'shared/components/vars';
 
 const Signals = {
 	PlayerAdded: new LocalSignal<[id: number, data: PlayerData]>(),

@@ -224,7 +224,7 @@ function GenerateInfoFromPlayerController(controller: PlayerEntity): PlayerEntit
 
 // When a player sends a respawn request, the server will search for an avaiable controller
 // If none is found then wait until one is free
-Client_RespawnRequest.OnServerInvoke = (player) => {
+Client_RespawnRequest.OnServerInvoke = player => {
 	let Controller: PlayerEntity | undefined;
 	do {
 		let cancel_search = false;

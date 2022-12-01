@@ -28,7 +28,7 @@ while (ReplicatedStorage.GetAttribute('Running') !== true);
 //=============================================================================
 import { Folders } from 'shared/global_resources';
 
-Folders.Storage.UserInterface.GetChildren().forEach((element) => {
+Folders.Storage.UserInterface.GetChildren().forEach(element => {
 	if (element.IsA('ScreenGui')) {
 		element.Enabled = true;
 		element.Parent = PlayerGui;
@@ -102,7 +102,7 @@ const Components = new Array<ComponentInfo>();
 const BuiltComponents = new Array<BaseClientComponent>();
 
 // Add components
-Folder.GetChildren().forEach((inst) => {
+Folder.GetChildren().forEach(inst => {
 	if (!inst.IsA('ModuleScript')) return;
 	const module = require(inst) as BaseComponentBuilder;
 	const info: ComponentInfo = {
@@ -118,17 +118,17 @@ Components.sort((a, b) => {
 });
 
 // Init
-Components.forEach((v) => {
+Components.forEach(v => {
 	const build = v.Module.Init();
 	BuiltComponents.insert(0, build);
 });
 
-BuiltComponents.forEach((component) =>
+BuiltComponents.forEach(component =>
 	coroutine.wrap(() => {
 		component.Start();
 
 		let FrameTime = 0;
-		RunService.RenderStepped.Connect((dt) => {
+		RunService.RenderStepped.Connect(dt => {
 			FrameTime += dt;
 			if (FrameTime < 1 / 60) return;
 			FrameTime = 0;

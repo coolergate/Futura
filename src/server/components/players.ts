@@ -47,12 +47,12 @@ declare global {
 // Functions
 //=============================================================================
 
-Server_GetDataFromPlayer.Handle = (userid) => {
+Server_GetDataFromPlayer.Handle = userid => {
 	if (!playerlist.has(userid)) print(userid, 'doesnt exist');
 	return playerlist.get(userid);
 };
 
-Client_PlayerLogin.OnServerInvoke = (player) => {
+Client_PlayerLogin.OnServerInvoke = player => {
 	print('login attempt.', player);
 	if (playerlist.has(player.UserId)) return;
 	let PlayerData: PlayerData = {
@@ -75,7 +75,7 @@ Client_PlayerLogin.OnServerInvoke = (player) => {
 	if (sv_playerjoin_log.value === true) Client_PlayerJoined.PostAllClients([], player.DisplayName);
 };
 
-Players.PlayerRemoving.Connect((player) => {
+Players.PlayerRemoving.Connect(player => {
 	if (sv_playerjoin_log.value === true) Client_PlayerLeft.PostAllClients([], player.DisplayName);
 	Server_PlayerRemoved.Fire(player.UserId, playerlist.get(player.UserId)!);
 });

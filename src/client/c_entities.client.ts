@@ -53,7 +53,7 @@ function CreateHumanoidModelFromDescription(Description = DefDescription) {
 	HumanoidRootPart.Anchored = true;
 	HumanoidRootPart.CFrame = new CFrame(0, 10000, 0);
 
-	CharacterModel.GetChildren().forEach((inst) => {
+	CharacterModel.GetChildren().forEach(inst => {
 		if (inst.IsA('Accessory') || inst.IsA('Hat')) {
 			const Handle = inst.FindFirstChildWhichIsA('BasePart');
 			if (!Handle) return;
@@ -85,7 +85,7 @@ Signals.Character_SendRespawnRequest.Handle = function () {
 	return true;
 };
 
-Server_EntityUpdated.OnClientPost = (Info) => {
+Server_EntityUpdated.OnClientPost = Info => {
 	// Check health
 	if (Info.Health !== Values.Character.Health) {
 		if (Info.Health === 0) {
