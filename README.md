@@ -1,8 +1,27 @@
-# Ralmak SDK
-Semi-Engine for [**Roblox-TS**](https://roblox-ts.com/) made by [*GGC Studios*.](https://www.roblox.com/groups/8549176/Galera-Galeruda-Community) *( Named after Halmak layout )*
-> Contains code used in Roblox Downstreets.
+# Futura SDK
+Semi-Engine made for [**Roblox-TS**](https://roblox-ts.com/)
+> Contains code used in Downstreets.
 > Framework unfinished!
 
+### Client components
+`client/components` houses all the components to be executed client-side
+
+Components must have the following functions:
+- `Init(): void`
+- `InitOrder: const number`
+- Component class
+- - `Start(): void`
+- - `Update(): void`
+
+`Init()` is called accordingly to InitOrder, required to build the class
+
+`Start()` is called in sync with other components, starting them all at the same time
+
+`Update()` is called in a fixed 60FPS rate, devices with lower framerates will increase the time between calls
+
+`client/component/prefab.ts` for more info.
+
+---
 ### Network
 `shared/network.ts` houses all the networking components.
 Components can be created with the classes:
@@ -46,6 +65,6 @@ export const variable_name = new Function<[username: string], boolean>();
 variable_name.OnServerInvoke = (user, data) => {}
 
 // client
-variable_name.InvokeServer(args).await() // .await() because it's a promise
+variable_name.InvokeServer(args).await() // .await() for it being a promise
 ```
 ---
