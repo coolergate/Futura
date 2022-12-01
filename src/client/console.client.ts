@@ -11,16 +11,11 @@
 
 import Signals from './providers/signals';
 import { ConVar, CreatedVars } from 'shared/components/vars';
-import { Folders } from 'shared/global_resources';
 import placeinfo from 'shared/components/placeinfo';
 import Values from 'client/providers/values';
 import Network from 'shared/network';
 
-const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const UserInputService = game.GetService('UserInputService');
-const ContentProvider = game.GetService('ContentProvider');
-const ReplicatedFirst = game.GetService('ReplicatedFirst');
-const StarterGui = game.GetService('StarterGui');
 const Player = game.GetService('Players').LocalPlayer;
 
 const net_ConsoleArg = Network.Console_SendArg;
@@ -70,17 +65,19 @@ const custom_colors = new Map<number, Color3>([
 	[7, new Color3(1, 1, 1)], // white (default)
 ]);
 
-function RenderMessage(Mode: ConsoleMessageType, Content: string) {
+function Print(Mode: ConsoleMessageType, Content: string) {
 	const CustomColorSplit = Content.split('^');
 	let FinalMessage = '';
-	let Color: Color3;
+	let Color = Color3.fromRGB(200, 200, 200);
 	switch (Mode) {
 		case 'Error': {
 			Color = Color3.fromRGB(255, 170, 170);
+			FinalMessage = '[!] ';
 			break;
 		}
 		case 'Warn': {
 			Color = Color3.fromRGB(255, 255, 180);
+			FinalMessage = '[*] ';
 			break;
 		}
 		case 'Chat': {
@@ -88,13 +85,12 @@ function RenderMessage(Mode: ConsoleMessageType, Content: string) {
 			break;
 		}
 		case 'UserInput': {
-			FinalMessage = `<font color="#${ConsoleInputUsername.TextColor3.ToHex()}">${
-				ConsoleInputUsername.Text
-			}</font>`;
+			FinalMessage = '> ';
 			break;
 		}
-		default:
-			Color = Color3.fromRGB(255, 255, 180);
+		default: {
+			FinalMessage = '[-] ';
+		}
 	}
 
 	if (CustomColorSplit.size() > 0)
@@ -112,43 +108,60 @@ function RenderMessage(Mode: ConsoleMessageType, Content: string) {
 		});
 	else FinalMessage = Content;
 
-	const prefab = ConsoleLogPrefab.Clone();
+	const prefab = LogPrefab.Clone();
 	prefab.Visible = true;
-	prefab.Parent = ConsoleContent;
-	prefab.LayoutOrder = getnextindex();
+	prefab.Parent = LogContent;
+	prefab.LayoutOrder = Log_GetNextIndex();
 	prefab.Name = '';
 	prefab.Text = FinalMessage;
+	prefab.TextColor3 = Color;
 
 	LoggedMessages.insert(0, prefab);
 
-	ConsoleContent.CanvasPosition = new Vector2(0, 1e23);
+	LogContent.CanvasPosition = new Vector2(0, 1e23);
 }
 
 //=============================================================================
 // Interface
 //=============================================================================
-const ConsoleWindow = Player.WaitForChild('PlayerGui').WaitForChild('Main').FindFirstChild('ConsoleWindow') as Frame;
-const ConsoleContent = ConsoleWindow.FindFirstChild('Content') as ScrollingFrame;
-const ConsoleLogPrefab = ConsoleContent.FindFirstChild('LogPrefab') as TextLabel;
+const Window = Player.WaitForChild('PlayerGui').WaitForChild('Main').FindFirstChild('ConsoleWindow') as Frame;
+const LogContent = Window.FindFirstChildOfClass('ScrollingFrame')!;
+const LogPrefab = LogContent.FindFirstChild('LogPrefab') as TextLabel;
 
-const ConsoleInputFrame = ConsoleWindow.FindFirstChild('InputFrame') as Frame;
-const ConsoleInputUsername = ConsoleInputFrame.FindFirstChildOfClass('TextLabel')!;
-const ConsoleInputBox = ConsoleInputFrame.FindFirstChildOfClass('TextBox')!;
+const InputBox = Window.FindFirstChild('InputFrame')!.FindFirstChildOfClass('TextBox')!;
 
-ConsoleLogPrefab.Visible = false;
-ConsoleWindow.Visible = false;
+const SuggestionsFrame = Window.FindFirstChild('SuggestionFrame') as Frame;
+const SuggestionPrefab = SuggestionsFrame.FindFirstChild('SuggestionPrefab') as TextLabel;
 
-function getnextindex(): number {
-	let av_index = 1;
-	ConsoleContent.GetChildren().forEach(inst => {
-		if (inst !== ConsoleLogPrefab && inst !== ConsoleInputFrame && (inst.IsA('TextLabel') || inst.IsA('Frame'))) {
-			if (inst.LayoutOrder >= av_index) av_index = inst.LayoutOrder + 1;
+Window.Visible = false;
+LogPrefab.Visible = false;
+SuggestionsFrame.Visible = false; // to be changed later
+
+function Log_GetNextIndex(): number {
+	let next_index = 1;
+	LogContent.GetChildren().forEach(inst => {
+		if (inst !== LogPrefab && inst.IsA('TextLabel')) {
+			if (inst.LayoutOrder >= next_index) next_index = inst.LayoutOrder + 1;
 		}
 	});
-	return av_index;
+	return next_index;
 }
 
-function Handle(content: string) {
+function LogMessage_CVarInfo(cvar: ConVar<unknown>) {
+	let description = cvar.description;
+	let attributes = '';
+
+	cvar.attributes.forEach((_, key) => {
+		attributes = attributes + key + ', ';
+	});
+	if (description === '') description = 'None';
+
+	Print('Info', `${cvar.name} is:"${tostring(cvar.value)}", default:"${cvar.original_value}"`);
+	Print('Info', `Attributes: ${attributes}`);
+	Print('Info', `Desc: ${description}`);
+}
+
+function Handle_Command(content: string) {
 	const args = content.split(' ');
 	const command = tostring(args[0]);
 	args.remove(0);
@@ -158,25 +171,12 @@ function Handle(content: string) {
 	});
 	if (equivalent_ConVar && !equivalent_ConVar.attributes.has('Hidden')) {
 		if (args[0] === undefined) {
-			let description = equivalent_ConVar.description;
-			let attributes = '';
-
-			equivalent_ConVar.attributes.forEach((_, key) => {
-				attributes = attributes + key + ', ';
-			});
-			if (description === '') description = 'None';
-
-			RenderMessage(
-				'Info',
-				`${equivalent_ConVar.name} is:"${equivalent_ConVar.value}", default:"${equivalent_ConVar.original_value}"`,
-			);
-			RenderMessage('Info', `Attributes: ${attributes}`);
-			RenderMessage('Info', `Desc: ${equivalent_ConVar.description}`);
+			LogMessage_CVarInfo(equivalent_ConVar);
 			return;
 		}
 
 		if (equivalent_ConVar.attributes.has('Readonly')) {
-			RenderMessage('Error', 'Variable is read-only.');
+			Print('Error', 'Variable is read-only.');
 			return;
 		}
 
@@ -184,7 +184,7 @@ function Handle(content: string) {
 			case 'number': {
 				const attempt = tonumber(args[0]);
 				if (attempt === undefined) {
-					RenderMessage('Error', `Value must be a "${equivalent_ConVar.value_type}", got "string" !`);
+					Print('Error', `Value must be a "${equivalent_ConVar.value_type}", got "string" !`);
 					return;
 				}
 				equivalent_ConVar.value = attempt;
@@ -195,8 +195,21 @@ function Handle(content: string) {
 				func(args);
 				break;
 			}
+			case 'boolean': {
+				const arg = args[0];
+				let final_value: boolean | undefined;
+
+				if (arg === 'true') final_value = true;
+				if (arg === 'false') final_value = false;
+				if (final_value === undefined) {
+					Print('Error', `Unknown value, boolean expected. Got: ${tostring(type(final_value))}`);
+					break;
+				}
+				equivalent_ConVar.value = final_value;
+				break;
+			}
 			default: {
-				RenderMessage('Error', `Variable has unknown value type. "${equivalent_ConVar.value_type}"`);
+				Print('Error', `Variable has unknown value type. "${equivalent_ConVar.value_type}"`);
 			}
 		}
 
@@ -214,35 +227,34 @@ function Handle(content: string) {
 	if (ServerCommands.includes(command)) {
 		const [server_recieved, response] = net_ConsoleArg.InvokeServer(command, [args[0] as string]).await();
 		if (response !== undefined) {
-			RenderMessage('Info', tostring(response));
+			Print('Info', tostring(response));
 			return;
 		}
 	}
 
-	RenderMessage('Error', 'Unknown or restricted command');
+	Print('Error', 'Unknown or restricted command');
 }
 
 ClientCommands.set('clear', function () {
-	ConsoleContent.GetChildren().forEach(inst => {
-		if ((inst.IsA('TextLabel') || inst.IsA('Frame')) && inst !== ConsoleInputFrame && inst !== ConsoleLogPrefab)
-			inst.Destroy();
+	LogContent.GetChildren().forEach(inst => {
+		if (inst.IsA('TextLabel') && inst !== LogPrefab) inst.Destroy();
 	});
 });
 ClientCommands.set('say', function (content: string) {
 	net_ConsoleArg.InvokeServer('say', [content]);
-	RenderMessage('Chat', `${Player.DisplayName}: ${content}`);
+	Print('Chat', `${Player.DisplayName}: ${content}`);
 });
 ClientCommands.set('echo', function (content: string) {
-	RenderMessage('Info', content);
+	Print('Info', content);
 });
 ClientCommands.set('close', function (content: string) {
-	ConsoleWindow.Visible = false;
+	Window.Visible = false;
 });
 ClientCommands.set('exit', function (content: string) {
-	ConsoleWindow.Visible = false;
+	Window.Visible = false;
 });
 ClientCommands.set('version', function (content: string) {
-	RenderMessage('Info', `Game: "${placeinfo.name}" ver. ${placeinfo.version}`);
+	Print('Info', `Game: "${placeinfo.name}" ver. ${placeinfo.version}`);
 });
 ClientCommands.set('setsize', function (content: string) {});
 
@@ -252,35 +264,35 @@ UserInputService.InputBegan.Connect((input, unavaiable) => {
 		input.KeyCode === Enum.KeyCode.Insert ||
 		input.KeyCode === Enum.KeyCode.F2
 	) {
-		ConsoleWindow.Visible = !ConsoleWindow.Visible;
+		Window.Visible = !Window.Visible;
 	}
 });
 
-ConsoleWindow.GetPropertyChangedSignal('Visible').Connect(() => {
-	if (ConsoleWindow.Visible) {
-		ConsoleInputBox.TextEditable = true;
-		ConsoleInputBox.CaptureFocus();
+Window.GetPropertyChangedSignal('Visible').Connect(() => {
+	if (Window.Visible) {
+		InputBox.TextEditable = true;
+		InputBox.CaptureFocus();
 		Values.CCameraUnlock.set('Console', true);
 	} else {
-		ConsoleInputBox.ReleaseFocus();
-		ConsoleInputBox.TextEditable = false;
+		InputBox.ReleaseFocus();
+		InputBox.TextEditable = false;
 		Values.CCameraUnlock.delete('Console');
 	}
 });
 
-ConsoleInputBox.FocusLost.Connect(enterPressed => {
-	ConsoleInputBox.TextEditable = false;
-	const content = ConsoleInputBox.Text;
+InputBox.FocusLost.Connect(enterPressed => {
+	InputBox.TextEditable = false;
+	const content = InputBox.Text;
 	if (enterPressed) {
-		RenderMessage('UserInput', content);
-		Handle(content);
+		Print('UserInput', content);
+		Handle_Command(content);
 	}
 
-	ConsoleInputBox.TextEditable = true;
+	InputBox.TextEditable = true;
 	if (enterPressed) {
 		task.wait();
-		ConsoleInputBox.CaptureFocus();
+		InputBox.CaptureFocus();
 		task.wait();
-		ConsoleInputBox.Text = '';
+		InputBox.Text = '';
 	}
 });
