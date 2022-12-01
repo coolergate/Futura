@@ -70,7 +70,74 @@ task.wait(2);
 ContentProvider.PreloadAsync(ReplicatedStorage.GetDescendants());
 Network.PlayerLogin.InvokeServer().await();
 
-Signals.Start.Fire();
+//=============================================================================
+// Components
+//=============================================================================
+declare global {
+	interface BaseClientComponent {
+		/**
+		 * Called in sync with other scripts
+		 */
+		Start(): void;
+
+		/**
+		 * Called every renderstepped when it matches 60FPS
+		 */
+		Update(): void;
+	}
+}
+interface BaseComponentBuilder {
+	InitOrder: number;
+	Init(): BaseClientComponent;
+}
+interface ComponentInfo {
+	Name: string;
+	InitOrder: number;
+	Started: boolean;
+	Module: BaseComponentBuilder;
+}
+
+const Folder = Player.WaitForChild('PlayerScripts').WaitForChild('TS').FindFirstChild('components') as Folder;
+const Components = new Array<ComponentInfo>();
+const BuiltComponents = new Array<BaseClientComponent>();
+
+// Add components
+Folder.GetChildren().forEach((inst) => {
+	if (!inst.IsA('ModuleScript')) return;
+	const module = require(inst) as BaseComponentBuilder;
+	const info: ComponentInfo = {
+		Name: inst.Name,
+		InitOrder: module.InitOrder,
+		Started: false,
+		Module: module,
+	};
+	Components.insert(0, info);
+});
+Components.sort((a, b) => {
+	return a.InitOrder < b.InitOrder;
+});
+
+// Init
+Components.forEach((v) => {
+	const build = v.Module.Init();
+	BuiltComponents.insert(0, build);
+});
+
+BuiltComponents.forEach((component) =>
+	coroutine.wrap(() => {
+		component.Start();
+
+		let FrameTime = 0;
+		RunService.RenderStepped.Connect((dt) => {
+			FrameTime += dt;
+			if (FrameTime < 1 / 60) return;
+			FrameTime = 0;
+			component.Update();
+		});
+	})(),
+);
+
+Signals.Start.Fire(); // start non-modules
 task.wait(1);
 
 const LoadingScreenFadeOut = TweenService.Create(LoadingInterfaceCanvas, new TweenInfo(0.5), { GroupTransparency: 1 });

@@ -3,5 +3,8 @@
 	"tabWidth": 4,
 	"trailingComma": "all",
 	"useTabs": true,
-	"singleQuote": true
+	"singleQuote": true,
+	"arrowParens": "avoid",
+	"bracketSpacing": true,
+	"endOfLine": "auto"
 }
