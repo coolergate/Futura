@@ -11,11 +11,15 @@
 //
 // * Required parameters:
 // * - Init(): BaseClientComponent
-// * - InitOrder: number
+// * - InitOrder: number'
+
+import * as AllServices from '@rbxts/services';
 
 class Component implements BaseClientComponent {
+	Player = AllServices.Players.LocalPlayer;
+
 	constructor() {
-		print('component init');
+		print('component init.');
 	}
 	Start(): void {
 		print('component start.');
