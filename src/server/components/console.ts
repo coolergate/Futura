@@ -1,55 +1,46 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
-// Purpose: Handle commands being sent from client's console and as well the chat.
+// Author: coolergate#2031
+// Purpose:
 
-import { ConVar, CreatedVars } from 'shared/components/vars';
-import Signals from '../providers/signals';
-const Server_GetDataFromPlayer = Signals.GetPlayerDataFromUserId;
-
+import * as Services from '@rbxts/services';
 import Network from 'shared/network';
-const Net_RecieveCommand = Network.Console_SendArg;
-const Net_ChatRecieve = Network.Chat_Revieve;
-const Net_ChatSend = Network.Chat_Send;
+import Signals from 'server/providers/signals';
+import { ConVar, CreatedVars } from 'shared/components/vars';
 
-interface ServerBoundCommand {
-	name: string;
-	userlevel: number;
-	callback: Callback;
+class Component implements BaseServerComponent {
+	Network = {
+		Console_Recieve: Network.Console_SendArg,
+		Chat_Recieve: Network.Chat_Revieve,
+		Chat_Send: Network.Chat_Send,
+		GetServerCmds: Network.Console_GetServerArgs,
+	};
+
+	Server_GetDataFromPlayer = Signals.GetPlayerDataFromUserId;
+
+	constructor() {
+		this.Network.Console_Recieve.OnServerInvoke = (user, command, args) => {
+			if (command === undefined || args === undefined) return;
+
+			let equivalent_convar: ConVar<unknown> | undefined;
+			CreatedVars.forEach(cvar => {
+				if (equivalent_convar !== undefined) return;
+				if (cvar.attributes.has('ClientAccess') && cvar.name === command) equivalent_convar = cvar;
+			});
+
+			if (equivalent_convar && type(equivalent_convar.value) === 'function') {
+				const callback = equivalent_convar.value as (...args: unknown[]) => string;
+				const data = Signals.GetPlayerDataFromUserId.Call(user.UserId).await()[1] as PlayerData | undefined;
+				if (!data) return '[!] Unable to retrieve player data';
+				return callback(user.UserId, args);
+			}
+
+			if (command === 'testnoreply') return '';
+		};
+	}
+	Start(): void {}
 }
 
-Net_RecieveCommand.OnServerInvoke = (player, command, args) => {
-	if (command === undefined || args === undefined) return;
+export function Init() {
+	return new Component();
+}
 
-	const userdata = Server_GetDataFromPlayer.Call(player.UserId).await()[1] as PlayerData | undefined;
-	if (!userdata) return 'Error code. 0x0';
-
-	let equivalent_convar: ConVar<unknown> | undefined;
-
-	CreatedVars.forEach(cvar => {
-		if (equivalent_convar !== undefined) return;
-		if (cvar.attributes.has('ClientAccess') && cvar.name === command) equivalent_convar = cvar;
-	});
-	if (equivalent_convar && type(equivalent_convar.value) === 'function') {
-		const callback = equivalent_convar.value as (...args: unknown[]) => string;
-		return callback(player.UserId, args);
-	}
-
-	if (command === 'testnoreply') return '';
-
-	return '';
-};
-
-Network.Console_GetServerArgs.OnServerInvoke = () => {
-	const list = new Array<string>();
-	CreatedVars.forEach(convar => {
-		if (convar.attributes.has('ClientAccess')) list.insert(0, convar.name);
-	});
-	return list;
-};
+export const InitOrder = 10;

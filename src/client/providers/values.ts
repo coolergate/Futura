@@ -7,7 +7,7 @@ const Values = {
 	Character: {
 		Health: 0,
 		MaxHealth: 150,
-		CollisionBox: undefined as PlayerCollisionBox | undefined,
+		CollisionBox: undefined as PlayerCollisionModel | undefined,
 		Id: '',
 	},
 

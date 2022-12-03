@@ -93,7 +93,6 @@ interface BaseComponentBuilder {
 interface ComponentInfo {
 	Name: string;
 	InitOrder: number;
-	Started: boolean;
 	Module: BaseComponentBuilder;
 }
 
@@ -108,7 +107,6 @@ Folder.GetChildren().forEach(inst => {
 	const info: ComponentInfo = {
 		Name: inst.Name,
 		InitOrder: module.InitOrder,
-		Started: false,
 		Module: module,
 	};
 	Components.insert(0, info);
