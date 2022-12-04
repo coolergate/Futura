@@ -10,7 +10,7 @@
 // Purpose: User interface manager
 
 import { ConVar } from 'shared/components/vars';
-import { Folders } from 'shared/global_resources';
+import { Folders } from 'shared/folders';
 import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';

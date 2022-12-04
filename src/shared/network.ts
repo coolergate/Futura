@@ -1,12 +1,4 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
+// Creator: coolergate#2031
 // Purpose: Remotes for communication between server and client(s)
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const RunService = game.GetService('RunService');
@@ -134,12 +126,13 @@ const Network = {
 	Console_SendArg: new Function<[argument: string, value: unknown[]], string | undefined | void>(),
 	Console_GetServerArgs: new Function<[], string[]>(),
 
-	Ent_Character_Spawned: new Remote('ServerToClient'),
-	Ent_Character_InfoChanged: new Remote<[Info: PlayerEntityInfo_1]>('ServerToClient'),
-	Ent_Character_RequestRespawn: new Function<[], PlayerEntityInfo_1 | void>(),
-	Ent_Character_GetAll: new Function(),
+	PlrEntity_LocalInfoChanged: new Remote<[Info: PlayerEntityInfo]>('ServerToClient'),
+	PlrEntity_RequestRespawn: new Function<[], PlayerEntityInfo | void>(),
 
 	// Loading data
 	GetInterfaceInfo: new Function<[], [content: ScreenGui[]]>(),
+
+	// Folders
+	GetFolderInfo: new Function<[Name: string], Folder | undefined>(),
 };
 export = Network;

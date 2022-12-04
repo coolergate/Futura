@@ -1,12 +1,4 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
+// Creator: coolergate#2031
 // Purpose: Control world camera
 
 import RenderPriorities from './modules/render';
@@ -63,7 +55,9 @@ RunService.BindToRenderStep('CCameraRender', RenderPriorities.CameraRender, dt =
 	}
 
 	const CameraLookCF = CFrame.Angles(0, CameraRotation.X, 0).mul(CFrame.Angles(CameraRotation.Y, 0, 0));
-	const FinalCFrame = new CFrame(Values.Character.CollisionBox.CameraAttachment.WorldPosition).mul(CameraLookCF);
+	const FinalCFrame = new CFrame(Values.Character.CollisionBox.CollisionBox.CameraAttachment.WorldPosition).mul(
+		CameraLookCF,
+	);
 
 	if (Values.CCameraEnable) {
 		if (Values.CCameraLockTo !== undefined) Camera!.CFrame = Values.CCameraLockTo.CFrame;

@@ -2,7 +2,7 @@ task.wait(1);
 
 import Signals from './providers/signals';
 import Values from './providers/values';
-import { Folders } from 'shared/global_resources';
+import { Folders } from 'shared/folders';
 import RenderPriorities from './modules/render';
 import GenerateString from 'shared/modules/randomstring';
 import Network from 'shared/network';
@@ -17,18 +17,16 @@ const StarterGui = game.GetService('StarterGui');
 const RunService = game.GetService('RunService');
 const Workspace = game.GetService('Workspace');
 
-const Server_RespawnRequest = Network.Ent_Character_RequestRespawn;
-const Server_EntityUpdated = Network.Ent_Character_InfoChanged;
-const Server_EntitySpawned = Network.Ent_Character_Spawned;
-const Server_RetrieveExistingEntities = Network.Ent_Character_GetAll;
+const Server_RespawnRequest = Network.PlrEntity_RequestRespawn;
+const Server_EntityUpdated = Network.PlrEntity_LocalInfoChanged;
 
 const Client_RespawnRequest = Signals.Character_SendRespawnRequest;
 
 const CharactersModelFolder = new Instance('Folder', Folders.Client.Objects);
 CharactersModelFolder.Name = 'CharacterModels';
-const PlrCollisionBoxEntities = Folders.World.Entities.WaitForChild('PlayersCollisionModels') as Folder;
+const PlrCollisionBoxEntities = Folders.Characters;
 
-const PlayersEntityList = new Map<string, PlayerEntityInfo_2>();
+const PlayersEntityList = new Map<string, PlayerEntityInfo>();
 
 // Create characters based on server size //
 const DefDescription = Players.GetHumanoidDescriptionFromUserId(3676469645);
@@ -75,12 +73,12 @@ function CreateHumanoidModelFromDescription(Description = DefDescription) {
 }
 
 Signals.Character_SendRespawnRequest.Handle = function () {
-	const info = Server_RespawnRequest.InvokeServer().await()[1] as PlayerEntityInfo_1 | undefined;
+	const info = Server_RespawnRequest.InvokeServer().await()[1] as PlayerEntityInfo | undefined;
 	if (!info) return false;
 
 	Values.Character.Health = info.Health;
 	Values.Character.MaxHealth = info.MaxHealth;
-	Values.Character.CollisionBox = info.CollisionBox;
+	Values.Character.CollisionBox = info.Model;
 	Values.Character.Id = info.Id;
 	return true;
 };

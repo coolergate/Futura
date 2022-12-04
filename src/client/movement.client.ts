@@ -1,13 +1,5 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
-// Purpose:
+// Creator: coolergate#2031
+// Purpose: movement handler for player entity
 
 task.wait(1);
 
@@ -16,7 +8,7 @@ import Signals from './providers/signals';
 import Values from './providers/values';
 import { ConVar, GetCVar } from 'shared/components/vars';
 import { Input } from './modules/input';
-import { Folders } from 'shared/global_resources';
+import { Folders } from 'shared/folders';
 
 const UserInputService = game.GetService('UserInputService');
 const StarterPlayer = game.GetService('StarterPlayer');
@@ -46,7 +38,7 @@ const Directions = new Map<Input, Enum.NormalId>([
 const JumpKeybind = new Input('jump');
 
 const GroundCheckParams = new OverlapParams();
-GroundCheckParams.FilterDescendantsInstances = [Folders.World.Map.Parts];
+GroundCheckParams.FilterDescendantsInstances = [Folders.Map.Parts];
 GroundCheckParams.MaxParts = 1;
 GroundCheckParams.FilterType = Enum.RaycastFilterType.Whitelist;
 
@@ -55,8 +47,8 @@ Signals.Start.Wait();
 function IsGrounded(): boolean {
 	if (!Values.Character.CollisionBox) return false;
 
-	const CollisionBox_Size_Y = Values.Character.CollisionBox.Size.Y;
-	const CollisionBox_CFrame = Values.Character.CollisionBox.CFrame;
+	const CollisionBox_Size_Y = Values.Character.CollisionBox.CollisionBox.Size.Y;
+	const CollisionBox_CFrame = Values.Character.CollisionBox.CollisionBox.CFrame;
 
 	const cast = Workspace.GetPartBoundsInBox(
 		new CFrame(CollisionBox_CFrame.Position).sub(new Vector3(0, CollisionBox_Size_Y / 2, 0)),
@@ -70,7 +62,9 @@ function IsGrounded(): boolean {
 
 RunService.Heartbeat.Connect(() => {
 	if (Values.Character.CollisionBox)
-		Values.Character.CollisionBox.CFrame = new CFrame(Values.Character.CollisionBox.CFrame.Position);
+		Values.Character.CollisionBox.CollisionBox.CFrame = new CFrame(
+			Values.Character.CollisionBox.CollisionBox.CFrame.Position,
+		);
 });
 
 let LastVel = 0;
@@ -99,11 +93,11 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	if (FrameTime < 1 / 60) return;
 	FrameTime = 0;
 
-	const Velocity = CollisionBox.AssemblyLinearVelocity;
+	const Velocity = CollisionBox.CollisionBox.AssemblyLinearVelocity;
 	Grounded = IsGrounded();
 
 	let wish_velocity = 0;
-	const vel = math.round(CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1)).Magnitude);
+	const vel = math.round(CollisionBox.CollisionBox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1)).Magnitude);
 	if (Grounded) {
 		if (Jumping) NextFrameSkipJump === false ? (Jumping = false) : (NextFrameSkipJump = false);
 		else {
@@ -112,10 +106,7 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 				LastDirection = WorldDirection;
 			}
 
-			CollisionBox.Force.LineDirection = LastDirection;
-			Velocity.Magnitude <= wish_velocity
-				? (CollisionBox.Force.LineVelocity = wish_velocity)
-				: (CollisionBox.Force.LineVelocity = 0);
+			CollisionBox.Humanoid.Move(LastDirection.mul(wish_velocity));
 		}
 	}
 
@@ -127,6 +118,6 @@ RunService.BindToRenderStep('CMovement_Move', RenderPriorities.CharacterMovement
 	if (JumpKeybind.Active && Grounded && !Jumping) {
 		Jumping = true;
 		NextFrameSkipJump = true;
-		CollisionBox.ApplyImpulse(new Vector3(0, 200, 0));
+		CollisionBox.Humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
 	}
 });

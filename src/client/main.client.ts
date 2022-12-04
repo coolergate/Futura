@@ -26,7 +26,7 @@ while (ReplicatedStorage.GetAttribute('Running') !== true);
 //=============================================================================
 // Loading screen
 //=============================================================================
-import { Folders } from 'shared/global_resources';
+import { Folders } from 'shared/folders';
 
 Folders.Storage.UserInterface.GetChildren().forEach(element => {
 	if (element.IsA('ScreenGui')) {

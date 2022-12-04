@@ -1,15 +1,7 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
+// Creator: coolergate#2031
 // Purpose: Startup server
 
-import { Folders } from 'shared/global_resources';
+import { Folders } from 'shared/folders';
 import * as Defined from 'shared/gamedefined';
 
 // Services
