@@ -3,12 +3,12 @@
 
 task.wait(1);
 
+import * as Folders from 'shared/folders';
 import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';
 import { ConVar, GetCVar } from 'shared/components/vars';
 import { Input } from './modules/input';
-import { Folders } from 'shared/folders';
 
 const UserInputService = game.GetService('UserInputService');
 const StarterPlayer = game.GetService('StarterPlayer');
@@ -38,7 +38,7 @@ const Directions = new Map<Input, Enum.NormalId>([
 const JumpKeybind = new Input('jump');
 
 const GroundCheckParams = new OverlapParams();
-GroundCheckParams.FilterDescendantsInstances = [Folders.Map.Parts];
+GroundCheckParams.FilterDescendantsInstances = [Folders.Workspace.Map.obj_part];
 GroundCheckParams.MaxParts = 1;
 GroundCheckParams.FilterType = Enum.RaycastFilterType.Whitelist;
 
