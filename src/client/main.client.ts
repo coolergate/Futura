@@ -1,64 +1,66 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
-// Purpose: Startup script.
+// Creator: coolergate#2031
+// Purpose:
 
-const ReplicatedStorage = game.GetService('ReplicatedStorage');
-const ContentProvider = game.GetService('ContentProvider');
-const TweenService = game.GetService('TweenService');
-const RunService = game.GetService('RunService');
-const StarterGui = game.GetService('StarterGui');
-const Player = game.GetService('Players').LocalPlayer;
+import * as Services from '@rbxts/services';
+import * as Defined from 'shared/gamedefined';
+import * as Folders from 'shared/folders';
+
+// Wait until the server is ready, should be in normal game
+// there is an issue in studio where the player logs on before Players.PlayerAdded
+do task.wait(1);
+while (!Defined.ServerRunning());
+
+Services.StarterGui.SetCoreGuiEnabled('All', false);
+Services.StarterGui.SetCore('ResetButtonCallback', false);
+
+const Player = Services.Players.LocalPlayer;
+const PlayerScripts = Player.WaitForChild('PlayerScripts') as PlayerScripts;
 const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
 
-// ^ Wait until the server is ready, should be in normal game
-// ^ but there is an issue with studio that the player logs on
-// ^ before Players.PlayerAdded is called
-do task.wait(1);
-while (ReplicatedStorage.GetAttribute('Running') !== true);
+// Build loading screen
+const LoadingGui = Folders.Storage.Interface.FindFirstChild('Loading') as ScreenGui & {
+	Main: CanvasGroup & {
+		Logo: TextLabel & {
+			UIGradient: UIGradient;
+		};
+		Info: TextLabel;
+	};
+};
 
-//=============================================================================
-// Loading screen
-//=============================================================================
-import { Folders } from 'shared/folders';
-
-Folders.Storage.UserInterface.GetChildren().forEach(element => {
-	if (element.IsA('ScreenGui')) {
-		element.Enabled = true;
-		element.Parent = PlayerGui;
-	}
-});
-
-const InterfaceHolder = PlayerGui.FindFirstChild('Main') as ScreenGui;
-const LoadingInterfaceCanvas = InterfaceHolder.FindFirstChild('LoadingOverlay') as CanvasGroup;
+LoadingGui.Parent = PlayerGui;
+LoadingGui.Enabled = true;
+const Loading_Canvas = LoadingGui.Main;
+const Loading_InfoText = Loading_Canvas.Info;
+const Loading_LogoGradient = Loading_Canvas.Logo.UIGradient;
 {
-	LoadingInterfaceCanvas.Visible = true;
-	StarterGui.SetCoreGuiEnabled('All', false);
-
 	let CurrentTween: Tween | undefined;
-	const TextGradient = LoadingInterfaceCanvas.FindFirstChild('UIGradient', true) as UIGradient;
-	TextGradient.Offset = new Vector2(-1, 0);
+	Loading_LogoGradient.Offset = new Vector2(-1, 0);
+
+	Loading_InfoText.Text = '';
 
 	coroutine.wrap(() => {
 		do {
 			if (!CurrentTween) {
-				TextGradient.Offset = new Vector2(-1, 0);
-				CurrentTween = TweenService.Create(TextGradient, new TweenInfo(1), { Offset: new Vector2(1, 0) });
+				Loading_LogoGradient.Offset = new Vector2(-1, 0);
+				CurrentTween = Services.TweenService.Create(Loading_LogoGradient, new TweenInfo(1), {
+					Offset: new Vector2(1, 0),
+				});
 				CurrentTween.Play();
 				CurrentTween.Completed.Wait();
 				task.wait(1);
 				CurrentTween?.Destroy();
 				CurrentTween = undefined;
 			} else task.wait();
-		} while (LoadingInterfaceCanvas !== undefined);
+		} while (PlayerGui.FindFirstChild('Loading') !== undefined);
 	})();
 }
+
+Folders.Storage.Interface.GetChildren().forEach(element => {
+	if (element.IsA('ScreenGui')) {
+		element.Enabled = true;
+		element.Parent = PlayerGui;
+	}
+});
 
 //=============================================================================
 // Pre-Load content and call server login
@@ -67,7 +69,7 @@ import Signals from './providers/signals';
 import Network from 'shared/network';
 
 task.wait(2);
-ContentProvider.PreloadAsync(ReplicatedStorage.GetDescendants());
+Services.ContentProvider.PreloadAsync(Services.ReplicatedStorage.GetDescendants());
 Network.PlayerLogin.InvokeServer().await();
 
 //=============================================================================
@@ -126,7 +128,7 @@ BuiltComponents.forEach(component =>
 		component.Start();
 
 		let FrameTime = 0;
-		RunService.RenderStepped.Connect(dt => {
+		Services.RunService.RenderStepped.Connect(dt => {
 			FrameTime += dt;
 			if (FrameTime < 1 / 60) return;
 			FrameTime = 0;
@@ -138,12 +140,12 @@ BuiltComponents.forEach(component =>
 Signals.Start.Fire(); // start non-modules
 task.wait(1);
 
-const LoadingScreenFadeOut = TweenService.Create(LoadingInterfaceCanvas, new TweenInfo(0.5), { GroupTransparency: 1 });
+const LoadingScreenFadeOut = Services.TweenService.Create(Loading_Canvas, new TweenInfo(0.5), { GroupTransparency: 1 });
 LoadingScreenFadeOut.Play();
 LoadingScreenFadeOut.Completed.Wait();
 
 task.wait(1);
-LoadingInterfaceCanvas.Destroy();
+LoadingGui.Destroy();
 
 // ! Temporary. will be moved over to another script
-Signals.Character_SendRespawnRequest.Call();
+print(Signals.Character_SendRespawnRequest.Call());
