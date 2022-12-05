@@ -1,8 +1,9 @@
 // Creator: coolergate#2031
 // Purpose: Startup server
 
-import { Folders } from 'shared/folders';
 import * as Defined from 'shared/gamedefined';
+import * as Folders from 'shared/folders';
+import Network from 'shared/network';
 
 // Services
 const ServerScriptService = game.GetService('ServerScriptService');
@@ -23,27 +24,10 @@ PhysicsService.CollisionGroupSetCollidable('GBaseCharacters', 'CViewmodels', fal
 PhysicsService.CollisionGroupSetCollidable('GBaseCharacters', 'GBaseCharacters', false);
 PhysicsService.CollisionGroupSetCollidable('CViewmodels', 'Default', false);
 
-// Workspace folders to ignore before deleting
-const Work_Ignore: string[] = ['World', 'Terrain', 'Server', 'Client'];
-Workspace.GetChildren().forEach(inst => {
-	if (inst.IsA('Terrain')) return;
-
-	if (inst.Name.sub(1, 1) === '_') {
-		inst.Destroy();
-		return;
-	}
-
-	if (inst.IsA('Folder')) {
-		const equivalent_repl = ReplicatedStorage.FindFirstChild(inst.Name);
-		if (equivalent_repl) inst.GetChildren().forEach(desc => (desc.Parent = equivalent_repl));
-		if (!Work_Ignore.includes(inst.Name)) inst.Destroy();
-	}
-});
-
 StarterGui.GetChildren().forEach(inst => {
 	if (inst.IsA('ScreenGui')) {
 		inst.Enabled = false;
-		inst.Parent = Folders.Storage.UserInterface;
+		inst.Parent = Folders.Storage.Interface;
 	}
 });
 
@@ -85,7 +69,7 @@ interface ComponentInfo {
 	Module: BaseComponentBuilder;
 }
 
-const Folder = ServerScriptService.WaitForChild('components') as Folder;
+const Folder = ServerScriptService.WaitForChild('TS').WaitForChild('components') as Folder;
 const Components = new Array<ComponentInfo>();
 const BuiltComponents = new Array<BaseServerComponent>();
 
