@@ -2,10 +2,10 @@
 // Purpose:
 
 import * as Services from '@rbxts/services';
+import * as Folders from 'shared/folders';
 import GenerateString from 'shared/modules/randomstring';
 import Network from 'shared/network';
 import { ConVar } from 'shared/components/vars';
-import { Folders } from 'shared/folders';
 import { LocalSignal } from 'shared/local_network';
 import Signals from 'server/providers/signals';
 
@@ -51,15 +51,22 @@ class PlayerEntityController {
 		CollisionBox.Size = new Vector3(2, 5, 2);
 		CollisionBox.Transparency = 0.5;
 		CollisionBox.CustomPhysicalProperties = CustomPhysicalProperties;
+		CollisionBox.Anchored = true;
+		CollisionBox.CFrame = new CFrame(0, 10e8, 0);
+		CollisionBox.Name = 'CollisionBox';
+
 		const MainAttachment = new Instance('Attachment', CollisionBox);
 		MainAttachment.Name = 'MainAttachment';
+
 		const CameraAttachment = new Instance('Attachment', CollisionBox);
 		CameraAttachment.Position = new Vector3(0, 2, 0);
 		CameraAttachment.Name = 'CameraAttachment';
+
 		const CollisionModel = new Instance('Model', Folder) as PlayerCollisionModel;
 		CollisionModel.Name = this.Id;
 		CollisionBox.Parent = CollisionModel;
 		CollisionModel.PrimaryPart = CollisionBox;
+
 		const Humanoid = new Instance('Humanoid', CollisionModel);
 		Humanoid.Health = 1;
 		Humanoid.MaxHealth = 1;
@@ -68,6 +75,7 @@ class PlayerEntityController {
 		Humanoid.UseJumpPower = true;
 		Humanoid.WalkSpeed = Services.StarterPlayer.CharacterWalkSpeed;
 		Humanoid.JumpPower = Services.StarterPlayer.CharacterJumpPower;
+
 		this.CollisionModel = CollisionModel;
 	}
 
@@ -80,12 +88,17 @@ class PlayerEntityController {
 	Kill() {
 		this.Alive = false;
 		this.Health = 0;
+		this.CollisionModel.CollisionBox.Anchored = false;
 		this.CollisionModel.CollisionBox.SetNetworkOwner();
+		this.CollisionModel.CollisionBox.Anchored = true;
 		this.Died.Fire(this.UserId);
 		this.UserId = undefined;
 	}
 
 	Spawn(userid: number) {
+		this.Alive = true;
+		this.Health = this.MaxHealth;
+		this.Armor = 0;
 		this.UserId = userid;
 	}
 }
@@ -138,12 +151,18 @@ class Component implements BaseServerComponent {
 				this.Controllers.forEach(controller => {
 					if (AvaiableController !== undefined) return;
 					if (controller.UserId !== undefined) return;
+
+					if (controller.UserId === undefined) {
+						controller.Kill();
+						controller.Spawn(player.UserId);
+						AvaiableController = controller;
+					}
 				});
 				if (AvaiableController) break;
 			} while (AvaiableController === undefined);
 
 			// Random spawn location
-			const Children = Folders.Map.SpawnLocation.GetChildren();
+			const Children = Folders.Workspace.Map.func_spawn.GetChildren();
 			let AssignedSpawnLocation = new CFrame(0, 10, 0);
 			if (!Children.isEmpty()) {
 				let found_spawn_location = false;
@@ -180,8 +199,8 @@ class Component implements BaseServerComponent {
 	Start(): void {}
 }
 
+// ! Default args
 export function Init() {
 	return new Component();
 }
-
 export const InitOrder = 0;
