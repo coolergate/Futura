@@ -1,29 +1,31 @@
 // Creator: coolergate#2031
 // Purpose: Game folders without searching the workspace
-const Workspace = game.GetService('Workspace');
-const ReplicatedStorage = game.GetService('ReplicatedStorage');
 
-export const Folders = {
-	Client: Workspace.WaitForChild('Client') as Folder & {
-		Objects: Folder;
-		Entities: Folder;
-	},
-	Server: Workspace.WaitForChild('Server') as Folder & {
-		Objects: Folder;
-		Entities: Folder;
-	},
-	Storage: ReplicatedStorage.WaitForChild('Storage') as Folder & {
-		Animations: Folder;
-		Models: Folder;
-		Sounds: Folder;
-		UserInterface: Folder;
-	},
-	Characters: Workspace.WaitForChild('Characters') as Folder,
-	Map: Workspace.WaitForChild('Map') as Folder & {
-		Filter: Folder;
-		Parts: Folder;
-		Lights: Folder;
-		Props: Folder;
-		SpawnLocation: Folder;
-	},
+/* eslint-disable prettier/prettier */
+
+import * as Services from '@rbxts/services';
+
+export const Storage = Services.ReplicatedStorage.WaitForChild('Storage') as unknown as {
+	Animations: Folder;
+	Models: Folder;
+	Sound: Folder;
+	Interface: Folder;
 };
+export const Workspace = Services.Workspace as unknown as {
+	Entities: Folder;
+	Server: Folder;
+	Objects: Folder;
+	Map: Folder & {
+		func_entity: Folder;
+		func_filter: Folder;
+		ent_light: Folder;
+		obj_part: Folder;
+		env_prop: Folder;
+		func_spawn: Folder;
+	};
+	Defined: Folder & {
+		Network: Folder;
+	};
+};
+export const ClientHolder = Services.RunService.IsClient() && Services.Players.LocalPlayer?.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder;
+export const ServerHolder = Services.RunService.IsServer() && Services.ServerScriptService?.FindFirstChild('TS') as Folder;
