@@ -13,7 +13,7 @@ const RunService = game.GetService('RunService');
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 
 export function ServerRunning() {
-	return ReplicatedStorage.GetAttribute('Running') !== true;
+	return ReplicatedStorage.GetAttribute('Running') === true;
 }
 
 export function IsConsole() {
