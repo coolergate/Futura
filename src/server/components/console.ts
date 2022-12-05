@@ -35,6 +35,14 @@ class Component implements BaseServerComponent {
 
 			if (command === 'testnoreply') return '';
 		};
+
+		this.Network.GetServerCmds.OnServerInvoke = player => {
+			const names: string[] = [];
+			CreatedVars.forEach(cvar => {
+				if (cvar.attributes.has('ClientAccess')) names.insert(0, cvar.name);
+			});
+			return names;
+		};
 	}
 	Start(): void {}
 }
