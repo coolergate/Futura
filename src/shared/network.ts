@@ -1,19 +1,15 @@
 // Creator: coolergate#2031
 // Purpose: Remotes for communication between server and client(s)
-const ReplicatedStorage = game.GetService('ReplicatedStorage');
-const RunService = game.GetService('RunService');
-const Players = game.GetService('Players');
 
-const network_folder =
-	(RunService.IsClient() && (ReplicatedStorage.WaitForChild('Network') as Folder)) ||
-	(ReplicatedStorage.FindFirstChild('Network') as Folder) ||
-	new Instance('Folder', ReplicatedStorage);
-network_folder.Name = 'Network';
+import * as Services from '@rbxts/services';
+import * as Folders from 'shared/folders';
+
+const network_folder = Folders.Workspace.Defined.Network;
 let next_index = 0;
 
 function Manager(index: number, mode: 'RemoteFunction' | 'RemoteEvent'): RemoteEvent | RemoteFunction {
 	let instance = network_folder.FindFirstChild(tostring(index)) as RemoteEvent | RemoteFunction;
-	if (RunService.IsClient()) {
+	if (Services.RunService.IsClient()) {
 		if (instance) return instance;
 		else return network_folder.WaitForChild(tostring(index)) as RemoteEvent | RemoteFunction;
 	}
@@ -37,14 +33,14 @@ class Remote<headers extends unknown[]> {
 	// * Server
 	OnServerPost = undefined as ((user: Player, ...args: headers) => void) | undefined;
 	PostClient(users: Player[], ...data: headers) {
-		assert(RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
+		assert(Services.RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
 		users.forEach(user => {
 			this.Instance.FireClient(user, ...data);
 		});
 	}
 	PostAllClients(block: Player[] | undefined, ...data: headers) {
-		assert(RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
-		Players.GetPlayers().forEach(user => {
+		assert(Services.RunService.IsServer(), 'server-side only.' + ' (' + tostring(this.Instance.Name) + ')');
+		Services.Players.GetPlayers().forEach(user => {
 			if (block !== undefined && block.includes(user)) return;
 			this.Instance.FireClient(user, ...data);
 		});
@@ -53,7 +49,7 @@ class Remote<headers extends unknown[]> {
 	// * Client
 	OnClientPost = undefined as ((...args: headers) => void) | undefined;
 	PostServer(...args: headers) {
-		assert(RunService.IsServer(), 'client-side only.' + ' (' + tostring(this.Instance.Name) + ')');
+		assert(Services.RunService.IsServer(), 'client-side only.' + ' (' + tostring(this.Instance.Name) + ')');
 		this.Instance.FireServer(...args);
 	}
 
@@ -62,7 +58,7 @@ class Remote<headers extends unknown[]> {
 		this.Instance = Manager(next_index, 'RemoteEvent') as RemoteEvent;
 		next_index++;
 
-		if (RunService.IsServer())
+		if (Services.RunService.IsServer())
 			this.Instance.OnServerEvent.Connect((player, ...data) => {
 				if (this.NetMode !== 'ClientToServer' || this.OnServerPost === undefined) return;
 				this.OnServerPost(player, ...(data as headers));
@@ -98,7 +94,7 @@ class Function<headers extends unknown[], response> {
 		this.Instance = Manager(next_index, 'RemoteFunction') as RemoteFunction;
 		next_index++;
 
-		if (RunService.IsServer())
+		if (Services.RunService.IsServer())
 			this.Instance.OnServerInvoke = function (player, ...data) {
 				assert(this.OnServerInvoke, 'OnServerInvoke has not been declared!' + ' (' + tostring(this.Name) + ')');
 				return this.OnServerInvoke(player, ...(data as headers)) as response;
