@@ -10,7 +10,7 @@
 // Purpose: User interface manager
 
 import { ConVar } from 'shared/components/vars';
-import { Folders } from 'shared/folders';
+import * as Folders from 'shared/folders';
 import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';
@@ -50,12 +50,12 @@ const Crosshair = OverlayFrame.FindFirstChild('Crosshair') as ImageLabel;
 
 RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, dt => {
 	const Character = Values.Character;
-	GameplayFrame.Visible = Character !== undefined && Character.Health > 0;
+	GameplayFrame.Visible = Character.CollisionBox !== undefined && Character.Health > 0;
 });
 
 RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, dt => {
 	const Character = Values.Character;
-	if (!GameplayFrame.Visible || !Character) return;
+	if (!GameplayFrame.Visible || !Character.CollisionBox) return;
 
 	// Health meter
 	const CurrentHealth = Values.Character.Health;
