@@ -85,7 +85,7 @@ declare global {
 		/**
 		 * Called every renderstepped when it matches 60FPS
 		 */
-		Update(): void;
+		FixedUpdate(): void;
 	}
 }
 interface BaseComponentBuilder {
@@ -132,7 +132,7 @@ BuiltComponents.forEach(component =>
 			FrameTime += dt;
 			if (FrameTime < 1 / 60) return;
 			FrameTime = 0;
-			component.Update();
+			component.FixedUpdate();
 		});
 	})(),
 );

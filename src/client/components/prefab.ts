@@ -16,7 +16,7 @@ class Component implements BaseClientComponent {
 	Start(): void {
 		print('component start.');
 	}
-	Update(): void {}
+	FixedUpdate(): void {}
 }
 
 export function Init() {

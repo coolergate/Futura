@@ -55,7 +55,7 @@ class Component implements BaseClientComponent {
 		this.gc_params.FilterType = Enum.RaycastFilterType.Whitelist;
 	}
 	Start(): void {}
-	Update(): void {
+	FixedUpdate(): void {
 		const CollisionModel = Values.Character.CollisionBox;
 		const Humanoid = CollisionModel?.Humanoid;
 		if (!CollisionModel || !Humanoid) return;
