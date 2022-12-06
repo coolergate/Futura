@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@rbxts/bin": "^1.3.0",
+    "@rbxts/roact": "^1.4.4-ts.0",
     "@rbxts/services": "^1.5.1",
     "@rbxts/signal": "^1.1.1",
     "@rbxts/t": "^3.0.0"
