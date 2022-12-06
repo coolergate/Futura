@@ -95,6 +95,7 @@ class Component implements BaseClientComponent {
 			Humanoid.ChangeState('Jumping');
 		}
 	}
+	Update(delta_time: number): void {}
 }
 
 export function Init() {

@@ -85,12 +85,12 @@ declare global {
 		/**
 		 * Called every frame
 		 */
-		Update?(delta_time: number): void;
+		Update(delta_time: number): void;
 
 		/**
 		 * Called every frame when it matches 60FPS
 		 */
-		FixedUpdate?(delta_time: number): void;
+		FixedUpdate(delta_time: number): void;
 	}
 }
 interface BaseComponentBuilder {
@@ -134,14 +134,11 @@ BuiltComponents.forEach(component =>
 
 		let FrameTime = 0;
 		Services.RunService.RenderStepped.Connect(dt => {
-			const fixed_callback = component.FixedUpdate;
-			const norml_callback = component.Update;
-			if (norml_callback !== undefined) norml_callback(dt);
-			if (fixed_callback === undefined) return;
+			component.Update(dt);
 			FrameTime += dt;
 			if (FrameTime < 1 / 60) return;
 			FrameTime = 0;
-			fixed_callback(FrameTime);
+			component.FixedUpdate(FrameTime);
 		});
 	})(),
 );

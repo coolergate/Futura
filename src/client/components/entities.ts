@@ -86,6 +86,7 @@ class Component implements BaseClientComponent {
 	}
 	Start(): void {}
 	FixedUpdate(): void {}
+	Update(delta_time: number): void {}
 }
 
 export function Init() {
