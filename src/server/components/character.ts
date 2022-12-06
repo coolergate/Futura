@@ -14,7 +14,7 @@ Folder.Name = 'Characters';
 
 declare global {
 	interface PlayerCollisionModel extends Model {
-		CollisionBox: Part & {
+		HumanoidRootPart: Part & {
 			CameraAttachment: Attachment;
 			MainAttachment: Attachment;
 		};
@@ -53,7 +53,7 @@ class PlayerEntityController {
 		CollisionBox.CustomPhysicalProperties = CustomPhysicalProperties;
 		CollisionBox.Anchored = true;
 		CollisionBox.CFrame = new CFrame(0, 10e8, 0);
-		CollisionBox.Name = 'CollisionBox';
+		CollisionBox.Name = 'HumanoidRootPart';
 
 		const MainAttachment = new Instance('Attachment', CollisionBox);
 		MainAttachment.Name = 'MainAttachment';
@@ -75,6 +75,7 @@ class PlayerEntityController {
 		Humanoid.UseJumpPower = true;
 		Humanoid.WalkSpeed = Services.StarterPlayer.CharacterWalkSpeed;
 		Humanoid.JumpPower = Services.StarterPlayer.CharacterJumpPower;
+		Humanoid.AutoRotate = false;
 
 		this.CollisionModel = CollisionModel;
 	}
@@ -88,9 +89,9 @@ class PlayerEntityController {
 	Kill() {
 		this.Alive = false;
 		this.Health = 0;
-		this.CollisionModel.CollisionBox.Anchored = false;
-		this.CollisionModel.CollisionBox.SetNetworkOwner();
-		this.CollisionModel.CollisionBox.Anchored = true;
+		this.CollisionModel.HumanoidRootPart.Anchored = false;
+		this.CollisionModel.HumanoidRootPart.SetNetworkOwner();
+		this.CollisionModel.HumanoidRootPart.Anchored = true;
 		this.Died.Fire(this.UserId);
 		this.UserId = undefined;
 	}
@@ -176,9 +177,9 @@ class Component implements BaseServerComponent {
 				} while (found_spawn_location === false);
 			}
 
-			AvaiableController.CollisionModel.CollisionBox.CFrame = AssignedSpawnLocation;
-			AvaiableController.CollisionModel.CollisionBox.Anchored = false;
-			AvaiableController.CollisionModel.CollisionBox.SetNetworkOwner(player);
+			AvaiableController.CollisionModel.HumanoidRootPart.CFrame = AssignedSpawnLocation;
+			AvaiableController.CollisionModel.HumanoidRootPart.Anchored = false;
+			AvaiableController.CollisionModel.HumanoidRootPart.SetNetworkOwner(player);
 
 			// TODO alert all players when a new entity spawns in
 
