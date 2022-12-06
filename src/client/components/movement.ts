@@ -83,7 +83,7 @@ class Component implements BaseClientComponent {
 		this.grounded = Humanoid.FloorMaterial.Name !== 'Air';
 		if (this.grounded) {
 			if (this.jumping) this.nextframe_skipjump ? (this.nextframe_skipjump = false) : (this.jumping = false);
-			else this.walking_dir = this.walking_dir.Lerp(world_direction, 0.2);
+			else this.walking_dir = this.walking_dir.Lerp(world_direction, 0.25);
 		}
 
 		Humanoid.Move(this.walking_dir, false);
