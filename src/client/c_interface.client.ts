@@ -1,16 +1,9 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
+// Creator: coolergate#2031
 // Purpose: User interface manager
 
 import { ConVar } from 'shared/components/vars';
 import * as Folders from 'shared/folders';
+import { num_string_pad } from 'shared/modules/util';
 import RenderPriorities from './modules/render';
 import Signals from './providers/signals';
 import Values from './providers/values';
@@ -39,13 +32,6 @@ const Holder = PlayerGui.WaitForChild('Main') as ScreenGui;
 const GameplayFrame = Holder.FindFirstChild('Game') as Frame;
 const OverlayFrame = Holder.FindFirstChild('GameOverlay') as Frame;
 
-interface BaseBasicMeter extends Frame {
-	AmountBar: Frame;
-	Amount: TextLabel;
-	Label: TextLabel;
-}
-const HealthMeter = GameplayFrame.FindFirstChild('Health') as BaseBasicMeter;
-const LevelXPMeter = GameplayFrame.FindFirstChild('UserLvl') as BaseBasicMeter;
 const Crosshair = OverlayFrame.FindFirstChild('Crosshair') as ImageLabel;
 
 RunService.BindToRenderStep('interface_pre', RenderPriorities.InterfacePre, dt => {
@@ -61,8 +47,15 @@ RunService.BindToRenderStep('interface_gameplay', RenderPriorities.Interface, dt
 	const CurrentHealth = Values.Character.Health;
 	const CurerntMaxHealth = Values.Character.MaxHealth;
 
-	HealthMeter.AmountBar.Size = new UDim2(CurrentHealth / CurerntMaxHealth, 0, 0, 4);
-	HealthMeter.Amount.Text = `${tostring(CurrentHealth)}/${tostring(CurerntMaxHealth)}`;
+	const HealthPanel = GameplayFrame.FindFirstChild('Health') as unknown as {
+		HealthIcon: {
+			Foreground: TextLabel;
+		};
+		Amount: TextLabel;
+	};
+
+	HealthPanel.Amount.Text = num_string_pad(CurrentHealth, 3);
+	HealthPanel.HealthIcon.Foreground.Size = UDim2.fromScale(1, CurrentHealth / CurerntMaxHealth);
 });
 
 RunService.BindToRenderStep('interface_overlay', RenderPriorities.Interface, dt => {
