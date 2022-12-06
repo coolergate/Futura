@@ -19,7 +19,7 @@ Components must have the following functions:
 
 `Update()` is called in a fixed 60FPS rate, devices with lower framerates will increase the time between calls
 
-`client/component/prefab.ts` for more info.
+> More info at `client/component/prefab.ts`
 
 ---
 ### Network
@@ -49,7 +49,7 @@ variable_name.OnServerPost = (user, data) => {}; // overwrites previous definiti
 // client
 variable_name.PostServer(data);
 ```
-> More info at the file `shared/network.ts`
+> More info at `shared/network.ts`
 
 Functions are bi-directional and returns a Promise when Invoked.
 - (property) `OnServerInvoke` Handles all data sent from client -> server
