@@ -1,22 +1,14 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
+// Creator: coolergate#2031
 // Purpose:
 //
 // * Required parameters:
 // * - Init(): BaseClientComponent
 // * - InitOrder: number'
 
-import * as AllServices from '@rbxts/services';
+import * as Services from '@rbxts/services';
 
 class Component implements BaseClientComponent {
-	Player = AllServices.Players.LocalPlayer;
+	Player = Services.Players.LocalPlayer;
 
 	constructor() {
 		print('component init.');
