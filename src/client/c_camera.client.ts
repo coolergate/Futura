@@ -55,7 +55,7 @@ RunService.BindToRenderStep('CCameraRender', RenderPriorities.CameraRender, dt =
 	}
 
 	const CameraLookCF = CFrame.Angles(0, CameraRotation.X, 0).mul(CFrame.Angles(CameraRotation.Y, 0, 0));
-	const FinalCFrame = new CFrame(Values.Character.CollisionBox.CollisionBox.CameraAttachment.WorldPosition).mul(
+	const FinalCFrame = new CFrame(Values.Character.CollisionBox.HumanoidRootPart.CameraAttachment.WorldPosition).mul(
 		CameraLookCF,
 	);
 
