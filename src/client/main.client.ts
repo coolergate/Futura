@@ -15,7 +15,6 @@ const PlayerScripts = Player.WaitForChild('PlayerScripts') as PlayerScripts;
 const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
 
 Services.StarterGui.SetCoreGuiEnabled('All', false);
-Services.StarterGui.SetCore('ResetButtonCallback', false);
 
 // Build loading screen
 const LoadingGui = Folders.Storage.Interface.FindFirstChild('Loading') as ScreenGui & {
@@ -144,6 +143,8 @@ BuiltComponents.forEach(component =>
 );
 
 Signals.Start.Fire(); // start non-modules
+
+Services.StarterGui.SetCore('ResetButtonCallback', false);
 task.wait(1);
 
 const LoadingScreenFadeOut = Services.TweenService.Create(Loading_Canvas, new TweenInfo(0.5), { GroupTransparency: 1 });
