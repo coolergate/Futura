@@ -83,9 +83,14 @@ declare global {
 		Start(): void;
 
 		/**
-		 * Called every renderstepped when it matches 60FPS
+		 * Called every frame
 		 */
-		FixedUpdate(): void;
+		Update?(): void;
+
+		/**
+		 * Called every frame when it matches 60FPS
+		 */
+		FixedUpdate?(): void;
 	}
 }
 interface BaseComponentBuilder {
@@ -129,10 +134,14 @@ BuiltComponents.forEach(component =>
 
 		let FrameTime = 0;
 		Services.RunService.RenderStepped.Connect(dt => {
+			const fixed_callback = component.FixedUpdate;
+			const norml_callback = component.Update;
+			if (norml_callback !== undefined) norml_callback();
+			if (fixed_callback === undefined) return;
 			FrameTime += dt;
 			if (FrameTime < 1 / 60) return;
 			FrameTime = 0;
-			component.FixedUpdate();
+			fixed_callback();
 		});
 	})(),
 );
