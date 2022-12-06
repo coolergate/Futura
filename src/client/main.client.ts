@@ -10,12 +10,12 @@ import * as Folders from 'shared/folders';
 do task.wait(1);
 while (!Defined.ServerRunning());
 
-Services.StarterGui.SetCoreGuiEnabled('All', false);
-Services.StarterGui.SetCore('ResetButtonCallback', false);
-
 const Player = Services.Players.LocalPlayer;
 const PlayerScripts = Player.WaitForChild('PlayerScripts') as PlayerScripts;
 const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
+
+Services.StarterGui.SetCoreGuiEnabled('All', false);
+Services.StarterGui.SetCore('ResetButtonCallback', false);
 
 // Build loading screen
 const LoadingGui = Folders.Storage.Interface.FindFirstChild('Loading') as ScreenGui & {
@@ -148,4 +148,4 @@ task.wait(1);
 LoadingGui.Destroy();
 
 // ! Temporary. will be moved over to another script
-print(Signals.Character_SendRespawnRequest.Call());
+Signals.Character_SendRespawnRequest.Call();
