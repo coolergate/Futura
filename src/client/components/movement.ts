@@ -4,7 +4,7 @@
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import Values from 'client/providers/values';
-import { Input } from 'client/modules/input';
+import { Input } from 'client/providers/input';
 import { ConVar, GetCVar } from 'shared/components/vars';
 
 class Component implements BaseClientComponent {
