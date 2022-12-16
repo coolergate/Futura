@@ -27,5 +27,12 @@ export const Workspace = Services.Workspace as unknown as {
 		Network: Folder;
 	};
 };
+
+interface client_holder extends Folder {
+	modules: Folder;
+	components: Folder;
+	providers: Folder;
+}
+
 export const ClientHolder = Services.RunService.IsClient() && Services.Players.LocalPlayer?.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder;
 export const ServerHolder = Services.RunService.IsServer() && Services.ServerScriptService?.FindFirstChild('TS') as Folder;
