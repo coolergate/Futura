@@ -18,9 +18,9 @@ import Network from 'shared/network';
 const UserInputService = game.GetService('UserInputService');
 const Player = game.GetService('Players').LocalPlayer;
 
-const net_ConsoleArg = Network.Console_SendArg;
-const net_GetCommands = Network.Console_GetServerArgs;
-const Local_RenderToConsole = Signals.RenderToConsole;
+const net_ConsoleArg = Network.console_sendarg;
+const net_GetCommands = Network.console_getcmds;
+const Local_RenderToConsole = Signals.console_render;
 
 //=============================================================================
 // Server & Client cmd list
@@ -258,6 +258,8 @@ ClientCommands.set('version', function (content: string) {
 });
 ClientCommands.set('setsize', function (content: string) {});
 
+Signals.console_sendarg.Connect(argument => Handle_Command(argument));
+
 UserInputService.InputBegan.Connect((input, unavaiable) => {
 	if (
 		input.KeyCode === Enum.KeyCode.RightShift ||
@@ -272,11 +274,11 @@ Window.GetPropertyChangedSignal('Visible').Connect(() => {
 	if (Window.Visible) {
 		InputBox.TextEditable = true;
 		InputBox.CaptureFocus();
-		Values.CCameraUnlock.set('Console', true);
+		Values.camUnlock.set('Console', true);
 	} else {
 		InputBox.ReleaseFocus();
 		InputBox.TextEditable = false;
-		Values.CCameraUnlock.delete('Console');
+		Values.camUnlock.delete('Console');
 	}
 });
 
