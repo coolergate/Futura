@@ -5,13 +5,13 @@ export const CreatedVars = new Array<ConVar<unknown>>();
 export class ConVar<T> {
 	readonly name: string;
 	readonly description: string;
-	readonly attributes: Map<ConVarType, boolean>;
+	readonly attributes: Map<ConvarAttribute, boolean>;
 	value: T;
 	value_type: keyof CheckablePrimitives;
 
 	readonly original_value: T;
 
-	constructor(consolecmd: string, value: T, description: string, attributes?: ConVarType[]) {
+	constructor(consolecmd: string, value: T, description: string, attributes?: ConvarAttribute[]) {
 		this.name = consolecmd;
 		this.value = value;
 		this.value_type = type(value);
@@ -32,14 +32,11 @@ export class ConVar<T> {
 }
 
 declare global {
-	type ConVarType = 'Hidden' | 'Readonly' | 'ClientAccess' | 'ServerOnly';
+	type ConvarAttribute = 'Hidden' | 'Readonly' | 'ClientAccess';
 }
 
 export function GetCVar(name: string) {
-	let equivalent: ConVar<unknown> | undefined;
-	CreatedVars.forEach(cvar => {
-		if (equivalent) return;
-		if (cvar.name === name) equivalent = cvar;
+	return CreatedVars.find(cvar => {
+		return cvar.name === name;
 	});
-	return equivalent;
 }
