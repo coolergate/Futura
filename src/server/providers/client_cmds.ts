@@ -15,7 +15,7 @@ export class client_command<args extends string[]> {
 		this.callback = (player, ...args) => {
 			print(player);
 			warn(...args);
-			return `server-side callback has not been defined! (${this.name})`;
+			return `command callback has not been defined! (${this.name})`;
 		};
 
 		created_commands.insert(0, this);
