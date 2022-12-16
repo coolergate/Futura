@@ -119,11 +119,23 @@ const Network = {
 	Chat_Send: new Function<[message: string], void>(),
 	Chat_Revieve: new Remote<[message: string]>('ServerToClient'),
 
-	Console_SendArg: new Function<[argument: string, value: unknown[]], string | undefined | void>(),
-	Console_GetServerArgs: new Function<[], string[]>(),
+	// console
+	console_sendarg: new Function<[argument: string, value: unknown[]], string | undefined | void>(),
+	console_getcmds: new Function<[], string[]>(),
 
-	PlrEntity_LocalInfoChanged: new Remote<[Info: PlayerEntityInfo]>('ServerToClient'),
-	PlrEntity_RequestRespawn: new Function<[], PlayerEntityInfo | void>(),
+	// character entity old
+	ent_plr_changed: new Remote<[Info: ent_CharacterInfo | undefined]>('ServerToClient'),
+	ent_plr_respawn: new Function<[], ent_CharacterInfo | boolean /*boolean*/>(),
+	ent_plr_created: new Remote<[]>('ServerToClient'),
+
+	// entities
+	entities: {
+		ent_Character: {
+			InfoChanged: new Remote<[Info: ent_CharacterInfo]>('ServerToClient'),
+			GetLatestInfo: new Function<[], ent_CharacterInfo | undefined>(),
+			SendRequest: new Function<[request: string], boolean>(),
+		},
+	},
 
 	// Loading data
 	GetInterfaceInfo: new Function<[], [content: ScreenGui[]]>(),
