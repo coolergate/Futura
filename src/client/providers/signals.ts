@@ -4,6 +4,7 @@ import { LocalSignal, LocalFunction } from 'shared/local_network';
 const Signals = {
 	Start: new Signal(),
 
+	// ! Legacy
 	CharacterRequestRespawn: new Instance('BindableFunction'),
 	CharacterTookDamage: new Signal(),
 	CharacterHealed: new Signal(),
@@ -11,10 +12,22 @@ const Signals = {
 
 	CameraShoveRecoil: new Instance('BindableFunction'),
 
-	SendConsoleCommand: new Signal<(cmd: string) => void>(),
-	RenderToConsole: new Signal<(LogType: ConsoleMessageType, Message: string) => void>(),
+	console_sendarg: new Signal<(cmd: string) => void>(),
+	console_render: new Signal<(LogType: ConsoleMessageType, Message: string) => void>(),
 
 	Character_SendRespawnRequest: new LocalFunction<[], boolean>(),
+
+	// new
+	ui_open_mainmenu: new LocalSignal(),
+
+	Character: {
+		Spawned: new LocalSignal<[info: ent_CharacterInfo]>(),
+		Died: new LocalSignal<[info: ent_CharacterInfo]>(),
+		HealthChanged: new LocalSignal<[Previous: number, Health: number]>(),
+
+		TookDamage: new LocalSignal<[Previous: number, Health: number]>(),
+		Healed: new LocalSignal<[Previous: number, Health: number]>(),
+	},
 };
 
 export = Signals;
