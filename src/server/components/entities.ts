@@ -37,14 +37,6 @@ BaseDefaultBox.Parent = DefaultCollisionModel;
 DefaultCollisionModel.PrimaryPart = BaseDefaultBox;
 
 const created_controllers = new Map<string, CharacterController>();
-/*const respawn_req = new ConVar(
-	'char_respawn',
-	(player: Player) => {
-		return 'lol';
-	},
-	'',
-	['ClientAccess'],
-);*/
 const respawn_req = new client_command<[]>('char_respawn');
 
 declare global {
