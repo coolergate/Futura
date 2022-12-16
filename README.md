@@ -87,7 +87,7 @@ Example: `const respawn_req = new client_command<[]>('char_respawn');`
 Then when called on the client's console it would return "command callback has not been defined!".
 You can define a callback by setting the `callback` property
 
-````ts
+```ts
 const respawn_req = new client_command<[]>('char_respawn');
 
 respawn_req.callback = (player) => {};
