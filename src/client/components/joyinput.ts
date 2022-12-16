@@ -4,15 +4,14 @@
 import * as Services from '@rbxts/services';
 import { ConVar } from 'shared/components/vars';
 
+//cvars
+const invert_thumbstick = new ConVar('joy_invert_thumbsticks', 0, 'Invert controller thumbsticks');
+const thumbsticks_deadzone = new ConVar('joy_deadzone', 0.05, 'ThumbstickDeadzone');
+const Thumbstick1 = new ConVar('joy_thumbstick1', new Vector3(), '', ['Hidden']);
+const Thumbstick2 = new ConVar('joy_thumbstick2', new Vector3(), '', ['Hidden']);
+
 class Component implements BaseClientComponent {
 	Player = Services.Players.LocalPlayer;
-
-	cvars = {
-		invert_thumbstick: new ConVar('joy_invert_thumbsticks', 0, 'Invert controller thumbsticks'),
-		thumbsticks_deadzone: new ConVar('joy_deadzone', 0.05, 'ThumbstickDeadzone'),
-		Thumbstick1: new ConVar('joy_thumbstick1', new Vector3(), '', ['Hidden']),
-		Thumbstick2: new ConVar('joy_thumbstick2', new Vector3(), '', ['Hidden']),
-	};
 
 	constructor() {}
 	Start(): void {}
@@ -21,15 +20,11 @@ class Component implements BaseClientComponent {
 		Services.UserInputService.GetGamepadState('Gamepad1').forEach(obj => {
 			// thumbsticks
 			if (obj.KeyCode.Name === 'Thumbstick1') {
-				if (obj.Position.Magnitude < this.cvars.thumbsticks_deadzone.value) obj.Position = new Vector3();
-				this.cvars.invert_thumbstick.value === 0
-					? (this.cvars.Thumbstick1.value = obj.Position)
-					: (this.cvars.Thumbstick2.value = obj.Position);
+				if (obj.Position.Magnitude < thumbsticks_deadzone.value) obj.Position = new Vector3();
+				invert_thumbstick.value === 0 ? (Thumbstick1.value = obj.Position) : (Thumbstick2.value = obj.Position);
 			} else if (obj.KeyCode.Name === 'Thumbstick2') {
-				if (obj.Position.Magnitude < this.cvars.thumbsticks_deadzone.value) obj.Position = new Vector3();
-				this.cvars.invert_thumbstick.value === 0
-					? (this.cvars.Thumbstick2.value = obj.Position)
-					: (this.cvars.Thumbstick1.value = obj.Position);
+				if (obj.Position.Magnitude < thumbsticks_deadzone.value) obj.Position = new Vector3();
+				invert_thumbstick.value === 0 ? (Thumbstick2.value = obj.Position) : (Thumbstick1.value = obj.Position);
 			}
 		});
 	}
