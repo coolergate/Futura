@@ -154,5 +154,4 @@ LoadingScreenFadeOut.Completed.Wait();
 task.wait(1);
 LoadingGui.Destroy();
 
-// ! Temporary. will be moved over to another script
-Signals.Character_SendRespawnRequest.Call();
+Signals.ui_open_mainmenu.Fire();
