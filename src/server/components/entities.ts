@@ -37,7 +37,7 @@ BaseDefaultBox.Parent = DefaultCollisionModel;
 DefaultCollisionModel.PrimaryPart = BaseDefaultBox;
 
 const created_controllers = new Map<string, CharacterController>();
-const respawn_req = new client_command<[]>('char_respawn');
+const respawn_req = new client_command<[], void>('char_respawn');
 
 declare global {
 	interface ent_CharacterModel extends Model {
@@ -133,12 +133,15 @@ for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 }
 
 // client respawn request
-Network.ent_plr_respawn.OnServerInvoke = player => {
+respawn_req.callback = player_data => {
+	const player_instance = Services.Players.GetPlayerByUserId(player_data.UserId);
+	if (player_instance === undefined) return;
+
 	// search if the player already has a controller assigned
 	let user_has_controller = false;
 	created_controllers.forEach(controller => {
 		if (user_has_controller) return;
-		if (controller.ent_owner === player.UserId) user_has_controller = true;
+		if (controller.ent_owner === player_data.UserId) user_has_controller = true;
 	});
 	if (user_has_controller) return false;
 
@@ -151,7 +154,7 @@ Network.ent_plr_respawn.OnServerInvoke = player => {
 
 			if (Char_Controller.ent_owner === undefined) {
 				Char_Controller.Kill();
-				Char_Controller.Spawn(player.UserId);
+				Char_Controller.Spawn(player_data.UserId);
 				AvaiableController = Char_Controller;
 			}
 		});
@@ -175,30 +178,21 @@ Network.ent_plr_respawn.OnServerInvoke = player => {
 
 	AvaiableController.ent_model.Base.CFrame = Spawn_Location;
 	AvaiableController.ent_model.Base.Anchored = false;
-	AvaiableController.ent_model.Base.SetNetworkOwner(player);
+	AvaiableController.ent_model.Base.SetNetworkOwner(player_instance);
+
+	Network.entities.ent_Character.InfoChanged.PostClient(
+		[player_instance],
+		char_InfoFromController(AvaiableController),
+	);
 
 	//TODO alert all players when a new entity spawns in
-
-	//return true;
-	return char_InfoFromController(AvaiableController);
 };
 
 //!SECTION
 
+//SECTION Default component stuff
 class Component implements BaseServerComponent {
-	created_controllers = new Map<string, CharacterController>();
-
-	CVars = {
-		DisableRespawnWave: new ConVar('sv_disable_respawn_waves', false, ''),
-	};
-
-	Network = {
-		RespawnRequest: Network.ent_plr_respawn,
-		InfoChanged: Network.ent_plr_changed,
-	};
-
 	constructor() {}
-
 	Start(): void {}
 }
 
@@ -207,3 +201,5 @@ export function Init() {
 	return new Component();
 }
 export const InitOrder = 0;
+
+//!SECTION

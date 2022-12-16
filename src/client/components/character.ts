@@ -55,18 +55,6 @@ function CreateHumanoidModelFromDescription(Description = DefDescription): Model
 
 class Component implements BaseClientComponent {
 	constructor() {
-		Signals.Character_SendRespawnRequest.Handle = () => {
-			const info = Network.ent_plr_respawn.InvokeServer().awaitStatus()[1] as ent_CharacterInfo | undefined;
-			if (!info) {
-				GetCVar('cam_mode')!.value = 0;
-				return false;
-			}
-
-			Values.Character = info;
-			GetCVar('cam_mode')!.value = 1;
-			return true;
-		};
-
 		Network.ent_plr_changed.OnClientPost = NewInfo => {
 			const PreviousInfo = Values.Character;
 

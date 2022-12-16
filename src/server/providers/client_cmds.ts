@@ -3,11 +3,11 @@
 
 import Network = require('shared/network');
 
-export const created_commands = new Array<client_command<any>>();
+export const created_commands = new Array<client_command<any, any>>();
 
-export class client_command<args extends string[]> {
+export class client_command<args extends string[], reply> {
 	name: string;
-	callback: (player: PlayerData_Advanced, ...args: args) => void | string;
+	callback: (player: PlayerData_Advanced, ...args: args) => reply | void;
 
 	constructor(name: string) {
 		this.name = name;
@@ -15,7 +15,6 @@ export class client_command<args extends string[]> {
 		this.callback = (player, ...args) => {
 			print(player);
 			warn(...args);
-			return `command callback has not been defined! (${this.name})`;
 		};
 
 		created_commands.insert(0, this);

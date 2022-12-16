@@ -125,7 +125,6 @@ const Network = {
 
 	// character entity old
 	ent_plr_changed: new Remote<[Info: ent_CharacterInfo | undefined]>('ServerToClient'),
-	ent_plr_respawn: new Function<[], ent_CharacterInfo | boolean /*boolean*/>(),
 	ent_plr_created: new Remote<[]>('ServerToClient'),
 
 	// entities

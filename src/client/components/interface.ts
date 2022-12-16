@@ -18,10 +18,6 @@ class Component implements BaseClientComponent {
 	Player = Services.Players.LocalPlayer;
 	PlayerGui = this.Player.WaitForChild('PlayerGui') as PlayerGui;
 
-	network = {
-		respawn: Network.ent_plr_respawn,
-	};
-
 	Holder: ScreenGui;
 	GameplayFrame: Frame;
 	GameplayOverlay: Frame;
@@ -54,7 +50,6 @@ class Component implements BaseClientComponent {
 
 		const buttons_callback = new Map<number, () => boolean>();
 		buttons_callback.set(1, () => {
-			//Signals.Character_SendRespawnRequest.Call();
 			Signals.console_sendarg.Fire('char_respawn');
 			return true;
 		});
