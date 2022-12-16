@@ -2,17 +2,18 @@
 // Purpose:
 
 import * as Services from '@rbxts/services';
+import * as Folders from 'shared/folders';
 import Values from 'client/providers/values';
 import { ConVar, GetCVar } from 'shared/components/vars';
+import { GetFolderInfo } from 'shared/network';
+
+// cvars
+const client_fov = new ConVar('fov', 80, "Change player's FOV");
+const menu_fov = new ConVar('fov_menu', 70, '', ['Readonly']);
+const camera_mode = new ConVar('cam_mode', 0, '', ['Hidden']);
 
 class Component implements BaseClientComponent {
 	Player = Services.Players.LocalPlayer;
-
-	cvars = {
-		client_fov: new ConVar('fov', 80, "Change player's FOV"),
-		menu_fov: new ConVar('fov_menu', 70, '', ['Readonly']),
-		camera_mode: new ConVar('cam_mode', 1, '', ['Hidden']),
-	};
 
 	Camera = Services.Workspace.CurrentCamera!;
 	CameraVerticalClamp = math.rad(90);
@@ -30,14 +31,14 @@ class Component implements BaseClientComponent {
 	FixedUpdate(): void {}
 
 	Update(delta_time: number): void {
-		const current_cam_mode = this.cvars.camera_mode;
+		const current_cam_mode = camera_mode;
 		if (this.LastCameraMode !== current_cam_mode.value) {
 			this.LastCameraMode = current_cam_mode.value;
 			this.CameraRotation = new Vector2();
 		}
 
 		if (current_cam_mode.value === 1) {
-			if (Values.Character.CollisionBox === undefined || !Values.CCameraUnlock.isEmpty()) {
+			if (Values.Character === undefined || !Values.camUnlock.isEmpty()) {
 				Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 				return;
 			}
@@ -46,11 +47,19 @@ class Component implements BaseClientComponent {
 			this.Gameplay_Cam(delta_time);
 			return;
 		}
+
+		if (current_cam_mode.value === 0) {
+			Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
+			this.MainMenu_Cam();
+			return;
+		}
 	}
 
 	Gameplay_Cam(dt: number) {
 		this.Camera.CameraType = Enum.CameraType.Scriptable;
-		this.Camera.FieldOfView = this.cvars.client_fov.value;
+		this.Camera.FieldOfView = client_fov.value;
+
+		if (!Values.Character) return;
 
 		const Thumbstick2 = GetCVar('joy_thumbstick2') as ConVar<Vector3>;
 		const delta = new Vector2(Thumbstick2.value.X, Thumbstick2.value.Y).add(
@@ -70,15 +79,21 @@ class Component implements BaseClientComponent {
 		}
 
 		const CameraLookCF = CFrame.Angles(0, this.CameraRotation.X, 0).mul(CFrame.Angles(this.CameraRotation.Y, 0, 0));
-		const FinalCFrame = new CFrame(
-			Values.Character.CollisionBox!.HumanoidRootPart.CameraAttachment.WorldPosition,
-		).mul(CameraLookCF);
+		const FinalCFrame = new CFrame(Values.Character.Model.Base.CameraAttachment.WorldPosition).mul(CameraLookCF);
 
 		this.Camera.CFrame = FinalCFrame.mul(CFrame.Angles(this.Recoil.Value.Y, 0, 0))
 			.mul(CFrame.Angles(0, this.Recoil.Value.X, 0))
 			.mul(CFrame.Angles(0, 0, this.Recoil.Value.Z));
 
-		Values.CCameraCFrame = FinalCFrame;
+		Values.camCFrame = FinalCFrame;
+	}
+
+	MainMenu_Cam() {
+		this.Camera.CameraType = Enum.CameraType.Scriptable;
+		this.Camera.FieldOfView = menu_fov.value;
+
+		const base_part = Folders.Workspace.Map.func_entity.FindFirstChild('Camera_Menu') as BasePart | undefined;
+		if (base_part) this.Camera.CFrame = this.Camera.CFrame.Lerp(base_part.CFrame, 0.05);
 	}
 }
 
