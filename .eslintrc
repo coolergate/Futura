@@ -12,16 +12,16 @@
 	],
 	"plugins": [
 		"@typescript-eslint",
-		"roblox-ts",
-		"prettier"
+		"roblox-ts"
+		//"prettier"
 	],
 	"extends": [
 		"eslint:recommended",
 		"plugin:@typescript-eslint/recommended",
-		"plugin:roblox-ts/recommended",
-		"plugin:prettier/recommended"
+		"plugin:roblox-ts/recommended"
+		//"plugin:prettier/recommended"
 	],
 	"rules": {
-		"prettier/prettier": "warn"
+		//"prettier/prettier": "warn"
 	}
 }
