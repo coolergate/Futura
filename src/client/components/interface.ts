@@ -19,6 +19,7 @@ class Component implements BaseClientComponent {
 	PlayerGui = this.Player.WaitForChild('PlayerGui') as PlayerGui;
 
 	Holder: ScreenGui;
+	MainMenuFrame: Frame;
 	GameplayFrame: Frame;
 	GameplayOverlay: Frame;
 
@@ -29,6 +30,7 @@ class Component implements BaseClientComponent {
 
 	constructor() {
 		this.Holder = this.PlayerGui.WaitForChild('Main') as ScreenGui;
+		this.MainMenuFrame = this.Holder.FindFirstChild('Menu') as Frame;
 		this.GameplayFrame = this.Holder.FindFirstChild('Game') as Frame;
 		this.GameplayOverlay = this.Holder.FindFirstChild('GameOverlay') as Frame;
 
@@ -37,14 +39,12 @@ class Component implements BaseClientComponent {
 	}
 	Start(): void {
 		const MainHolder = this.PlayerGui.FindFirstChild('Main') as ScreenGui;
-		const MainMenu = MainHolder.FindFirstChild('Menu') as Frame;
-
-		MainMenu.Visible = false;
+		this.MainMenuFrame.Visible = false;
 
 		// Main menu
-		const MM_buttons = MainMenu.FindFirstChild('Buttons') as Frame;
-		const MM_background = MainMenu.FindFirstChild('BackgroundDark') as Frame;
-		const MM_bar_top_left = MainMenu.FindFirstChild('Topbar_Left') as Frame;
+		const MM_buttons = this.MainMenuFrame.FindFirstChild('Buttons') as Frame;
+		const MM_background = this.MainMenuFrame.FindFirstChild('BackgroundDark') as Frame;
+		const MM_bar_top_left = this.MainMenuFrame.FindFirstChild('Topbar_Left') as Frame;
 		const MM_bar_top_background = MainHolder.FindFirstChild('Topbar_Background') as Frame;
 		const MM_changelogs = MainHolder.FindFirstChild('Changelogs') as Frame;
 
@@ -64,10 +64,10 @@ class Component implements BaseClientComponent {
 		});
 
 		Signals.ui_open_mainmenu.Connect(() => {
-			MainMenu.Visible = true;
+			this.MainMenuFrame.Visible = true;
 		});
 
-		Signals.Character.Spawned.Connect(() => (MainMenu.Visible = false));
+		Signals.Character.Spawned.Connect(() => (this.MainMenuFrame.Visible = false));
 	}
 	Update(delta_time: number): void {
 		const meter_label = this.roact_ref.fps_meter_label.getValue()!;
@@ -84,6 +84,10 @@ class Component implements BaseClientComponent {
 
 	FixedUpdate(delta_time: number): void {
 		const Character = Values.Character;
+
+		// toggle gameplay interface
+		this.GameplayFrame.Visible = Character !== undefined && this.MainMenuFrame.Visible === false;
+
 		if (Character === undefined) return;
 
 		const user_health = Character.health;
@@ -97,7 +101,7 @@ class Component implements BaseClientComponent {
 		};
 
 		HealthPanel.Amount.Text = num_string_pad(user_health, 3);
-		HealthPanel.HealthIcon.Foreground.Size = UDim2.fromScale(1, user_health / user_max_health);
+		HealthPanel.HealthIcon.Foreground.Size = HealthPanel.HealthIcon.Foreground.Size.Lerp(UDim2.fromScale(1, user_health / user_max_health), 0.25);
 	}
 }
 
