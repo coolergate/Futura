@@ -17,7 +17,7 @@ const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
 Services.StarterGui.SetCoreGuiEnabled('All', false);
 
 // Build loading screen
-const LoadingGui = Folders.Storage.Interface.FindFirstChild('Loading') as ScreenGui & {
+const LoadingGui = Folders.Interface.FindFirstChild('Loading') as ScreenGui & {
 	Main: CanvasGroup & {
 		Logo: TextLabel & {
 			UIGradient: UIGradient;
@@ -54,7 +54,7 @@ const Loading_LogoGradient = Loading_Canvas.Logo.UIGradient;
 	})();
 }
 
-Folders.Storage.Interface.GetChildren().forEach(element => {
+Folders.Interface.GetChildren().forEach(element => {
 	if (element.IsA('ScreenGui')) {
 		element.Enabled = true;
 		element.Parent = PlayerGui;
@@ -102,7 +102,7 @@ interface ComponentInfo {
 	Module: BaseComponentBuilder;
 }
 
-const Folder = Player.WaitForChild('PlayerScripts').WaitForChild('TS').FindFirstChild('components') as Folder;
+const Folder = Folders.MainScriptFolder.FindFirstChild('components') as Folder;
 const Components = new Array<ComponentInfo>();
 const BuiltComponents = new Array<BaseClientComponent>();
 

@@ -4,7 +4,7 @@
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 
-const network_folder = Folders.Workspace.Defined.Network;
+const network_folder = Folders.Network;
 let next_index = 0;
 
 function Manager(index: number, mode: 'RemoteFunction' | 'RemoteEvent'): RemoteEvent | RemoteFunction {
@@ -123,16 +123,12 @@ const Network = {
 	console_sendarg: new Function<[argument: string, value: unknown[]], string | undefined | void>(),
 	console_getcmds: new Function<[], string[]>(),
 
-	// character entity old
-	ent_plr_changed: new Remote<[Info: ent_CharacterInfo | undefined]>('ServerToClient'),
-	ent_plr_created: new Remote<[]>('ServerToClient'),
-
 	// entities
 	entities: {
 		ent_Character: {
-			InfoChanged: new Remote<[Info: ent_CharacterInfo]>('ServerToClient'),
-			GetLatestInfo: new Function<[], ent_CharacterInfo | undefined>(),
-			SendRequest: new Function<[request: string], boolean>(),
+			info_changed: new Remote<[Info: ent_CharacterInfo]>('ServerToClient'),
+			get_info: new Function<[], ent_CharacterInfo | undefined>(),
+			send_request: new Function<[request: string], boolean>(),
 		},
 	},
 

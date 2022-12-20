@@ -5,34 +5,29 @@
 
 import * as Services from '@rbxts/services';
 
-export const Storage = Services.ReplicatedStorage.WaitForChild('Storage') as unknown as {
-	Animations: Folder;
-	Models: Folder;
-	Sound: Folder;
-	Interface: Folder;
-};
-export const Workspace = Services.Workspace as unknown as {
-	Entities: Folder;
-	Server: Folder;
-	Objects: Folder;
-	Map: Folder & {
-		func_entity: Folder;
-		func_filter: Folder;
-		ent_light: Folder;
-		obj_part: Folder;
-		env_prop: Folder;
-		func_spawn: Folder;
-	};
-	Defined: Folder & {
-		Network: Folder;
-	};
-};
-
-interface client_holder extends Folder {
-	modules: Folder;
-	components: Folder;
-	providers: Folder;
+export function GetFolder(Name: string, Parent: Instance): Folder {
+	const Folder = Services.RunService.IsClient() ? Parent.WaitForChild(Name) as Folder : (Parent.FindFirstChild(Name) as Folder | undefined || new Instance('Folder', Parent));
+	Folder.Name = Name;
+	return Folder;
 }
 
-export const ClientHolder = Services.RunService.IsClient() && Services.Players.LocalPlayer?.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder;
-export const ServerHolder = Services.RunService.IsServer() && Services.ServerScriptService?.FindFirstChild('TS') as Folder;
+// base
+export const Entities = GetFolder('Entities', Services.Workspace);
+export const Objects = GetFolder('Objects', Services.Workspace);
+export const Network = GetFolder('Network', Services.ReplicatedStorage);
+export const Map = GetFolder('Map', Services.Workspace) as Folder & {
+	func_entity: Folder;
+	func_filter: Folder;
+	ent_light: Folder;
+	obj_part: Folder;
+	env_prop: Folder;
+	func_spawn: Folder;
+};
+
+// storage
+export const Animations = GetFolder('Animations', Services.ReplicatedStorage);
+export const Interface = GetFolder('Interface', Services.ReplicatedStorage);
+export const Models = GetFolder('Models', Services.ReplicatedStorage);
+export const Sound = GetFolder('Sound', Services.ReplicatedStorage);
+
+export const MainScriptFolder = Services.RunService.IsClient() ? Services.Players.LocalPlayer!.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder : Services.ServerScriptService.FindFirstChild('TS') as Folder

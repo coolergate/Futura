@@ -31,7 +31,7 @@ PhysicsService.CollisionGroupSetCollidable('CViewmodels', 'Default', false);
 StarterGui.GetChildren().forEach(inst => {
 	if (inst.IsA('ScreenGui')) {
 		inst.Enabled = false;
-		inst.Parent = Folders.Storage.Interface;
+		inst.Parent = Folders.Interface;
 	}
 });
 
