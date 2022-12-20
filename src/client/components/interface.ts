@@ -66,6 +66,8 @@ class Component implements BaseClientComponent {
 		Signals.ui_open_mainmenu.Connect(() => {
 			MainMenu.Visible = true;
 		});
+
+		Signals.Character.Spawned.Connect(() => (MainMenu.Visible = false));
 	}
 	Update(delta_time: number): void {
 		const meter_label = this.roact_ref.fps_meter_label.getValue()!;
@@ -84,8 +86,8 @@ class Component implements BaseClientComponent {
 		const Character = Values.Character;
 		if (Character === undefined) return;
 
-		const user_health = Character.Health;
-		const user_max_health = Character.MaxHealth;
+		const user_health = Character.health;
+		const user_max_health = Character.health_max;
 
 		const HealthPanel = this.GameplayFrame.FindFirstChild('Health') as unknown as {
 			HealthIcon: {

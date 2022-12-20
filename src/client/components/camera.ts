@@ -37,6 +37,7 @@ class Component implements BaseClientComponent {
 			this.CameraRotation = new Vector2();
 		}
 
+		// gameplay camera
 		if (current_cam_mode.value === 1) {
 			if (Values.Character === undefined || !Values.camUnlock.isEmpty()) {
 				Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
@@ -48,6 +49,7 @@ class Component implements BaseClientComponent {
 			return;
 		}
 
+		// main menu camera
 		if (current_cam_mode.value === 0) {
 			Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 			this.MainMenu_Cam();
@@ -79,7 +81,7 @@ class Component implements BaseClientComponent {
 		}
 
 		const CameraLookCF = CFrame.Angles(0, this.CameraRotation.X, 0).mul(CFrame.Angles(this.CameraRotation.Y, 0, 0));
-		const FinalCFrame = new CFrame(Values.Character.Model.Base.CameraAttachment.WorldPosition).mul(CameraLookCF);
+		const FinalCFrame = new CFrame(Values.Character.collisionbox.CameraAttachment.WorldPosition).mul(CameraLookCF);
 
 		this.Camera.CFrame = FinalCFrame.mul(CFrame.Angles(this.Recoil.Value.Y, 0, 0))
 			.mul(CFrame.Angles(0, this.Recoil.Value.X, 0))
@@ -92,7 +94,7 @@ class Component implements BaseClientComponent {
 		this.Camera.CameraType = Enum.CameraType.Scriptable;
 		this.Camera.FieldOfView = menu_fov.value;
 
-		const base_part = Folders.Workspace.Map.func_entity.FindFirstChild('Camera_Menu') as BasePart | undefined;
+		const base_part = Folders.Map.func_entity.FindFirstChild('Camera_Menu') as BasePart | undefined;
 		if (base_part) this.Camera.CFrame = this.Camera.CFrame.Lerp(base_part.CFrame, 0.05);
 	}
 }

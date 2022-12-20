@@ -28,7 +28,7 @@ function CreateHumanoidModelFromDescription(Description = DefDescription): Model
 	hum.JumpPower = 0;
 
 	CharacterModel.Name = GenerateString();
-	CharacterModel.Parent = Folders.Workspace.Objects;
+	CharacterModel.Parent = Folders.Objects;
 	HumanoidRootPart.Anchored = true;
 	HumanoidRootPart.CFrame = new CFrame(0, 10000, 0);
 
@@ -55,7 +55,7 @@ function CreateHumanoidModelFromDescription(Description = DefDescription): Model
 
 class Component implements BaseClientComponent {
 	constructor() {
-		Network.ent_plr_changed.OnClientPost = NewInfo => {
+		Network.entities.ent_Character.info_changed.OnClientPost = NewInfo => {
 			const PreviousInfo = Values.Character;
 
 			// if the server is just reminding us that we have no character
@@ -68,19 +68,20 @@ class Component implements BaseClientComponent {
 			if (PreviousInfo === undefined) {
 				Values.Character = NewInfo;
 				Signals.Character.Spawned.Fire(NewInfo);
+				GetCVar('cam_mode')!.value = 1;
 				return;
 			}
 
 			// health changes
-			if (NewInfo.Health !== PreviousInfo.Health) {
-				if (NewInfo.Health === 0) {
+			if (NewInfo.health !== PreviousInfo.health) {
+				if (NewInfo.health === 0) {
 					Signals.CharacterDied.Fire();
 					GetCVar('cam_mode')!.value = 0;
 					return;
 				}
 
-				const CurrentHealth = PreviousInfo.Health;
-				const NewHealth = NewInfo.Health;
+				const CurrentHealth = PreviousInfo.health;
+				const NewHealth = NewInfo.health;
 				CurrentHealth > NewHealth
 					? Signals.Character.TookDamage.Fire(CurrentHealth, NewHealth)
 					: Signals.Character.Healed.Fire(CurrentHealth, NewHealth);
@@ -88,7 +89,6 @@ class Component implements BaseClientComponent {
 			}
 
 			Values.Character = NewInfo;
-			GetCVar('cam_mode')!.value = 1;
 		};
 	}
 	Start(): void {}

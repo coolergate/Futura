@@ -11,53 +11,31 @@ import * as Folders from 'shared/folders';
 import Network from 'shared/network';
 import { client_command } from 'server/providers/client_cmds';
 
+// ANCHOR Folders
+const characters_folder = Folders.GetFolder('characters', Folders.Entities);
+
 //SECTION Character entity
-const ent_CharacterFolderHolder = new Instance('Folder', Services.Workspace);
-ent_CharacterFolderHolder.Name = 'Characters';
-
-const BaseDefaultBox = new Instance('Part');
-BaseDefaultBox.Size = new Vector3(2, 5, 2);
-BaseDefaultBox.Transparency = 0.5;
-BaseDefaultBox.CustomPhysicalProperties = new PhysicalProperties(0.5, 0.25, 0, 1, 100);
-BaseDefaultBox.Anchored = true;
-BaseDefaultBox.CFrame = new CFrame(0, 10e8, 0);
-BaseDefaultBox.Name = 'Base';
-
-const Attachment1 = new Instance('Attachment', BaseDefaultBox);
-Attachment1.Name = 'MainAttachment';
-
-// camera attachment
-const Attachment2 = new Instance('Attachment', BaseDefaultBox);
-Attachment2.Position = new Vector3(0, 2, 0);
-Attachment2.Name = 'CameraAttachment';
-
-const DefaultCollisionModel = new Instance('Model') as ent_CharacterModel;
-DefaultCollisionModel.Name = '';
-BaseDefaultBox.Parent = DefaultCollisionModel;
-DefaultCollisionModel.PrimaryPart = BaseDefaultBox;
-
-const created_controllers = new Map<string, CharacterController>();
+const created_controllers = new Array<CharacterController>();
 const respawn_req = new client_command<[], void>('char_respawn');
 
 declare global {
-	interface ent_CharacterModel extends Model {
-		Base: Part & {
-			CameraAttachment: Attachment;
-			MainAttachment: Attachment;
-		};
+	interface ent_characterColl extends Part {
+		CameraAttachment: Attachment;
+		MainAttachment: Attachment;
 	}
 	interface ent_CharacterInfo {
-		Id: string;
-		Alive: boolean;
-		Health: number;
-		MaxHealth: number;
-		Model: ent_CharacterModel;
+		id: string;
+		alive: boolean;
+		health: number;
+		health_max: number;
+
+		collisionbox: ent_characterColl;
 	}
 }
 
 class CharacterController {
-	readonly ent_id = tostring(ent_CharacterFolderHolder.GetChildren().size() + 1); //GenerateString(math.random(10, 20));
-	readonly ent_model: ent_CharacterModel;
+	readonly ent_id = tostring(characters_folder.GetChildren().size() + 1); //GenerateString(math.random(10, 20));
+	readonly ent_collisionbox: ent_characterColl;
 
 	ent_owner = undefined as number | undefined;
 	ent_alive = true;
@@ -71,11 +49,24 @@ class CharacterController {
 	// functions
 	constructor() {
 		// create collision box
-		const cmodel = DefaultCollisionModel.Clone();
-		cmodel.Parent = ent_CharacterFolderHolder;
-		cmodel.Name = tostring(ent_CharacterFolderHolder.GetChildren().size() + 1);
+		const collision_box = new Instance('Part', characters_folder) as ent_characterColl;
+		collision_box.Size = new Vector3(2, 5, 2);
+		collision_box.Transparency = 0.5;
+		collision_box.CustomPhysicalProperties = new PhysicalProperties(1, 1, 0, 0, 100);
+		collision_box.Anchored = true;
+		collision_box.CFrame = new CFrame(0, 10e8, 0);
+		collision_box.Name =  Services.RunService.IsStudio() ? 'character_' + tostring(characters_folder.GetChildren().size() + 1) : GenerateString(math.random(10, 20), '§');
 
-		this.ent_model = cmodel;
+		// vforce attachment
+		const attachment_1 = new Instance('Attachment', collision_box);
+		attachment_1.Name = 'MainAttachment';
+
+		// camera attachment
+		const attachment_2 = new Instance('Attachment', collision_box);
+		attachment_2.Position = new Vector3(0, 2, 0);
+		attachment_2.Name = 'CameraAttachment';
+
+		this.ent_collisionbox = collision_box;
 	}
 
 	Damage(amount: number) {
@@ -87,9 +78,9 @@ class CharacterController {
 	Kill() {
 		this.ent_alive = false;
 		this.ent_health = 0;
-		this.ent_model.Base.Anchored = false;
-		this.ent_model.Base.SetNetworkOwner();
-		this.ent_model.Base.Anchored = true;
+		this.ent_collisionbox.Anchored = false;
+		this.ent_collisionbox.SetNetworkOwner();
+		this.ent_collisionbox.Anchored = true;
 		this.signal_died.Fire(this.ent_owner);
 		this.ent_owner = undefined;
 	}
@@ -103,34 +94,41 @@ class CharacterController {
 
 function char_InfoFromController(controller: CharacterController): ent_CharacterInfo {
 	return {
-		Id: controller.ent_id,
-		Alive: controller.ent_alive,
-		Health: controller.ent_health,
-		MaxHealth: controller.ent_maxhealth,
-		Model: controller.ent_model,
+		id: controller.ent_id,
+		alive: controller.ent_alive,
+		health: controller.ent_health,
+		health_max: controller.ent_maxhealth,
+		collisionbox: controller.ent_collisionbox,
 	};
 }
 
 // create 5 controllers above maxplayers
 for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 	const ent_player_controller = new CharacterController();
-	created_controllers.set(ent_player_controller.ent_id, ent_player_controller);
+	created_controllers.insert(0, ent_player_controller);
 
 	ent_player_controller.signal_damaged.Connect(amount => {
 		if (ent_player_controller.ent_owner === undefined) return;
 		const controller_owner = Services.Players.GetPlayerByUserId(ent_player_controller.ent_owner);
 		if (!controller_owner) return;
 
-		Network.ent_plr_changed.PostClient([controller_owner], char_InfoFromController(ent_player_controller));
+		Network.entities.ent_Character.info_changed.PostClient(
+			[controller_owner],
+			char_InfoFromController(ent_player_controller),
+		);
 	});
 	ent_player_controller.signal_died.Connect(previous_owner => {
 		if (previous_owner === undefined) return;
 		const controller_owner = Services.Players.GetPlayerByUserId(previous_owner);
 		if (!controller_owner) return;
 
-		Network.ent_plr_changed.PostClient([controller_owner], char_InfoFromController(ent_player_controller));
+		Network.entities.ent_Character.info_changed.PostClient(
+			[controller_owner],
+			char_InfoFromController(ent_player_controller),
+		);
 	});
 }
+created_controllers.sort((a, b) => {return a.ent_id > b.ent_id});
 
 // client respawn request
 respawn_req.callback = player_data => {
@@ -138,31 +136,28 @@ respawn_req.callback = player_data => {
 	if (player_instance === undefined) return;
 
 	// search if the player already has a controller assigned
-	let user_has_controller = false;
-	created_controllers.forEach(controller => {
-		if (user_has_controller) return;
-		if (controller.ent_owner === player_data.UserId) user_has_controller = true;
-	});
-	if (user_has_controller) return false;
+	if (created_controllers.find(controller => {return controller.ent_owner === player_data.UserId}))
+		return false;
 
 	// loop search until a controller is avaiable
-	let AvaiableController: CharacterController | undefined;
-	do {
-		created_controllers.forEach(Char_Controller => {
-			if (AvaiableController !== undefined) return;
-			if (Char_Controller.ent_owner !== undefined) return;
+	// const controller = created_controllers.find(controller => {return controller.ent_owner === undefined});
+	// if (controller === undefined) return false;
+	// controller.Kill();
+	// controller.Spawn(player_data.UserId);
 
-			if (Char_Controller.ent_owner === undefined) {
-				Char_Controller.Kill();
-				Char_Controller.Spawn(player_data.UserId);
-				AvaiableController = Char_Controller;
-			}
-		});
-		if (AvaiableController) break;
-	} while (AvaiableController === undefined);
+	let controller: CharacterController | undefined;
+	while (controller === undefined)
+		for (let index = 0; index < created_controllers.size(); index++) {
+			const element = created_controllers[index];
+			if (element.ent_owner === undefined) controller = element;
+			if (controller !== undefined) break;
+		}
+
+	controller.Kill();
+	controller.Spawn(player_data.UserId);
 
 	// Random spawn location
-	const spawn_children = Folders.Workspace.Map.func_spawn.GetChildren();
+	const spawn_children = Folders.Map.func_spawn.GetChildren();
 	let Spawn_Location = new CFrame(0, 10, 0);
 	if (!spawn_children.isEmpty()) {
 		let Found = false;
@@ -176,13 +171,13 @@ respawn_req.callback = player_data => {
 		} while (Found === false);
 	}
 
-	AvaiableController.ent_model.Base.CFrame = Spawn_Location;
-	AvaiableController.ent_model.Base.Anchored = false;
-	AvaiableController.ent_model.Base.SetNetworkOwner(player_instance);
+	controller.ent_collisionbox.CFrame = Spawn_Location;
+	controller.ent_collisionbox.Anchored = false;
+	controller.ent_collisionbox.SetNetworkOwner(player_instance);
 
-	Network.entities.ent_Character.InfoChanged.PostClient(
+	Network.entities.ent_Character.info_changed.PostClient(
 		[player_instance],
-		char_InfoFromController(AvaiableController),
+		char_InfoFromController(controller),
 	);
 
 	//TODO alert all players when a new entity spawns in
