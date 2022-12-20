@@ -101,7 +101,10 @@ class Component implements BaseClientComponent {
 		};
 
 		HealthPanel.Amount.Text = num_string_pad(user_health, 3);
-		HealthPanel.HealthIcon.Foreground.Size = HealthPanel.HealthIcon.Foreground.Size.Lerp(UDim2.fromScale(1, user_health / user_max_health), 0.25);
+		HealthPanel.HealthIcon.Foreground.Size = HealthPanel.HealthIcon.Foreground.Size.Lerp(
+			UDim2.fromScale(1, user_health / user_max_health),
+			0.25,
+		);
 	}
 }
 

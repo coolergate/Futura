@@ -55,9 +55,9 @@ function is_grounded(): boolean {
 	const cbox_cframe = Values.Character.collisionbox.CFrame;
 
 	const checkcframe = new CFrame(cbox_cframe.Position).sub(new Vector3(0, cbox_size.Y / 2, 0));
-	const checksize = new Vector3(cbox_size.X - 0.125, 0.175, cbox_size.Z - 0.125)
+	const checksize = new Vector3(cbox_size.X - 0.125, 0.175, cbox_size.Z - 0.125);
 
-	const cast = Services.Workspace.GetPartBoundsInBox(checkcframe,checksize,gc_params);
+	const cast = Services.Workspace.GetPartBoundsInBox(checkcframe, checksize, gc_params);
 	return cast.size() > 0 ? true : false;
 }
 
@@ -72,17 +72,18 @@ class Component implements BaseClientComponent {
 
 		const walkspeed = Services.StarterPlayer.CharacterWalkSpeed;
 		const velocity = collisionbox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1));
-		
+
 		let ground_check = is_grounded();
 		if (JumpKB.Active && ground_check) {
 			ground_check = false;
 			collisionbox.AssemblyLinearVelocity = new Vector3(velocity.X, 20, velocity.Z);
 		}
-		
+
 		const world_direction = GetCameraWorldDirection(GetInputDirection());
-		collisionbox.AssemblyLinearVelocity = ground_check && velocity.Magnitude <= walkspeed + 5
-			? collisionbox.AssemblyLinearVelocity.Lerp(world_direction.mul(walkspeed), 0.15)
-			: collisionbox.AssemblyLinearVelocity;
+		collisionbox.AssemblyLinearVelocity =
+			ground_check && velocity.Magnitude <= walkspeed + 5
+				? collisionbox.AssemblyLinearVelocity.Lerp(world_direction.mul(walkspeed), 0.15)
+				: collisionbox.AssemblyLinearVelocity;
 	}
 	Update(delta_time: number): void {
 		if (!Values.Character) return;

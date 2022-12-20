@@ -55,7 +55,9 @@ class CharacterController {
 		collision_box.CustomPhysicalProperties = new PhysicalProperties(1, 1, 0, 0, 100);
 		collision_box.Anchored = true;
 		collision_box.CFrame = new CFrame(0, 10e8, 0);
-		collision_box.Name =  Services.RunService.IsStudio() ? 'character_' + tostring(characters_folder.GetChildren().size() + 1) : GenerateString(math.random(10, 20), '§');
+		collision_box.Name = Services.RunService.IsStudio()
+			? 'character_' + tostring(characters_folder.GetChildren().size() + 1)
+			: GenerateString(math.random(10, 20), '§');
 
 		// vforce attachment
 		const attachment_1 = new Instance('Attachment', collision_box);
@@ -128,7 +130,9 @@ for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 		);
 	});
 }
-created_controllers.sort((a, b) => {return a.ent_id > b.ent_id});
+created_controllers.sort((a, b) => {
+	return a.ent_id > b.ent_id;
+});
 
 // client respawn request
 respawn_req.callback = player_data => {
@@ -136,7 +140,11 @@ respawn_req.callback = player_data => {
 	if (player_instance === undefined) return;
 
 	// search if the player already has a controller assigned
-	if (created_controllers.find(controller => {return controller.ent_owner === player_data.UserId}))
+	if (
+		created_controllers.find(controller => {
+			return controller.ent_owner === player_data.UserId;
+		})
+	)
 		return false;
 
 	// loop search until a controller is avaiable
@@ -175,10 +183,7 @@ respawn_req.callback = player_data => {
 	controller.ent_collisionbox.Anchored = false;
 	controller.ent_collisionbox.SetNetworkOwner(player_instance);
 
-	Network.entities.ent_Character.info_changed.PostClient(
-		[player_instance],
-		char_InfoFromController(controller),
-	);
+	Network.entities.ent_Character.info_changed.PostClient([player_instance], char_InfoFromController(controller));
 
 	//TODO alert all players when a new entity spawns in
 };
