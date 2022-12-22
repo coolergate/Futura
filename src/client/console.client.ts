@@ -10,7 +10,7 @@
 // Purpose: Client's console
 
 import Signals from './providers/signals';
-import { ConVar, CreatedVars } from 'shared/components/vars';
+import { CVar, CreatedVars } from 'shared/components/vars';
 import placeinfo from 'shared/components/placeinfo';
 import Values from 'client/providers/values';
 import Network from 'shared/network';
@@ -147,7 +147,7 @@ function Log_GetNextIndex(): number {
 	return next_index;
 }
 
-function LogMessage_CVarInfo(cvar: ConVar<unknown>) {
+function LogMessage_CVarInfo(cvar: CVar<unknown>) {
 	let description = cvar.description;
 	let attributes = '';
 

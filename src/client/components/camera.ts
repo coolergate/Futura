@@ -4,13 +4,13 @@
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import Values from 'client/providers/values';
-import { ConVar, GetCVar } from 'shared/components/vars';
+import { CVar, GetCVar } from 'shared/components/vars';
 import { GetFolderInfo } from 'shared/network';
 
 // cvars
-const client_fov = new ConVar('fov', 80, "Change player's FOV");
-const menu_fov = new ConVar('fov_menu', 70, '', ['Readonly']);
-const camera_mode = new ConVar('cam_mode', 0, '', ['Hidden']);
+const client_fov = new CVar('fov', 80, "Change player's FOV");
+const menu_fov = new CVar('fov_menu', 70, '', ['Readonly']);
+const camera_mode = new CVar('cam_mode', 0, '', ['Hidden']);
 
 class Component implements BaseClientComponent {
 	Player = Services.Players.LocalPlayer;
@@ -63,7 +63,7 @@ class Component implements BaseClientComponent {
 
 		if (!Values.Character) return;
 
-		const Thumbstick2 = GetCVar('joy_thumbstick2') as ConVar<Vector3>;
+		const Thumbstick2 = GetCVar('joy_thumbstick2') as CVar<Vector3>;
 		const delta = new Vector2(Thumbstick2.value.X, Thumbstick2.value.Y).add(
 			Services.UserInputService.GetMouseDelta(),
 		);

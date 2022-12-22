@@ -6,13 +6,13 @@ import Values from 'client/providers/values';
 import Network from 'shared/network';
 import Signals from 'client/providers/signals';
 import Roact from '@rbxts/roact';
-import { ConVar } from 'shared/components/vars';
+import { CVar } from 'shared/components/vars';
 import { num_string_pad } from 'shared/modules/util';
 import { create_fps_label } from 'shared/providers/interface';
 
 // cvars
-const crosshair_enabled = new ConVar('ui_crosshair', 0, 'Toggle crosshair');
-const show_fps = new ConVar('ui_showfps', 0, 'Toggle FPS meter');
+const crosshair_enabled = new CVar('ui_crosshair', 0, 'Toggle crosshair');
+const show_fps = new CVar('ui_showfps', 0, 'Toggle FPS meter');
 
 class Component implements BaseClientComponent {
 	Player = Services.Players.LocalPlayer;

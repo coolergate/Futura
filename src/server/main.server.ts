@@ -6,7 +6,7 @@ import * as Folders from 'shared/folders';
 import * as Services from '@rbxts/services';
 import Signals from './providers/signals';
 import Network from 'shared/network';
-import { ConVar, CreatedVars } from 'shared/components/vars';
+import { CVar, CreatedVars } from 'shared/components/vars';
 import { created_commands } from './providers/client_cmds';
 
 // Services
@@ -78,7 +78,7 @@ declare global {
 }
 
 const player_ids = new Array<PlayerData_Advanced>();
-const plr_joinlog = new ConVar('pl_joinlog', 1, '', []);
+const plr_joinlog = new CVar('pl_joinlog', 1, '', []);
 
 const PlayerReport = Network.PlayerReport;
 const PlayerJoined = Network.PlayerJoined;

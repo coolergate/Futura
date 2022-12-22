@@ -7,7 +7,7 @@ import GenerateString from 'shared/modules/randomstring';
 import Signals from 'client/providers/signals';
 import Network from 'shared/network';
 import Values from 'client/providers/values';
-import { ConVar, GetCVar } from 'shared/components/vars';
+import { CVar, GetCVar } from 'shared/components/vars';
 
 const DefDescription = Services.Players.GetHumanoidDescriptionFromUserId(3676469645);
 

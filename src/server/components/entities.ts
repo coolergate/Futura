@@ -4,7 +4,7 @@
 
 import GenerateString from 'shared/modules/randomstring';
 import { LocalSignal } from 'shared/local_network';
-import { ConVar } from 'shared/components/vars';
+import { CVar } from 'shared/components/vars';
 import Signals from 'server/providers/signals';
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';

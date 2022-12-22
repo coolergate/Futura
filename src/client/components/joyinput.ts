@@ -2,14 +2,14 @@
 // Purpose: Gamepad / Controller input handler
 
 import * as Services from '@rbxts/services';
-import { ConVar } from 'shared/components/vars';
+import { CVar } from 'shared/components/vars';
 
 //cvars
-const gamepad_enabled = new ConVar('joy_enabled', false, 'Toggle gamepad support', ['Readonly']);
-const invert_thumbstick = new ConVar('joy_invert_thumbsticks', 0, 'Invert controller thumbsticks');
-const thumbsticks_deadzone = new ConVar('joy_deadzone', 0.05, 'ThumbstickDeadzone');
-const Thumbstick1 = new ConVar('joy_thumbstick1', new Vector3(), '', ['Hidden']);
-const Thumbstick2 = new ConVar('joy_thumbstick2', new Vector3(), '', ['Hidden']);
+const gamepad_enabled = new CVar('joy_enabled', false, 'Toggle gamepad support', ['Readonly']);
+const invert_thumbstick = new CVar('joy_invert_thumbsticks', 0, 'Invert controller thumbsticks');
+const thumbsticks_deadzone = new CVar('joy_deadzone', 0.05, 'ThumbstickDeadzone');
+const Thumbstick1 = new CVar('joy_thumbstick1', new Vector3(), '', ['Hidden']);
+const Thumbstick2 = new CVar('joy_thumbstick2', new Vector3(), '', ['Hidden']);
 
 class Component implements BaseClientComponent {
 	Player = Services.Players.LocalPlayer;
