@@ -8,6 +8,7 @@ import Signals from './providers/signals';
 import Network from 'shared/network';
 import { CVar, CreatedVars } from 'shared/components/vars';
 import { created_commands } from './providers/client_cmds';
+import { LocalSignal } from 'shared/local_network';
 
 // Services
 const ServerScriptService = game.GetService('ServerScriptService');
@@ -59,26 +60,9 @@ Defined.SetServerLocation(gStringLocation);
 //====================================================================
 // Player management
 //====================================================================
-declare global {
-	// used by other scripts
-	interface PlayerData {
-		Username: string;
-		UserId: number;
-		Elo: number;
-	}
-	interface PlayerCloudData {
-		Username: string;
-		Elo: number;
-		CustomSettings: Map<string, unknown>;
-	}
-	interface PlayerData_Advanced extends PlayerData {
-		CloudData: PlayerCloudData;
-		ConsoleLevel: number;
-	}
-}
 
-const player_ids = new Array<PlayerData_Advanced>();
-const plr_joinlog = new CVar('pl_joinlog', 1, '', []);
+const PlayerMonitors = new Array<PlayerMonitor>();
+const cvar_joinlog = new CVar('pl_joinlog', true, '', []);
 
 const PlayerReport = Network.PlayerReport;
 const PlayerJoined = Network.PlayerJoined;
@@ -86,23 +70,69 @@ const PlayerLogin = Network.PlayerLogin;
 const PlayerLeft = Network.PlayerLeft;
 
 const PlayerDataStore = DataStoreService.GetDataStore('PlayerData');
+declare global {
+	interface PlayerCloudData {
+		Username: string;
+		Elo: number;
+		CustomSettings: Map<string, unknown>;
+	}
+	interface PlayerMonitor {
+		Username: string;
+		UserId: number;
+		Cloud: PlayerCloudData;
+		Instance: Player;
 
-function BuildPlayerDataFromAdvanced(data: PlayerData_Advanced) {
+		readonly ConsoleLevel: number;
+
+		OnDisconnect: LocalSignal<[]>;
+	}
+}
+class Monitor implements PlayerMonitor {
+	Username: string;
+	UserId: number;
+	Cloud: PlayerCloudData;
+	Instance: Player;
+	readonly ConsoleLevel: number;
+
+	OnDisconnect = new LocalSignal();
+
+	constructor(player: Player) {
+		this.Cloud = (PlayerDataStore.GetAsync(`player_${player.UserId}`)[0] as PlayerCloudData | undefined) || {
+			Username: player.Name,
+			Elo: 1000,
+			CustomSettings: new Map(),
+		};
+
+		this.Username = this.Cloud.Username;
+		this.UserId = player.UserId;
+		this.ConsoleLevel = 0;
+		this.Instance = player;
+
+		PlayerMonitors.insert(0, this);
+	}
+}
+
+function BuildClassInfo(monitor: Monitor): PlayerMonitor {
 	return {
-		Username: data.Username,
-		UserId: data.UserId,
-		Elo: data.Elo,
-	} as PlayerData;
+		Username: monitor.Username,
+		UserId: monitor.UserId,
+		Cloud: monitor.Cloud,
+		Instance: monitor.Instance,
+		ConsoleLevel: monitor.ConsoleLevel,
+
+		OnDisconnect: monitor.OnDisconnect,
+	};
 }
 
-function GetDataFromUserId(userid: number): PlayerData_Advanced | undefined {
-	return player_ids.find((v, i) => {
-		return v.UserId === userid;
+Signals.GetDataFromPlayerId.Handle = userid => {
+	const monitor = PlayerMonitors.find(PlayerClass => {
+		return PlayerClass.UserId === userid;
 	});
-}
+	return monitor !== undefined ? BuildClassInfo(monitor) : undefined;
+};
 
 PlayerLogin.OnServerInvoke = player => {
-	const user_is_logged = player_ids.find(data => {
+	const user_is_logged = PlayerMonitors.find(data => {
 		if (data.UserId === player.UserId) return true;
 	});
 
@@ -111,34 +141,20 @@ PlayerLogin.OnServerInvoke = player => {
 		return;
 	}
 
-	let datastore_data = PlayerDataStore.GetAsync(`player_${player.UserId}`)[0] as PlayerCloudData | undefined;
-	if (datastore_data === undefined)
-		datastore_data = {
-			Username: player.Name,
-			Elo: 1000,
-			CustomSettings: new Map(),
-		};
+	const monitor = new Monitor(player);
 
-	// local data
-	const advanced_data: PlayerData_Advanced = {
-		Username: datastore_data.Username,
-		UserId: player.UserId,
-		Elo: datastore_data.Elo,
-		CloudData: datastore_data,
-		ConsoleLevel: 0,
-	};
-
-	player_ids.insert(0, advanced_data);
-	Signals.PlayerAdded.Fire(player.UserId, BuildPlayerDataFromAdvanced(advanced_data));
-	if (plr_joinlog.value === 1) PlayerJoined.PostAllClients(undefined, advanced_data.Username);
+	Signals.PlayerAdded.Fire(player.UserId, BuildClassInfo(monitor));
+	if (cvar_joinlog.value) PlayerJoined.PostAllClients(undefined, monitor.Username);
 };
 
 Services.Players.PlayerRemoving.Connect(player => {
-	const data = GetDataFromUserId(player.UserId);
-	if (!data) return;
+	const monitor = PlayerMonitors.find(monitor => {
+		return monitor.UserId === player.UserId;
+	});
+	if (!monitor) return;
 
-	Signals.PlayerRemoved.Fire(player.UserId, BuildPlayerDataFromAdvanced(data));
-	if (plr_joinlog.value === 1) PlayerLeft.PostAllClients([], data.Username);
+	Signals.PlayerRemoved.Fire(player.UserId, BuildClassInfo(monitor));
+	if (cvar_joinlog.value) PlayerLeft.PostAllClients([], monitor.Username);
 });
 
 //====================================================================
@@ -154,7 +170,7 @@ Console_SendArg.OnServerInvoke = (user, command, args) => {
 	if (command === undefined || args === undefined) return;
 
 	// only accept invokes if the sender is in the playerlist
-	const player_data = player_ids.find(data => {
+	const player_data = PlayerMonitors.find(data => {
 		return data.UserId === user.UserId;
 	});
 	if (!player_data) return '[!] Unable to retrieve player data';
@@ -164,7 +180,7 @@ Console_SendArg.OnServerInvoke = (user, command, args) => {
 		return cvar.attributes.has('ClientAccess') && cvar.name === command;
 	});
 	if (cvar && type(cvar.value) === 'function') {
-		const callback = cvar.value as (player: PlayerData_Advanced, ...args: unknown[]) => string;
+		const callback = cvar.value as (player: PlayerMonitor, ...args: unknown[]) => string;
 		return callback(player_data, ...args);
 	}
 
