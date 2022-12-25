@@ -18,7 +18,7 @@ const Signals = {
 	Character_SendRespawnRequest: new LocalFunction<[], boolean>(),
 
 	// new
-	ui_open_mainmenu: new LocalSignal(),
+	Open_MainMenu: new LocalSignal(),
 
 	Character: {
 		Spawned: new LocalSignal<[info: CharacterInfoLocal]>(),
