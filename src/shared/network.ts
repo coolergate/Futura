@@ -126,9 +126,9 @@ const Network = {
 	// entities
 	entities: {
 		ent_Character: {
-			info_changed: new Remote<[Info: ent_CharacterInfo]>('ServerToClient'),
-			get_info: new Function<[], ent_CharacterInfo | undefined>(),
-			send_request: new Function<[request: string], boolean>(),
+			info_changed: new Remote<[Mode: info_entCharacter_type, Info: CharacterInfoLocal]>('ServerToClient'),
+			get_info: new Function<[], CharacterInfoLocal | undefined>(),
+			get: new Function<[request: string], boolean>(),
 		},
 	},
 
@@ -137,5 +137,8 @@ const Network = {
 
 	// Folders
 	GetFolderInfo: new Function<[Name: string], Folder | undefined>(),
+
+	// Custom
+	CharacterRespawn: new Function<[], string | void>(),
 };
 export = Network;
