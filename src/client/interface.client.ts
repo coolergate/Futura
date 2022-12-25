@@ -21,28 +21,27 @@ const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
 // cvars
 const crosshair_enabled = new CVar('ui_crosshair', 0, 'Toggle crosshair');
 const show_fps = new CVar('ui_showfps', 0, 'Toggle FPS meter');
+const cvar_accent = new CVar('interface_accent', '255,58,41', 'Change interface accent color', []);
 
 const Holder = PlayerGui.WaitForChild('Main') as ScreenGui;
-const MainMenuFrame = Holder.FindFirstChild('Menu') as Frame;
 const GameplayFrame = Holder.FindFirstChild('Game') as Frame;
 const SettingsFrame = Holder.FindFirstChild('Settings') as Frame;
 const GameplayOverlay = Holder.FindFirstChild('GameOverlay') as Frame;
 
-//SECTION Main Menu
-const MM_buttons = MainMenuFrame.FindFirstChild('Buttons') as Frame;
-const MM_background = MainMenuFrame.FindFirstChild('BackgroundDark') as Frame;
-const MM_bar_topleft = MainMenuFrame.FindFirstChild('Topbar_Left') as Frame;
-const MM_bar_topbackground = MainMenuFrame.FindFirstChild('Topbar_Background') as Frame;
-const MM_changelogs = MainMenuFrame.FindFirstChild('Changelogs') as Frame;
+//SECTION Menu
+const MenuCanvas = Holder.FindFirstChild('Menu') as CanvasGroup;
+const MenuPanel = MenuCanvas.FindFirstChild('Panel') as Frame;
+const MenuPanel_Buttons = MenuPanel.FindFirstChild('Buttons_MainMenu') as Frame;
+const MenuPanel_Background = MenuCanvas.FindFirstChild('Background') as ImageLabel;
+const MenuPanel_TopText = MenuCanvas.FindFirstChild('TopbarText', true) as TextLabel;
 
 const buttons_callback = new Map<number, () => boolean>();
 buttons_callback.set(1, () => {
-	//Signals.console_sendarg.Fire('char_respawn');
 	Network.CharacterRespawn.InvokeServer();
 	return true;
 });
 
-MM_buttons.GetChildren().forEach(inst => {
+MenuPanel_Buttons.GetChildren().forEach(inst => {
 	if (!inst.IsA('TextButton')) return;
 
 	const callback = buttons_callback.get(inst.LayoutOrder);
@@ -51,13 +50,12 @@ MM_buttons.GetChildren().forEach(inst => {
 	});
 });
 
-Signals.Character.Spawned.Connect(() => (MainMenuFrame.Visible = false));
-Signals.ui_open_mainmenu.Connect(() => (MainMenuFrame.Visible = true));
+Signals.Character.Spawned.Connect(() => (MenuCanvas.Visible = false));
+Signals.Open_MainMenu.Connect(() => (MenuCanvas.Visible = true));
 
 //!SECTION
 
 //SECTION Settings menu
-// TODO Settings menu
 const settings_panel = SettingsFrame.FindFirstChild('Panel') as Frame;
 const settings_selector = settings_panel.FindFirstChild('Selector') as Frame;
 
@@ -89,7 +87,7 @@ Services.RunService.RenderStepped.Connect(dt => {
 	const Character = Values.Character;
 
 	// toggle gameplay interface
-	GameplayFrame.Visible = Character !== undefined && !MainMenuFrame.Visible && !SettingsFrame.Visible;
+	GameplayFrame.Visible = Character !== undefined && !MenuCanvas.Visible && !SettingsFrame.Visible;
 
 	if (Character === undefined) return;
 
