@@ -67,13 +67,23 @@ Folders.Interface.GetChildren().forEach(element => {
 import Signals from './providers/signals';
 import Network from 'shared/network';
 
-task.wait(2);
-Services.ContentProvider.PreloadAsync(Services.ReplicatedStorage.GetDescendants());
+task.wait(5);
+const List = Services.ReplicatedStorage.GetDescendants();
+List.sort((a, b) => {
+	return a.ClassName > b.ClassName;
+});
+List.forEach((inst, index) => {
+	Loading_InfoText.Text = `Loading ${inst.ClassName}... (${index} / ${List.size()})`;
+	Services.ContentProvider.PreloadAsync([inst]);
+});
+
+Loading_InfoText.Text = 'Sending login request...';
 Network.PlayerLogin.InvokeServer().await();
 
 //=============================================================================
 // Components
 //=============================================================================
+Loading_InfoText.Text = 'Initializing components...';
 declare global {
 	interface BaseClientComponent {
 		/**
@@ -147,11 +157,19 @@ Signals.Start.Fire(); // start non-modules
 Services.StarterGui.SetCore('ResetButtonCallback', false);
 task.wait(1);
 
+// space to continue
+Loading_InfoText.Text = 'Press <font color="rgb(255,58,41)">SPACE</font> to continue';
+let continue_ = false;
+const input_connection = Services.UserInputService.InputBegan.Connect(input => {
+	if (input.KeyCode.Name !== 'Space') return;
+	continue_ = true;
+});
+while (!continue_) Services.RunService.RenderStepped.Wait();
+Signals.Open_MainMenu.Fire();
+
 const LoadingScreenFadeOut = Services.TweenService.Create(Loading_Canvas, new TweenInfo(0.5), { GroupTransparency: 1 });
+LoadingScreenFadeOut.Completed.Connect(() => {
+	Loading_Canvas.Destroy();
+	LoadingScreenFadeOut.Destroy();
+});
 LoadingScreenFadeOut.Play();
-LoadingScreenFadeOut.Completed.Wait();
-
-task.wait(1);
-LoadingGui.Destroy();
-
-Signals.ui_open_mainmenu.Fire();
