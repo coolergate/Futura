@@ -159,12 +159,13 @@ task.wait(1);
 
 // space to continue
 Loading_InfoText.Text = 'Press <font color="rgb(255,58,41)">SPACE</font> to continue';
-let continue_ = false;
+let wait_for_input = true;
 const input_connection = Services.UserInputService.InputBegan.Connect(input => {
 	if (input.KeyCode.Name !== 'Space') return;
-	continue_ = true;
+	wait_for_input = false;
 });
-while (!continue_) Services.RunService.RenderStepped.Wait();
+while (wait_for_input) Services.RunService.RenderStepped.Wait();
+input_connection.Disconnect();
 Signals.Open_MainMenu.Fire();
 
 const LoadingScreenFadeOut = Services.TweenService.Create(Loading_Canvas, new TweenInfo(0.5), { GroupTransparency: 1 });
