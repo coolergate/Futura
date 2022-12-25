@@ -61,7 +61,7 @@ class Component implements BaseClientComponent {
 		this.Camera.CameraType = Enum.CameraType.Scriptable;
 		this.Camera.FieldOfView = client_fov.value;
 
-		if (!Values.Character) return;
+		if (Values.Character === undefined) return;
 
 		const Thumbstick2 = GetCVar('joy_thumbstick2') as CVar<Vector3>;
 		const delta = new Vector2(Thumbstick2.value.X, Thumbstick2.value.Y).add(
@@ -81,7 +81,7 @@ class Component implements BaseClientComponent {
 		}
 
 		const CameraLookCF = CFrame.Angles(0, this.CameraRotation.X, 0).mul(CFrame.Angles(this.CameraRotation.Y, 0, 0));
-		const FinalCFrame = new CFrame(Values.Character.collisionbox.CameraAttachment.WorldPosition).mul(CameraLookCF);
+		const FinalCFrame = new CFrame(Values.Character.CollisionBox.CameraAttachment.WorldPosition).mul(CameraLookCF);
 
 		this.Camera.CFrame = FinalCFrame.mul(CFrame.Angles(this.Recoil.Value.Y, 0, 0))
 			.mul(CFrame.Angles(0, this.Recoil.Value.X, 0))
