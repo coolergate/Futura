@@ -1,12 +1,12 @@
 // Creator: coolergate#2031
-// Purpose: Game folders without searching the workspace
-
-/* eslint-disable prettier/prettier */
+// Purpose: Game folders without manually searching the workspace
 
 import * as Services from '@rbxts/services';
 
 export function GetFolder(Name: string, Parent: Instance): Folder {
-	const Folder = Services.RunService.IsClient() ? Parent.WaitForChild(Name) as Folder : (Parent.FindFirstChild(Name) as Folder | undefined || new Instance('Folder', Parent));
+	const Folder = Services.RunService.IsClient()
+		? (Parent.WaitForChild(Name) as Folder)
+		: (Parent.FindFirstChild(Name) as Folder | undefined) || new Instance('Folder', Parent);
 	Folder.Name = Name;
 	return Folder;
 }
@@ -30,4 +30,13 @@ export const Interface = GetFolder('Interface', Services.ReplicatedStorage);
 export const Models = GetFolder('Models', Services.ReplicatedStorage);
 export const Sound = GetFolder('Sound', Services.ReplicatedStorage);
 
-export const MainScriptFolder = Services.RunService.IsClient() ? Services.Players.LocalPlayer!.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder : Services.ServerScriptService.FindFirstChild('TS') as Folder
+export const MainScriptFolder = Services.RunService.IsClient()
+	? (Services.Players.LocalPlayer!.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder)
+	: (Services.ServerScriptService.FindFirstChild('TS') as Folder);
+
+// custom
+export const CharacterEntity = {
+	Info: GetFolder('CharacterInfo', Entities),
+	Collision: GetFolder('CharacterCollision', Entities),
+	Skins: GetFolder('CharacterSkins', Models),
+};
