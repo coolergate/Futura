@@ -51,8 +51,8 @@ function GetCameraWorldDirection(wish_dir: Vector3): Vector3 {
 function is_grounded(): boolean {
 	if (!Values.Character) return false;
 
-	const cbox_size = Values.Character.collisionbox.Size;
-	const cbox_cframe = Values.Character.collisionbox.CFrame;
+	const cbox_size = Values.Character.CollisionBox.Size;
+	const cbox_cframe = Values.Character.CollisionBox.CFrame;
 
 	const checkcframe = new CFrame(cbox_cframe.Position).sub(new Vector3(0, cbox_size.Y / 2, 0));
 	const checksize = new Vector3(cbox_size.X - 0.125, 0.175, cbox_size.Z - 0.125);
@@ -68,7 +68,7 @@ class Component implements BaseClientComponent {
 	Start(): void {}
 	FixedUpdate(): void {
 		if (!Values.Character) return;
-		const collisionbox = Values.Character.collisionbox;
+		const collisionbox = Values.Character.CollisionBox;
 
 		const walkspeed = Services.StarterPlayer.CharacterWalkSpeed;
 		const velocity = collisionbox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1));
@@ -89,7 +89,7 @@ class Component implements BaseClientComponent {
 		if (!Values.Character) return;
 
 		// keep it upright
-		Values.Character.collisionbox.CFrame = new CFrame(Values.Character.collisionbox.CFrame.Position);
+		Values.Character.CollisionBox.CFrame = new CFrame(Values.Character.CollisionBox.CFrame.Position);
 	}
 }
 

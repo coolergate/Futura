@@ -7,7 +7,7 @@ export const created_commands = new Array<client_command<any, any>>();
 
 export class client_command<args extends string[], reply> {
 	name: string;
-	callback: (player: PlayerData_Advanced, ...args: args) => reply | void;
+	callback: (player: PlayerMonitor, ...args: args) => reply | void;
 
 	constructor(name: string) {
 		this.name = name;
@@ -15,6 +15,7 @@ export class client_command<args extends string[], reply> {
 		this.callback = (player, ...args) => {
 			print(player);
 			warn(...args);
+			print('callback has not been assigned for:', this.name);
 		};
 
 		created_commands.insert(0, this);
