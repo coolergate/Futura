@@ -21,14 +21,11 @@ function Manager(index: number, mode: 'RemoteFunction' | 'RemoteEvent'): RemoteE
 	return instance;
 }
 
-type NetworkMode = 'ClientToServer' | 'ServerToClient';
-
 //=============================================================================
 // Remote constructor defined by NetworkMode
 //=============================================================================
 class Remote<headers extends unknown[]> {
 	private Instance: RemoteEvent;
-	private NetMode: NetworkMode;
 
 	// * Server
 	OnServerPost = undefined as ((user: Player, ...args: headers) => void) | undefined;
@@ -53,20 +50,17 @@ class Remote<headers extends unknown[]> {
 		this.Instance.FireServer(...args);
 	}
 
-	constructor(NetworkMode: NetworkMode) {
-		this.NetMode = NetworkMode;
+	constructor() {
 		this.Instance = Manager(next_index, 'RemoteEvent') as RemoteEvent;
 		next_index++;
 
 		if (Services.RunService.IsServer())
 			this.Instance.OnServerEvent.Connect((player, ...data) => {
-				if (this.NetMode !== 'ClientToServer' || this.OnServerPost === undefined) return;
-				this.OnServerPost(player, ...(data as headers));
+				if (this.OnServerPost !== undefined) this.OnServerPost(player, ...(data as headers));
 			});
 		else
 			this.Instance.OnClientEvent.Connect((...data) => {
-				if (this.NetMode !== 'ServerToClient' || this.OnClientPost === undefined) return;
-				this.OnClientPost(...(data as headers));
+				if (this.OnClientPost !== undefined) this.OnClientPost(...(data as headers));
 			});
 	}
 }
@@ -112,12 +106,12 @@ class Function<headers extends unknown[], response> {
 
 const Network = {
 	PlayerLogin: new Function<[], void>(),
-	PlayerJoined: new Remote<[username: string]>('ServerToClient'),
-	PlayerLeft: new Remote<[username: string]>('ServerToClient'),
-	PlayerReport: new Remote<[username: string, reason: string]>('ClientToServer'),
+	PlayerJoined: new Remote<[username: string]>(),
+	PlayerLeft: new Remote<[username: string]>(),
+	PlayerReport: new Remote<[username: string, reason: string]>(),
 
 	Chat_Send: new Function<[message: string], void>(),
-	Chat_Revieve: new Remote<[message: string]>('ServerToClient'),
+	Chat_Revieve: new Remote<[message: string]>(),
 
 	// console
 	console_sendarg: new Function<[argument: string, value: unknown[]], string | undefined | void>(),
@@ -126,8 +120,8 @@ const Network = {
 	// entities
 	entities: {
 		ent_Character: {
-			info_changed: new Remote<[Mode: info_entCharacter_type, Info: CharacterInfoLocal]>('ServerToClient'),
-			get_info: new Function<[], CharacterInfoLocal | undefined>(),
+			info_changed: new Remote<[Info: CharacterLocalInfo]>(),
+			get_info: new Function<[], CharacterLocalInfo | undefined>(),
 			get: new Function<[request: string], boolean>(),
 		},
 	},
@@ -138,7 +132,8 @@ const Network = {
 	// Folders
 	GetFolderInfo: new Function<[Name: string], Folder | undefined>(),
 
-	// Custom
+	// Character
 	CharacterRespawn: new Function<[], string | void>(),
+	CharacterReplicatedInfoChanged: new Remote<[CharacterReplicatedInfo]>(),
 };
 export = Network;
