@@ -38,20 +38,24 @@ declare global {
 		CameraAttachment: Attachment;
 		MainAttachment: Attachment;
 	}
-	interface CharacterInfoLocal {
-		Id: string;
+	interface CharacterLocalInfo {
+		CollisionBox: CharacterCollision;
 		Alive: boolean;
 		Health: number;
 		MaxHealth: number;
+	}
 
+	interface CharacterReplicatedInfo {
 		CollisionBox: CharacterCollision;
+		Angle: CFrame;
+		Position: Vector3;
+		AppliedSkin: string;
 	}
-	interface info_entCharacter_replicated {
-		id: string;
-		skin_applied: string;
-		collisionbox: CharacterCollision;
+
+	interface CharacterInfoReport {
+		Angle: CFrame;
+		Position: Vector3;
 	}
-	type info_entCharacter_type = 'Local' | 'Replicated';
 }
 
 // ANCHOR CharacterController
@@ -60,7 +64,7 @@ class CharacterController {
 	collisionbox: CharacterCollision;
 
 	private PInfo = {
-		collisionbox_name: Services.RunService.IsStudio()
+		identifier: Services.RunService.IsStudio()
 			? 'character_' + tostring(char_collision_folder.GetChildren().size() + 1)
 			: GenerateString(math.random(10, 20)),
 	};
@@ -85,7 +89,7 @@ class CharacterController {
 		cbox.CustomPhysicalProperties = new PhysicalProperties(1, 1, 0, 0, 100);
 		cbox.Anchored = true;
 		cbox.CFrame = new CFrame(0, 10e8, 0);
-		cbox.Name = this.PInfo.collisionbox_name;
+		cbox.Name = this.PInfo.identifier;
 
 		// vforce attachment
 		const main_attach = new Instance('Attachment', cbox);
@@ -163,7 +167,7 @@ class CharacterController {
 		const description =
 			(HumanoidDescription_Folder.FindFirstChild(tostring(PlayerInfo.Instance)) as
 				| HumanoidDescription
-				| undefined) || Services.Players.GetHumanoidDescriptionFromUserId(PlayerInfo.Instance.UserId);
+				| undefined) || Services.Players.GetHumanoidDescriptionFromUserId(PlayerInfo.UserId);
 		description.Parent = HumanoidDescription_Folder;
 		description.Name = tostring(PlayerInfo.UserId);
 
@@ -181,9 +185,8 @@ class CharacterController {
 	}
 }
 
-function GenerateCharacterInfo(controller: CharacterController): CharacterInfoLocal {
+function GenerateCharacterInfo(controller: CharacterController): CharacterLocalInfo {
 	return {
-		Id: controller.id,
 		Alive: controller.Info.Alive,
 		Health: controller.Info.Health,
 		MaxHealth: controller.Info.HealthMax,
@@ -202,25 +205,19 @@ for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 		// send local info
 		Network.entities.ent_Character.info_changed.PostClient(
 			[Controller.Info.Controlling.Instance],
-			'Local',
 			GenerateCharacterInfo(Controller),
 		);
 
 		// send global info
 		Network.entities.ent_Character.info_changed.PostAllClients(
 			[Controller.Info.Controlling.Instance],
-			'Replicated',
 			GenerateCharacterInfo(Controller),
 		);
 	});
 	Controller.signal_died.Connect(Monitor => {
 		if (Monitor === undefined) return;
 
-		Network.entities.ent_Character.info_changed.PostClient(
-			[Monitor.Instance],
-			'Local',
-			GenerateCharacterInfo(Controller),
-		);
+		Network.entities.ent_Character.info_changed.PostClient([Monitor.Instance], GenerateCharacterInfo(Controller));
 	});
 }
 created_CharacterControllers.sort((a, b) => {
@@ -254,7 +251,7 @@ Network.CharacterRespawn.OnServerInvoke = Player => {
 	controller.collisionbox.SetNetworkOwner(MonitorData.Instance); // needs to be set manually for some reason
 	controller.Spawn();
 
-	Network.entities.ent_Character.info_changed.PostClient([Player], 'Local', GenerateCharacterInfo(controller));
+	Network.entities.ent_Character.info_changed.PostClient([Player], GenerateCharacterInfo(controller));
 
 	//TODO alert all players when a new entity spawns in
 };

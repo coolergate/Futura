@@ -3,7 +3,7 @@
 //==================================================================//
 
 const Values = {
-	Character: undefined as CharacterInfoLocal | undefined,
+	Character: undefined as CharacterLocalInfo | undefined,
 
 	// camera values
 	camCFrame: new CFrame(),

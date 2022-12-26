@@ -21,8 +21,8 @@ const Signals = {
 	Open_MainMenu: new LocalSignal(),
 
 	Character: {
-		Spawned: new LocalSignal<[info: CharacterInfoLocal]>(),
-		Died: new LocalSignal<[info: CharacterInfoLocal]>(),
+		Spawned: new LocalSignal<[info: CharacterLocalInfo]>(),
+		Died: new LocalSignal<[info: CharacterLocalInfo]>(),
 		HealthChanged: new LocalSignal<[Previous: number, Health: number]>(),
 
 		TookDamage: new LocalSignal<[Previous: number, Health: number]>(),
