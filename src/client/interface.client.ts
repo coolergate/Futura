@@ -1,10 +1,8 @@
 // Author: coolergate#2031
-// Purpose: handle interface components
+// Reason: Handle user interface
 
-// Creator: coolergate#2031
-// Purpose:
+Signals.Start.Wait();
 
-import * as Services from '@rbxts/services';
 import Values from 'client/providers/values';
 import Network from 'shared/network';
 import Signals from 'client/providers/signals';
@@ -13,9 +11,12 @@ import { CVar } from 'shared/components/vars';
 import { num_string_pad } from 'shared/modules/util';
 import { create_fps_label } from 'shared/providers/interface';
 
-Signals.Start.Wait();
+//ANCHOR Services
+const Players = game.GetService('Players');
+const RunService = game.GetService('RunService');
+const UserInputService = game.GetService('UserInputService');
 
-const Player = Services.Players.LocalPlayer;
+const Player = Players.LocalPlayer;
 const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
 
 // cvars
@@ -72,17 +73,17 @@ const roact_ref = {
 const fps_label = create_fps_label(roact_ref.fps_meter_label);
 Roact.mount(fps_label, Holder);
 
-Services.RunService.RenderStepped.Connect(dt => {
+RunService.RenderStepped.Connect(dt => {
 	const meter_label = roact_ref.fps_meter_label.getValue()!;
 	meter_label.Visible = show_fps.value === 1;
 	show_fps.value === 1
 		? (meter_label.Text = '<b>' + tostring(math.round(1 / dt)) + 'fps on ${env_mapname}' + '</b>')
 		: undefined;
 
-	Services.UserInputService.MouseIconEnabled = !Values.camUnlock.isEmpty() || Values.Character === undefined;
+	UserInputService.MouseIconEnabled = !Values.camUnlock.isEmpty() || Values.Character === undefined;
 
 	const crosshair = GameplayFrame.FindFirstChild('Crosshair') as ImageLabel;
-	crosshair.Visible = Services.UserInputService.MouseIconEnabled === false && crosshair_enabled.value === 1;
+	crosshair.Visible = UserInputService.MouseIconEnabled === false && crosshair_enabled.value === 1;
 
 	const Character = Values.Character;
 
