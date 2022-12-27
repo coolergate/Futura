@@ -9,4 +9,4 @@ do task.wait(1);
 while (!Defined.ServerRunning());
 
 // import main
-import * as main from './main';
+import * as main from './c_main';
