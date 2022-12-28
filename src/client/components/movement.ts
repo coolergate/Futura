@@ -3,7 +3,7 @@
 
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
-import * as Settings from '../providers/settings';
+import * as Input from '../providers/input';
 import Values from 'client/providers/values';
 import { CVar, GetCVar } from 'shared/components/vars';
 
@@ -12,14 +12,14 @@ const cvar_grounded = new CVar('cmov_p_grounded', false, '', ['Hidden']);
 const cvar_duckmethod = new CVar('option_duck_method', 1, ''); // 0 = HOLD to duck, 1 = TOGGLE
 
 // movement
-const Directions = new Map<Settings.KeycodeEvent, Enum.NormalId>([
-	[Settings.KeycodeEvents.move_forward, Enum.NormalId.Front],
-	[Settings.KeycodeEvents.move_back, Enum.NormalId.Back],
-	[Settings.KeycodeEvents.move_left, Enum.NormalId.Left],
-	[Settings.KeycodeEvents.move_right, Enum.NormalId.Right],
+const Directions = new Map<Input.KeycodeEvent, Enum.NormalId>([
+	[Input.KeycodeEvents.move_forward, Enum.NormalId.Front],
+	[Input.KeycodeEvents.move_back, Enum.NormalId.Back],
+	[Input.KeycodeEvents.move_left, Enum.NormalId.Left],
+	[Input.KeycodeEvents.move_right, Enum.NormalId.Right],
 ]);
-const JumpKB = Settings.KeycodeEvents.jump;
-const CrouchKB = Settings.KeycodeEvents.duck;
+const JumpKB = Input.KeycodeEvents.jump;
+const CrouchKB = Input.KeycodeEvents.duck;
 
 const gc_params = new OverlapParams();
 gc_params.FilterDescendantsInstances = [Folders.Map.obj_part];
@@ -27,8 +27,7 @@ gc_params.MaxParts = 1;
 gc_params.FilterType = Enum.RaycastFilterType.Whitelist;
 
 function GetInputDirection(): Vector3 {
-	const Thumbstick1 = GetCVar('joy_thumbstick1') as CVar<Vector3>;
-	let wish_dir = new Vector3(Thumbstick1.value.X, 0, -Thumbstick1.value.Y);
+	let wish_dir = new Vector3(Input.Thumbstick1.X, 0, -Input.Thumbstick1.Y);
 
 	Directions.forEach((normal, input) => {
 		if (!input.Active) return;
