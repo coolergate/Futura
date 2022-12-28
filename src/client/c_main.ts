@@ -28,7 +28,7 @@ declare global {
 
 const network_console_arg = Network.console_sendarg;
 const network_console_get = Network.console_getcmds;
-const signal_render_console = Signals.console_render;
+const signal_render_console = Signals.Console_RenderMessage;
 
 const client_commands = new Map<string, Callback>();
 const server_commands = new Array<string>();
@@ -240,7 +240,7 @@ client_commands.set('version', function (content: string) {
 });
 client_commands.set('setsize', function (content: string) {});
 
-Signals.console_sendarg.Connect(argument => Handle_Command(argument));
+Signals.Console_SendCommand.Connect(argument => Handle_Command(argument));
 
 UserInputService.InputBegan.Connect((input, unavaiable) => {
 	if (
@@ -248,19 +248,19 @@ UserInputService.InputBegan.Connect((input, unavaiable) => {
 		input.KeyCode === Enum.KeyCode.Insert ||
 		input.KeyCode === Enum.KeyCode.F2
 	) {
-		ConsoleWindow.Visible = !ConsoleWindow.Visible;
+		ConsoleHolder.Enabled = !ConsoleHolder.Enabled;
 	}
 });
 
-ConsoleWindow.GetPropertyChangedSignal('Visible').Connect(() => {
-	if (ConsoleWindow.Visible) {
+ConsoleHolder.GetPropertyChangedSignal('Enabled').Connect(() => {
+	if (ConsoleHolder.Enabled) {
 		ConsoleInput.TextEditable = true;
 		ConsoleInput.CaptureFocus();
-		Values.camUnlock.set('Console', true);
+		Values.Camera_Unlock.set('Console', true);
 	} else {
 		ConsoleInput.ReleaseFocus();
 		ConsoleInput.TextEditable = false;
-		Values.camUnlock.delete('Console');
+		Values.Camera_Unlock.delete('Console');
 	}
 });
 
@@ -279,11 +279,6 @@ ConsoleInput.FocusLost.Connect(enterPressed => {
 		task.wait();
 		ConsoleInput.Text = '';
 	}
-});
-
-UserInputService.InputBegan.Connect(input => {
-	if (input.KeyCode.Name === 'F2' || input.KeyCode.Name === 'Insert' || input.KeyCode.Name === 'RightShift')
-		ConsoleHolder.Enabled = !ConsoleHolder.Enabled;
 });
 
 update_server_commands();
@@ -441,7 +436,7 @@ const input_connection = UserInputService.InputBegan.Connect(input => {
 });
 while (wait_for_input) RunService.RenderStepped.Wait();
 input_connection.Disconnect();
-Signals.Open_MainMenu.Fire();
+Signals.GUI_OpenMenu.Fire();
 
 const LoadingScreenFadeOut = TweenService.Create(Loading_Canvas, new TweenInfo(0.5), { GroupTransparency: 1 });
 LoadingScreenFadeOut.Completed.Connect(() => {
