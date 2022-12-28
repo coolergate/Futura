@@ -1,9 +1,11 @@
 // Author: coolergate#2031
 // Reason: Handle user input
 
+import { CVar } from 'shared/components/vars';
 import { LocalSignal } from 'shared/local_network';
 
 const UserInputService = game.GetService('UserInputService');
+const RunService = game.GetService('RunService');
 
 export const AssignedKeycodes = new Map<string, KeycodeEvent>();
 export const KeycodeEvent_List = new Array<KeycodeEvent>();
@@ -54,6 +56,29 @@ UserInputService.InputEnded.Connect((input, busy) => {
 		if (keycode === keycode_name) {
 			event.Active = false;
 			event.Deactivated.Fire();
+		}
+	});
+});
+
+// ANCHOR Gamepad input
+export let GamepadEnabled = false;
+export let Thumbstick1 = new Vector3();
+export let Thumbstick2 = new Vector3();
+export const InvertThumbsticks = new CVar('joy_invert_thumbsticks', false, 'Invert controller thumbsticks');
+export const ThumbstickDeadzone = new CVar('joy_deadzone', 0.05, 'Controller thumbstick deadzone');
+RunService.RenderStepped.Connect(dt => {
+	GamepadEnabled = UserInputService.GetGamepadConnected('Gamepad1');
+	if (!GamepadEnabled) return;
+
+	UserInputService.GetGamepadState('Gamepad1').forEach(obj => {
+		// thumbsticks
+		if (obj.KeyCode.Name === 'Thumbstick1') {
+			if (obj.Position.Magnitude < ThumbstickDeadzone.value) obj.Position = new Vector3();
+			!InvertThumbsticks.value ? (Thumbstick1 = obj.Position) : (Thumbstick2 = obj.Position);
+		}
+		if (obj.KeyCode.Name === 'Thumbstick2') {
+			if (obj.Position.Magnitude < ThumbstickDeadzone.value) obj.Position = new Vector3();
+			!InvertThumbsticks.value ? (Thumbstick2 = obj.Position) : (Thumbstick1 = obj.Position);
 		}
 	});
 });
