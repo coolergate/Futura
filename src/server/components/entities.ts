@@ -2,9 +2,9 @@
 // Purpose: Create and manage entities
 //==================================================================//
 
-import GenerateString from 'shared/modules/randomstring';
+import GenerateString from 'shared/randomstring';
 import { LocalSignal } from 'shared/local_network';
-import { CVar, Server_ConCommand } from 'shared/components/vars';
+import { CVar, Server_ConCommand } from 'shared/vars';
 import Signals from 'server/providers/signals';
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';

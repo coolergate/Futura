@@ -5,7 +5,7 @@ import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import * as Input from '../providers/input';
 import Values from 'client/providers/values';
-import { CVar, GetCVar } from 'shared/components/vars';
+import { CVar, GetCVar } from 'shared/vars';
 
 // cvar
 const cvar_grounded = new CVar('cmov_p_grounded', false, '', ['Hidden']);

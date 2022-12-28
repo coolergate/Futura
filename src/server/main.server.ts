@@ -6,7 +6,7 @@ import * as Folders from 'shared/folders';
 import * as Services from '@rbxts/services';
 import Signals from './providers/signals';
 import Network from 'shared/network';
-import { CVar, CreatedVars, CreatedServerCommands } from 'shared/components/vars';
+import { CVar, CreatedVars, CreatedServerCommands } from 'shared/vars';
 import { LocalSignal } from 'shared/local_network';
 
 // Services

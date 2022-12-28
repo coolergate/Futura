@@ -1,7 +1,7 @@
 // Author: coolergate#2031
 // Reason: Handle user input
 
-import { CVar } from 'shared/components/vars';
+import { CVar } from 'shared/vars';
 import { LocalSignal } from 'shared/local_network';
 
 const UserInputService = game.GetService('UserInputService');

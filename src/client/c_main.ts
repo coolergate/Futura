@@ -4,9 +4,9 @@
 import * as Folders from 'shared/folders';
 import * as Signals from './providers/signals';
 import * as Network from 'shared/network';
-import placeinfo from 'shared/components/placeinfo';
+import placeinfo from 'shared/placeinfo';
 import Values from './providers/values';
-import { CreatedVars, CVar } from 'shared/components/vars';
+import { CreatedVars, CVar } from 'shared/vars';
 
 const ReplicatedStorage = game.GetService('ReplicatedStorage');
 const UserInputService = game.GetService('UserInputService');

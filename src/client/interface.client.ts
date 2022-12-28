@@ -5,9 +5,9 @@ import Values from 'client/providers/values';
 import Network from 'shared/network';
 import Signals from 'client/providers/signals';
 import Roact from '@rbxts/roact';
-import { CVar } from 'shared/components/vars';
-import { num_string_pad } from 'shared/modules/util';
-import { create_fps_label } from 'shared/providers/interface';
+import { CVar } from 'shared/vars';
+import { num_string_pad } from 'shared/util';
+import { create_fps_label } from 'shared/interface';
 
 Signals.Start.Wait();
 

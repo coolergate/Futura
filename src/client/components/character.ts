@@ -3,11 +3,11 @@
 
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
-import GenerateString from 'shared/modules/randomstring';
+import GenerateString from 'shared/randomstring';
 import Signals from 'client/providers/signals';
 import Network from 'shared/network';
 import Values from 'client/providers/values';
-import { CVar, GetCVar } from 'shared/components/vars';
+import { CVar, GetCVar } from 'shared/vars';
 
 function CreateHumanoidModelFromDescription(Description: HumanoidDescription): Model {
 	const CharacterModel = Services.Players.CreateHumanoidModelFromDescription(Description, 'R6');

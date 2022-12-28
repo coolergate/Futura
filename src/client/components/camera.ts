@@ -4,7 +4,7 @@
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import Values from 'client/providers/values';
-import { CVar, GetCVar } from 'shared/components/vars';
+import { CVar, GetCVar } from 'shared/vars';
 import { GetFolderInfo } from 'shared/network';
 import { Thumbstick2 } from 'client/providers/input';
 
