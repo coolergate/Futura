@@ -37,15 +37,16 @@ declare global {
 	}
 
 	interface CharacterReplicatedInfo {
+		Alive: boolean;
 		CollisionBox: CharacterCollision;
-		Angle: CFrame;
+		Angle: Vector2;
 		Position: Vector3;
 		AppliedSkin: string;
 	}
 
 	// sent from client
 	interface CharacterInfoReport {
-		Angle: CFrame;
+		Angle: Vector2;
 		Position: Vector3;
 	}
 }
@@ -68,6 +69,8 @@ class CharacterController {
 		Alive: false,
 		Health: 0,
 		HealthMax: cvar_default_maxhealth.value,
+
+		Angles: new Vector2(0, 0),
 	};
 
 	// signals
@@ -108,13 +111,20 @@ class CharacterController {
 	Damage(amount: number) {
 		if (this.Info.Controlling === undefined) return;
 		this.Info.Health = math.clamp(this.Info.Health - amount, 0, this.Info.HealthMax);
-		this.Info.Health <= 0 && this.Info.Alive ? this.Kill() : this.signal_damaged.Fire(amount);
+		if (this.Info.Health <= 0 && this.Info.Alive) this.Kill();
+		else {
+			this.signal_damaged.Fire(amount);
+			this.NotifyController();
+		}
 	}
 
 	Kill() {
 		this.Info.Alive = false;
 		this.Info.Health = 0;
 		this.signal_died.Fire(this.Info.Controlling);
+
+		this.NotifyController();
+		this.NotifyReplicated();
 
 		this.Unassign();
 
@@ -153,6 +163,9 @@ class CharacterController {
 		this.Info.HealthMax = cvar_default_maxhealth.value;
 		this.Info.Health = math.clamp(cvar_default_health.value, 1, cvar_default_maxhealth.value);
 		this.Info.Alive = true;
+
+		this.NotifyController();
+		this.NotifyReplicated();
 	}
 
 	Assign(PlayerInfo: PlayerMonitor) {
@@ -175,15 +188,44 @@ class CharacterController {
 		this.collisionbox.Anchored = false;
 		this.collisionbox.SetNetworkOwner();
 	}
-}
 
-function GenerateCharacterInfo(controller: CharacterController): CharacterLocalInfo {
-	return {
-		Alive: controller.Info.Alive,
-		Health: controller.Info.Health,
-		MaxHealth: controller.Info.HealthMax,
-		CollisionBox: controller.collisionbox,
-	};
+	// ANCHOR Controller networking
+	NotifyController() {
+		if (this.Info.Controlling === undefined) return;
+		Network.Entities.Character.LocalInfoChanged.PostClient(
+			[this.Info.Controlling.Instance],
+			this.GenerateLocalInfo(),
+		);
+	}
+
+	NotifyReplicated() {
+		Network.Entities.Character.ReplicatedInfoChanged.PostAllClients([], {
+			Alive: this.Info.Alive,
+			CollisionBox: this.collisionbox,
+			Angle: this.Info.Angles,
+			Position: this.collisionbox.CFrame.Position,
+			AppliedSkin: '', // TODO Handle different skins
+		});
+	}
+
+	GenerateLocalInfo(): CharacterLocalInfo {
+		return {
+			Alive: this.Info.Alive,
+			Health: this.Info.Health,
+			MaxHealth: this.Info.HealthMax,
+			CollisionBox: this.collisionbox,
+		};
+	}
+
+	GenerateReplicatedInfo(): CharacterReplicatedInfo {
+		return {
+			Alive: this.Info.Alive,
+			CollisionBox: this.collisionbox,
+			Angle: this.Info.Angles,
+			Position: this.collisionbox.CFrame.Position,
+			AppliedSkin: '', // TODO Handle different skins
+		};
+	}
 }
 
 // create 5 controllers above maxplayers
@@ -191,25 +233,9 @@ for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 	const Controller = new CharacterController();
 	List_CharacterControllers.insert(0, Controller);
 
-	Controller.signal_damaged.Connect(amount => {
-		if (Controller.Info.Controlling === undefined) return;
-
-		// send local info
-		Network.Entities.Character.LocalInfoChanged.PostClient(
-			[Controller.Info.Controlling.Instance],
-			GenerateCharacterInfo(Controller),
-		);
-
-		// send global info
-		Network.Entities.Character.LocalInfoChanged.PostAllClients(
-			[Controller.Info.Controlling.Instance],
-			GenerateCharacterInfo(Controller),
-		);
-	});
 	Controller.signal_died.Connect(Monitor => {
 		if (Monitor === undefined) return;
-
-		Network.Entities.Character.LocalInfoChanged.PostClient([Monitor.Instance], GenerateCharacterInfo(Controller));
+		print(Monitor.Instance, 'died.');
 	});
 }
 List_CharacterControllers.sort((a, b) => {
@@ -243,12 +269,20 @@ Command_RespawnEntity.OnInvoke = MonitorData => {
 	controller.Assign(MonitorData);
 	controller.collisionbox.SetNetworkOwner(MonitorData.Instance); // needs to be set manually for some reason
 	controller.Spawn();
-
-	Network.Entities.Character.LocalInfoChanged.PostClient([MonitorData.Instance], GenerateCharacterInfo(controller));
-
-	//TODO alert all players when a new entity spawns in
 };
 
+Network.Entities.Character.LocalInfoUpdate.OnServerPost = (user, Angle, Position) => {
+	const user_data = Signals.GetDataFromPlayerId.Call(user.UserId);
+	if (!user_data || Angle === undefined || Position === undefined) return;
+
+	const user_controller = List_CharacterControllers.find(controller => {
+		return controller.Info.Controlling === user_data;
+	});
+	if (!user_controller) return;
+
+	user_controller.Info.Angles = Angle;
+	user_controller.NotifyReplicated();
+};
 //!SECTION
 
 //SECTION Default component stuff

@@ -120,9 +120,9 @@ const Network = {
 	// entities
 	Entities: {
 		Character: {
-			LocalInfoUpdate: new Remote<[CFrame: CFrame]>(), // contains both Angle and Position
+			LocalInfoUpdate: new Remote<[Angle: Vector2, Position: Vector3]>(), // contains both Angle and Position
 			LocalInfoChanged: new Remote<[Info: CharacterLocalInfo]>(),
-			ReplicatedInfoChanged: new Remote<[CollisionBox: CharacterCollision, Info?: CharacterReplicatedInfo]>(),
+			ReplicatedInfoChanged: new Remote<[Info: CharacterReplicatedInfo]>(),
 		},
 	},
 
