@@ -1,15 +1,14 @@
 // Author: coolergate#2031
-// Purpose: Store script values to be used with other scripts
-//==================================================================//
+// Reason: Store values that can be shared between scripts
 
 const Values = {
 	Character: undefined as CharacterLocalInfo | undefined,
 
 	// camera values
-	camCFrame: new CFrame(),
-	camDelta: new Vector2(),
-	camEnable: true,
-	camUnlock: new Map<string, boolean>(),
+	Camera_CFrame: new CFrame(),
+	Camera_Delta: new Vector2(),
+	Camera_Enable: true,
+	Camera_Unlock: new Map<string, boolean>(),
 };
 
 export = Values;

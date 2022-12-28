@@ -40,7 +40,7 @@ class Component implements BaseClientComponent {
 
 		// gameplay camera
 		if (current_cam_mode.value === 1) {
-			if (Values.Character === undefined || !Values.camUnlock.isEmpty()) {
+			if (Values.Character === undefined || !Values.Camera_Unlock.isEmpty()) {
 				Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 				return;
 			}
@@ -85,7 +85,7 @@ class Component implements BaseClientComponent {
 			.mul(CFrame.Angles(0, this.Recoil.Value.X, 0))
 			.mul(CFrame.Angles(0, 0, this.Recoil.Value.Z));
 
-		Values.camCFrame = FinalCFrame;
+		Values.Camera_CFrame = FinalCFrame;
 	}
 
 	MainMenu_Cam() {

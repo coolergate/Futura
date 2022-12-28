@@ -1,5 +1,5 @@
 // Creator: coolergate#2031
-// Purpose:
+// Purpose: Handle client-side movement
 
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';

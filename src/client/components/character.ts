@@ -75,7 +75,7 @@ class Component implements BaseClientComponent {
 			// health changes
 			if (NewInfo.Health !== PreviousInfo.Health) {
 				if (NewInfo.Health === 0) {
-					Signals.CharacterDied.Fire();
+					Signals.Character.Died.Fire(NewInfo);
 					GetCVar('cam_mode')!.value = 0;
 					return;
 				}
