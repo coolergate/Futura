@@ -6,6 +6,7 @@ import * as Folders from 'shared/folders';
 import Values from 'client/providers/values';
 import { CVar, GetCVar } from 'shared/components/vars';
 import { GetFolderInfo } from 'shared/network';
+import { Thumbstick2 } from 'client/providers/input';
 
 // cvars
 const client_fov = new CVar('fov', 80, "Change player's FOV");
@@ -63,10 +64,7 @@ class Component implements BaseClientComponent {
 
 		if (Values.Character === undefined) return;
 
-		const Thumbstick2 = GetCVar('joy_thumbstick2') as CVar<Vector3>;
-		const delta = new Vector2(Thumbstick2.value.X, Thumbstick2.value.Y).add(
-			Services.UserInputService.GetMouseDelta(),
-		);
+		const delta = new Vector2(Thumbstick2.X, Thumbstick2.Y).add(Services.UserInputService.GetMouseDelta());
 
 		const rotation_x = this.CameraRotation.X - math.rad(delta.X);
 		const rotation_y = math.min(
