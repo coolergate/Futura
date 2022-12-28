@@ -24,13 +24,12 @@ const crosshair_enabled = new CVar('ui_crosshair', 0, 'Toggle crosshair');
 const show_fps = new CVar('ui_showfps', 0, 'Toggle FPS meter');
 const cvar_accent = new CVar('interface_accent', '255,58,41', 'Change interface accent color', []);
 
-const Holder = PlayerGui.WaitForChild('Main') as ScreenGui;
-const GameplayFrame = Holder.FindFirstChild('Game') as Frame;
-const SettingsFrame = Holder.FindFirstChild('Settings') as Frame;
-const GameplayOverlay = Holder.FindFirstChild('GameOverlay') as Frame;
+const MainGui = PlayerGui.WaitForChild('Main') as ScreenGui;
+const SettingsFrame = MainGui.FindFirstChild('Settings') as Frame;
+const GameplayOverlay = MainGui.FindFirstChild('GameOverlay') as Frame;
 
 //SECTION Menu
-const MenuCanvas = Holder.FindFirstChild('Menu') as CanvasGroup;
+const MenuCanvas = MainGui.FindFirstChild('Menu') as CanvasGroup;
 const MenuPanel = MenuCanvas.FindFirstChild('Panel') as Frame;
 const MenuPanel_Buttons = MenuPanel.FindFirstChild('Buttons_MainMenu') as Frame;
 const MenuPanel_Background = MenuCanvas.FindFirstChild('Background') as ImageLabel;
@@ -66,13 +65,28 @@ settings_selector.GetChildren().forEach(inst => {
 
 	inst.Activated.Connect(() => {});
 });
+//!SECTION
 
 const roact_ref = {
 	fps_meter_label: Roact.createRef<TextLabel>(),
 };
 
 const fps_label = create_fps_label(roact_ref.fps_meter_label);
-Roact.mount(fps_label, Holder);
+Roact.mount(fps_label, MainGui);
+
+//SECTION Gameplay interface
+const GameplayFrame = MainGui.FindFirstChild('Game') as Frame;
+
+const hp_panel = GameplayFrame.FindFirstChild('Health') as Frame;
+const hp_icon = hp_panel.FindFirstChild('HealthIcon') as ImageLabel;
+const hp_foreground = hp_icon.FindFirstChild('Foreground') as ImageLabel;
+const hp_text = hp_panel.FindFirstChild('Amount') as TextLabel;
+
+const wep_panel = GameplayFrame.FindFirstChild('Weapon') as Frame;
+const wep_icon = wep_panel.FindFirstChild('AmmoIcon') as ImageLabel;
+const wep_foreground = wep_icon.FindFirstChild('Foreground') as ImageLabel;
+const wep_text = wep_panel.FindFirstChild('Amount') as TextLabel;
+//!SECTION
 
 RunService.RenderStepped.Connect(dt => {
 	const meter_label = roact_ref.fps_meter_label.getValue()!;
@@ -96,16 +110,6 @@ RunService.RenderStepped.Connect(dt => {
 	const user_health = Character.Health;
 	const user_max_health = Character.MaxHealth;
 
-	const HealthPanel = GameplayFrame.FindFirstChild('Health') as unknown as {
-		HealthIcon: {
-			Foreground: TextLabel;
-		};
-		Amount: TextLabel;
-	};
-
-	HealthPanel.Amount.Text = num_string_pad(user_health, 3);
-	HealthPanel.HealthIcon.Foreground.Size = HealthPanel.HealthIcon.Foreground.Size.Lerp(
-		UDim2.fromScale(1, user_health / user_max_health),
-		0.25,
-	);
+	hp_text.Text = num_string_pad(user_health, 3);
+	hp_foreground.Size = hp_foreground.Size.Lerp(UDim2.fromScale(1, user_health / user_max_health), 0.25);
 });
