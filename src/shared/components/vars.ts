@@ -1,7 +1,7 @@
+import { RunService } from '@rbxts/services';
 import Signal from '@rbxts/signal';
 
 export const CreatedVars = new Array<CVar<unknown>>();
-
 export class CVar<T> {
 	readonly name: string;
 	readonly description: string;
@@ -39,4 +39,39 @@ export function GetCVar(name: string) {
 	return CreatedVars.find(cvar => {
 		return cvar.name === name;
 	});
+}
+
+export const CreatedCommands = new Array<ConCommand>();
+export class ConCommand {
+	name: string;
+	OnInvoke: (...args: string[]) => unknown;
+
+	constructor(console_name: string) {
+		this.name = console_name;
+
+		this.OnInvoke = () => {
+			warn(this.name, 'has not been set up!');
+			return;
+		};
+
+		CreatedCommands.insert(0, this);
+	}
+}
+
+export const CreatedServerCommands = new Array<Server_ConCommand>();
+export class Server_ConCommand {
+	name: string;
+	OnInvoke: (player: PlayerMonitor, ...args: string[]) => string | void;
+
+	constructor(console_name: string) {
+		assert(RunService.IsServer(), 'Cannot run Server_ConCommand on client!');
+		this.name = console_name;
+
+		this.OnInvoke = () => {
+			warn(this.name, 'has not been set up!');
+			return;
+		};
+
+		CreatedServerCommands.insert(0, this);
+	}
 }

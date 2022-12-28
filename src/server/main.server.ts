@@ -6,8 +6,7 @@ import * as Folders from 'shared/folders';
 import * as Services from '@rbxts/services';
 import Signals from './providers/signals';
 import Network from 'shared/network';
-import { CVar, CreatedVars } from 'shared/components/vars';
-import { created_commands } from './providers/client_cmds';
+import { CVar, CreatedVars, CreatedServerCommands } from 'shared/components/vars';
 import { LocalSignal } from 'shared/local_network';
 
 // Services
@@ -166,8 +165,18 @@ const Console_SendArg = Network.console_sendarg;
 const Chat_Recieve = Network.Chat_Revieve;
 const Chat_Send = Network.Chat_Send;
 
-Console_SendArg.OnServerInvoke = (user, command, args) => {
-	if (command === undefined || args === undefined) return;
+Console_SendArg.OnServerInvoke = (user, content) => {
+	// safe checks
+	if (
+		content.size() === 0 ||
+		!content.every(element => {
+			return type(element) === 'string';
+		})
+	)
+		return;
+
+	const command = content[0];
+	content.remove(0);
 
 	// only accept invokes if the sender is in the playerlist
 	const player_data = PlayerMonitors.find(data => {
@@ -175,27 +184,17 @@ Console_SendArg.OnServerInvoke = (user, command, args) => {
 	});
 	if (!player_data) return '[!] Unable to retrieve player data';
 
-	// legacy support
-	const cvar = CreatedVars.find(cvar => {
-		return cvar.attributes.has('ClientAccess') && cvar.name === command;
-	});
-	if (cvar && type(cvar.value) === 'function') {
-		const callback = cvar.value as (player: PlayerMonitor, ...args: unknown[]) => string;
-		return callback(player_data, ...args);
-	}
-
-	const c_command = created_commands.find(cmd => {
+	const c_command = CreatedServerCommands.find(cmd => {
 		return cmd.name === command;
 	});
-	if (c_command) return c_command.callback(player_data, args);
+	if (c_command) return c_command.OnInvoke(player_data, ...content);
 };
 
 Console_GetCmds.OnServerInvoke = player => {
 	const names: string[] = [];
-	CreatedVars.forEach(cvar => {
-		if (cvar.attributes.has('ClientAccess')) names.insert(0, cvar.name);
+	CreatedServerCommands.forEach(server_cmd => {
+		names.insert(0, server_cmd.name);
 	});
-	created_commands.forEach(cmd => names.insert(0, cmd.name));
 	return names;
 };
 

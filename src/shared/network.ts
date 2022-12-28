@@ -114,7 +114,7 @@ const Network = {
 	Chat_Revieve: new Remote<[message: string]>(),
 
 	// console
-	console_sendarg: new Function<[argument: string, value: unknown[]], string | undefined | void>(),
+	console_sendarg: new Function<[content: string[]], string | void>(),
 	console_getcmds: new Function<[], string[]>(),
 
 	// entities

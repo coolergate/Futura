@@ -1,8 +1,6 @@
 // Author: coolergate#2031
 // Reason: Handle user interface
 
-Signals.Start.Wait();
-
 import Values from 'client/providers/values';
 import Network from 'shared/network';
 import Signals from 'client/providers/signals';
@@ -10,6 +8,8 @@ import Roact from '@rbxts/roact';
 import { CVar } from 'shared/components/vars';
 import { num_string_pad } from 'shared/modules/util';
 import { create_fps_label } from 'shared/providers/interface';
+
+Signals.Start.Wait();
 
 //ANCHOR Services
 const Players = game.GetService('Players');
@@ -38,7 +38,8 @@ const MenuPanel_TopText = MenuCanvas.FindFirstChild('TopbarText', true) as TextL
 
 const buttons_callback = new Map<number, () => boolean>();
 buttons_callback.set(1, () => {
-	Network.CharacterRespawn.InvokeServer();
+	//Network.CharacterRespawn.InvokeServer();
+	Signals.console_sendarg.Fire('char_respawn');
 	return true;
 });
 

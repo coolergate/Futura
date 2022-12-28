@@ -146,13 +146,12 @@ export function std_print(Mode: ConsoleMessageType, Content: string) {
 function Handle_Command(content: string) {
 	const args = content.split(' ');
 	const command = tostring(args[0]);
-	args.remove(0);
 
 	const equivalent_ConVar = CreatedVars.find((val, index, obj) => {
 		return val.name === command;
 	});
 	if (equivalent_ConVar && !equivalent_ConVar.attributes.has('Hidden')) {
-		if (args[0] === undefined) {
+		if (args[1] === undefined) {
 			Console_LogCvarInfo(equivalent_ConVar);
 			return;
 		}
@@ -164,7 +163,7 @@ function Handle_Command(content: string) {
 
 		switch (equivalent_ConVar.value_type) {
 			case 'number': {
-				const attempt = tonumber(args[0]);
+				const attempt = tonumber(args[1]);
 				if (attempt === undefined) {
 					std_print('Error', `Value must be a "${equivalent_ConVar.value_type}", got "string" !`);
 					return;
@@ -178,7 +177,7 @@ function Handle_Command(content: string) {
 				break;
 			}
 			case 'boolean': {
-				const arg = args[0];
+				const arg = args[1];
 				let final_value: boolean | undefined;
 
 				if (arg === 'true') final_value = true;
@@ -207,7 +206,7 @@ function Handle_Command(content: string) {
 
 	// check if it's an server command
 	if (server_commands.includes(command)) {
-		const [server_recieved, response] = network_console_arg.InvokeServer(command, [args[0] as string]).await();
+		const [server_recieved, response] = network_console_arg.InvokeServer(args).await();
 		if (response !== undefined) {
 			std_print('Info', tostring(response));
 			return;
@@ -223,7 +222,7 @@ client_commands.set('clear', function () {
 	});
 });
 client_commands.set('say', function (content: string) {
-	network_console_arg.InvokeServer('say', [content]);
+	network_console_arg.InvokeServer(['say', content]);
 	//Print('Chat', `${Player.DisplayName}: ${content}`);
 	std_print('Info', `${Player.DisplayName}: ${content}`);
 });

@@ -4,12 +4,11 @@
 
 import GenerateString from 'shared/modules/randomstring';
 import { LocalSignal } from 'shared/local_network';
-import { CVar } from 'shared/components/vars';
+import { CVar, Server_ConCommand } from 'shared/components/vars';
 import Signals from 'server/providers/signals';
 import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import Network from 'shared/network';
-import { client_command } from 'server/providers/client_cmds';
 
 // ANCHOR Folders
 const char_collision_folder = Folders.CharacterEntity.Collision;
@@ -25,7 +24,7 @@ interface BaseEntity {
 
 //SECTION Character entity
 const created_CharacterControllers = new Array<CharacterController>();
-const respawn_req = new client_command<[], void>('char_respawn');
+const respawn_req = new Server_ConCommand('char_respawn');
 const def_humanoid_desc = new Instance('HumanoidDescription', HumanoidDescription_Folder);
 def_humanoid_desc.Name = 'DefaultHumanoidDescription';
 
@@ -225,9 +224,10 @@ created_CharacterControllers.sort((a, b) => {
 });
 
 //ANCHOR Character respawning
-Network.CharacterRespawn.OnServerInvoke = Player => {
-	const MonitorData = Signals.GetDataFromPlayerId.Call(Player.UserId).await()[1] as PlayerMonitor | undefined;
-	if (!MonitorData) return;
+//Network.CharacterRespawn.OnServerInvoke = Player => {
+respawn_req.OnInvoke = MonitorData => {
+	//const MonitorData = Signals.GetDataFromPlayerId.Call(Player.UserId).await()[1] as PlayerMonitor | undefined;
+	//if (!MonitorData) return;
 
 	// search if the player already has a controller assigned
 	if (
@@ -251,7 +251,7 @@ Network.CharacterRespawn.OnServerInvoke = Player => {
 	controller.collisionbox.SetNetworkOwner(MonitorData.Instance); // needs to be set manually for some reason
 	controller.Spawn();
 
-	Network.entities.ent_Character.info_changed.PostClient([Player], GenerateCharacterInfo(controller));
+	Network.entities.ent_Character.info_changed.PostClient([MonitorData.Instance], GenerateCharacterInfo(controller));
 
 	//TODO alert all players when a new entity spawns in
 };
