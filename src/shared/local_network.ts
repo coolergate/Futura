@@ -1,34 +1,24 @@
-//    █████████    █████████    █████████
-//   ███░░░░░███  ███░░░░░███  ███░░░░░███
-//  ███     ░░░  ███     ░░░  ███     ░░░
-// ░███         ░███         ░███
-// ░███    █████░███    █████░███
-// ░░███  ░░███ ░░███  ░░███ ░░███     ███
-//  ░░█████████  ░░█████████  ░░█████████
-//   ░░░░░░░░░    ░░░░░░░░░    ░░░░░░░░░
-//
-// Purpose: Signals for communicating between scripts
+// Author: coolergate#2031
+// Reason: Signals for communicating between scripts
 
 export class LocalSignal<headers extends unknown[]> {
-	private Instance = new Instance('BindableEvent');
+	Connections = new Array<(...args: headers) => unknown>();
 
 	Connect(callback: (...args: headers) => void) {
-		this.Instance.Event.Connect(callback);
+		this.Connections.insert(0, callback);
 	}
 
 	Fire(...args: headers) {
-		this.Instance.Fire(...args);
+		this.Connections.forEach(callback => {
+			coroutine.wrap(() => callback(...args))();
+		});
 	}
 }
 export class LocalFunction<headers extends unknown[], response> {
-	private Instance = new Instance('BindableFunction');
-
 	Handle = undefined as ((...args: headers) => response) | undefined;
 
 	Call(...args: headers) {
 		assert(this.Handle, 'LocalFunction Handle callback has not been defined.');
-		return new Promise<response>(resolve => {
-			resolve(this.Handle!(...args));
-		});
+		return this.Handle(...args);
 	}
 }
