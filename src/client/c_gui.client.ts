@@ -1,5 +1,5 @@
 // Author: coolergate#2031
-// Reason: Handle user interface
+// Reason: Handle interface
 
 import Values from 'client/providers/values';
 import Network from 'shared/network';
@@ -39,7 +39,7 @@ const MenuPanel_TopText = MenuCanvas.FindFirstChild('TopbarText', true) as TextL
 const buttons_callback = new Map<number, () => boolean>();
 buttons_callback.set(1, () => {
 	//Network.CharacterRespawn.InvokeServer();
-	Signals.console_sendarg.Fire('char_respawn');
+	Signals.Console_SendCommand.Fire('char_respawn');
 	return true;
 });
 
@@ -53,7 +53,7 @@ MenuPanel_Buttons.GetChildren().forEach(inst => {
 });
 
 Signals.Character.Spawned.Connect(() => (MenuCanvas.Visible = false));
-Signals.Open_MainMenu.Connect(() => (MenuCanvas.Visible = true));
+Signals.GUI_OpenMenu.Connect(() => (MenuCanvas.Visible = true));
 
 //!SECTION
 
@@ -81,7 +81,7 @@ RunService.RenderStepped.Connect(dt => {
 		? (meter_label.Text = '<b>' + tostring(math.round(1 / dt)) + 'fps on ${env_mapname}' + '</b>')
 		: undefined;
 
-	UserInputService.MouseIconEnabled = !Values.camUnlock.isEmpty() || Values.Character === undefined;
+	UserInputService.MouseIconEnabled = !Values.Camera_Unlock.isEmpty() || Values.Character === undefined;
 
 	const crosshair = GameplayFrame.FindFirstChild('Crosshair') as ImageLabel;
 	crosshair.Visible = UserInputService.MouseIconEnabled === false && crosshair_enabled.value === 1;
