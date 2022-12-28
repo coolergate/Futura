@@ -53,7 +53,7 @@ function CreateHumanoidModelFromDescription(Description: HumanoidDescription): M
 
 class Component implements BaseClientComponent {
 	constructor() {
-		Network.entities.ent_Character.info_changed.OnClientPost = NewInfo => {
+		Network.Entities.Character.LocalInfoChanged.OnClientPost = NewInfo => {
 			// TODO Handle info from other characters
 
 			const PreviousInfo = Values.Character;

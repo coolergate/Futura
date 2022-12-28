@@ -118,11 +118,11 @@ const Network = {
 	console_getcmds: new Function<[], string[]>(),
 
 	// entities
-	entities: {
-		ent_Character: {
-			info_changed: new Remote<[Info: CharacterLocalInfo]>(),
-			get_info: new Function<[], CharacterLocalInfo | undefined>(),
-			get: new Function<[request: string], boolean>(),
+	Entities: {
+		Character: {
+			LocalInfoUpdate: new Remote<[CFrame: CFrame]>(), // contains both Angle and Position
+			LocalInfoChanged: new Remote<[Info: CharacterLocalInfo]>(),
+			ReplicatedInfoChanged: new Remote<[CollisionBox: CharacterCollision, Info?: CharacterReplicatedInfo]>(),
 		},
 	},
 

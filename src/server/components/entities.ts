@@ -11,22 +11,14 @@ import * as Folders from 'shared/folders';
 import Network from 'shared/network';
 
 // ANCHOR Folders
-const char_collision_folder = Folders.CharacterEntity.Collision;
-const HumanoidDescription_Folder = Folders.GetFolder('HumanoidDescriptions', Folders.Entities);
-
-interface BaseEntity {
-	base_id: string;
-	base_model?: Instance;
-
-	Remove(): void;
-	Create(): void;
-}
+const Folder_CharacterCollisions = Folders.CharacterEntity.Collision;
+const Folder_HumanoidDescriptions = Folders.GetFolder('HumanoidDescriptions', Folders.Entities);
 
 //SECTION Character entity
-const created_CharacterControllers = new Array<CharacterController>();
-const respawn_req = new Server_ConCommand('char_respawn');
-const def_humanoid_desc = new Instance('HumanoidDescription', HumanoidDescription_Folder);
-def_humanoid_desc.Name = 'DefaultHumanoidDescription';
+const List_CharacterControllers = new Array<CharacterController>();
+const Command_RespawnEntity = new Server_ConCommand('char_respawn');
+const HumanoidDescription_Default = new Instance('HumanoidDescription', Folder_HumanoidDescriptions);
+HumanoidDescription_Default.Name = 'DefaultHumanoidDescription';
 
 //ANCHOR CVars
 const cvar_default_maxhealth = new CVar('char_starting_maxhealth', 150, '');
@@ -51,6 +43,7 @@ declare global {
 		AppliedSkin: string;
 	}
 
+	// sent from client
 	interface CharacterInfoReport {
 		Angle: CFrame;
 		Position: Vector3;
@@ -59,18 +52,18 @@ declare global {
 
 // ANCHOR CharacterController
 class CharacterController {
-	readonly id = tostring(char_collision_folder.GetChildren().size() + 1); //GenerateString(math.random(10, 20));
+	readonly id = tostring(Folder_CharacterCollisions.GetChildren().size() + 1); //GenerateString(math.random(10, 20));
 	collisionbox: CharacterCollision;
 
 	private PInfo = {
 		identifier: Services.RunService.IsStudio()
-			? 'character_' + tostring(char_collision_folder.GetChildren().size() + 1)
+			? 'character_' + tostring(Folder_CharacterCollisions.GetChildren().size() + 1)
 			: GenerateString(math.random(10, 20)),
 	};
 
 	Info = {
 		Controlling: undefined as PlayerMonitor | undefined,
-		Description: def_humanoid_desc as HumanoidDescription | undefined,
+		Description: HumanoidDescription_Default as HumanoidDescription | undefined,
 
 		Alive: false,
 		Health: 0,
@@ -82,7 +75,7 @@ class CharacterController {
 	signal_died = new LocalSignal<[Controller: PlayerMonitor | undefined]>();
 
 	private CreateCollisionBox() {
-		const cbox = new Instance('Part', char_collision_folder) as CharacterCollision;
+		const cbox = new Instance('Part', Folder_CharacterCollisions) as CharacterCollision;
 		cbox.Size = new Vector3(2, 5, 2);
 		cbox.Transparency = 0.5;
 		cbox.CustomPhysicalProperties = new PhysicalProperties(1, 1, 0, 0, 100);
@@ -164,10 +157,10 @@ class CharacterController {
 
 	Assign(PlayerInfo: PlayerMonitor) {
 		const description =
-			(HumanoidDescription_Folder.FindFirstChild(tostring(PlayerInfo.Instance)) as
+			(Folder_HumanoidDescriptions.FindFirstChild(tostring(PlayerInfo.Instance)) as
 				| HumanoidDescription
 				| undefined) || Services.Players.GetHumanoidDescriptionFromUserId(PlayerInfo.UserId);
-		description.Parent = HumanoidDescription_Folder;
+		description.Parent = Folder_HumanoidDescriptions;
 		description.Name = tostring(PlayerInfo.UserId);
 
 		this.Info.Description = description;
@@ -178,7 +171,7 @@ class CharacterController {
 
 	Unassign() {
 		this.Info.Controlling = undefined;
-		this.Info.Description = def_humanoid_desc;
+		this.Info.Description = HumanoidDescription_Default;
 		this.collisionbox.Anchored = false;
 		this.collisionbox.SetNetworkOwner();
 	}
@@ -196,19 +189,19 @@ function GenerateCharacterInfo(controller: CharacterController): CharacterLocalI
 // create 5 controllers above maxplayers
 for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 	const Controller = new CharacterController();
-	created_CharacterControllers.insert(0, Controller);
+	List_CharacterControllers.insert(0, Controller);
 
 	Controller.signal_damaged.Connect(amount => {
 		if (Controller.Info.Controlling === undefined) return;
 
 		// send local info
-		Network.entities.ent_Character.info_changed.PostClient(
+		Network.Entities.Character.LocalInfoChanged.PostClient(
 			[Controller.Info.Controlling.Instance],
 			GenerateCharacterInfo(Controller),
 		);
 
 		// send global info
-		Network.entities.ent_Character.info_changed.PostAllClients(
+		Network.Entities.Character.LocalInfoChanged.PostAllClients(
 			[Controller.Info.Controlling.Instance],
 			GenerateCharacterInfo(Controller),
 		);
@@ -216,22 +209,22 @@ for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 	Controller.signal_died.Connect(Monitor => {
 		if (Monitor === undefined) return;
 
-		Network.entities.ent_Character.info_changed.PostClient([Monitor.Instance], GenerateCharacterInfo(Controller));
+		Network.Entities.Character.LocalInfoChanged.PostClient([Monitor.Instance], GenerateCharacterInfo(Controller));
 	});
 }
-created_CharacterControllers.sort((a, b) => {
+List_CharacterControllers.sort((a, b) => {
 	return a.id > b.id;
 });
 
 //ANCHOR Character respawning
 //Network.CharacterRespawn.OnServerInvoke = Player => {
-respawn_req.OnInvoke = MonitorData => {
+Command_RespawnEntity.OnInvoke = MonitorData => {
 	//const MonitorData = Signals.GetDataFromPlayerId.Call(Player.UserId).await()[1] as PlayerMonitor | undefined;
 	//if (!MonitorData) return;
 
 	// search if the player already has a controller assigned
 	if (
-		created_CharacterControllers.find(controller => {
+		List_CharacterControllers.find(controller => {
 			return controller.Info.Controlling === MonitorData;
 		})
 	)
@@ -239,8 +232,8 @@ respawn_req.OnInvoke = MonitorData => {
 
 	let controller: CharacterController | undefined;
 	while (controller === undefined)
-		for (let index = 0; index < created_CharacterControllers.size(); index++) {
-			const element = created_CharacterControllers[index];
+		for (let index = 0; index < List_CharacterControllers.size(); index++) {
+			const element = List_CharacterControllers[index];
 			if (element.Info.Controlling === undefined) controller = element;
 			if (controller !== undefined) break;
 		}
@@ -251,7 +244,7 @@ respawn_req.OnInvoke = MonitorData => {
 	controller.collisionbox.SetNetworkOwner(MonitorData.Instance); // needs to be set manually for some reason
 	controller.Spawn();
 
-	Network.entities.ent_Character.info_changed.PostClient([MonitorData.Instance], GenerateCharacterInfo(controller));
+	Network.Entities.Character.LocalInfoChanged.PostClient([MonitorData.Instance], GenerateCharacterInfo(controller));
 
 	//TODO alert all players when a new entity spawns in
 };
