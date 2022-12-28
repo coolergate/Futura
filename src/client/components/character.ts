@@ -9,9 +9,7 @@ import Network from 'shared/network';
 import Values from 'client/providers/values';
 import { CVar, GetCVar } from 'shared/components/vars';
 
-const DefDescription = Services.Players.GetHumanoidDescriptionFromUserId(3676469645);
-
-function CreateHumanoidModelFromDescription(Description = DefDescription): Model {
+function CreateHumanoidModelFromDescription(Description: HumanoidDescription): Model {
 	const CharacterModel = Services.Players.CreateHumanoidModelFromDescription(Description, 'R6');
 	const HumanoidRootPart = CharacterModel.WaitForChild('HumanoidRootPart') as BasePart;
 	const hum = CharacterModel.WaitForChild('Humanoid') as Humanoid;
@@ -56,6 +54,8 @@ function CreateHumanoidModelFromDescription(Description = DefDescription): Model
 class Component implements BaseClientComponent {
 	constructor() {
 		Network.entities.ent_Character.info_changed.OnClientPost = NewInfo => {
+			// TODO Handle info from other characters
+
 			const PreviousInfo = Values.Character;
 
 			// if the server is just reminding us that we have no character
@@ -73,15 +73,15 @@ class Component implements BaseClientComponent {
 			}
 
 			// health changes
-			if (NewInfo.health !== PreviousInfo.health) {
-				if (NewInfo.health === 0) {
+			if (NewInfo.Health !== PreviousInfo.Health) {
+				if (NewInfo.Health === 0) {
 					Signals.CharacterDied.Fire();
 					GetCVar('cam_mode')!.value = 0;
 					return;
 				}
 
-				const CurrentHealth = PreviousInfo.health;
-				const NewHealth = NewInfo.health;
+				const CurrentHealth = PreviousInfo.Health;
+				const NewHealth = NewInfo.Health;
 				CurrentHealth > NewHealth
 					? Signals.Character.TookDamage.Fire(CurrentHealth, NewHealth)
 					: Signals.Character.Healed.Fire(CurrentHealth, NewHealth);
