@@ -5,7 +5,7 @@ import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 
 const network_folder = Folders.Network;
-let next_index = 0;
+let next_index = 1;
 
 function Manager(index: number, mode: 'RemoteFunction' | 'RemoteEvent'): RemoteEvent | RemoteFunction {
 	let instance = network_folder.FindFirstChild(tostring(index)) as RemoteEvent | RemoteFunction;
@@ -74,31 +74,34 @@ class Function<headers extends unknown[], response> {
 		this.Instance = Manager(next_index, 'RemoteFunction') as RemoteFunction;
 		next_index++;
 
-		Services.RunService.IsServer()
-			? (this.Instance.OnServerInvoke = (player, ...args) => {
-					assert(this.OnServerInvoke, `OnServerPost has not been declared! ${this.Instance.Name}`);
-					return this.OnServerInvoke(player, ...(args as headers));
-			  })
-			: (this.Instance.OnClientInvoke = (...args) => {
-					assert(this.OnClientInvoke, `OnClientPost has not been declared! ${this.Instance.Name}`);
-					return this.OnClientInvoke(...(args as headers));
-			  });
+		if (Services.RunService.IsServer())
+			this.Instance.OnServerInvoke = (player, ...args) => {
+				assert(this.OnServerInvoke, `OnServerPost has not been declared! ${this.Instance.Name}`);
+				return this.OnServerInvoke(player, ...(args as headers));
+			};
+		else
+			this.Instance.OnClientInvoke = (...args) => {
+				assert(this.OnClientInvoke, `OnClientPost has not been declared! ${this.Instance.Name}`);
+				return this.OnClientInvoke(...(args as headers));
+			};
 	}
 
 	InvokeServer(...args: headers) {
 		assert(Services.RunService.IsClient(), 'InvokeServer cannot be called from the server!');
 		let response: response;
+		let recieved_response = false;
 		coroutine.wrap(() => {
 			response = this.Instance.InvokeServer(...args) as response;
+			recieved_response = true;
 		})();
 		return {
 			await: function () {
-				while (response === undefined) task.wait();
+				while (recieved_response === false) task.wait();
 				return response;
 			},
 			andthen: function (callback: (response: response) => unknown) {
 				coroutine.wrap(() => {
-					while (response === undefined) task.wait();
+					while (recieved_response === false) task.wait();
 					callback(response);
 				});
 			},
@@ -107,17 +110,19 @@ class Function<headers extends unknown[], response> {
 	InvokeClient(player: Player, ...args: headers) {
 		assert(Services.RunService.IsServer(), 'InvokeClient cannot be called from the client!');
 		let response: response;
+		let recieved_response = false;
 		coroutine.wrap(() => {
 			response = this.Instance.InvokeClient(player, ...args) as response;
+			recieved_response = true;
 		})();
 		return {
 			await: function () {
-				while (response === undefined) task.wait();
+				while (recieved_response === false) task.wait();
 				return response;
 			},
 			then: function (callback: (response: response) => unknown) {
 				coroutine.wrap(() => {
-					while (response === undefined) task.wait();
+					while (recieved_response === false) task.wait();
 					callback(response);
 				});
 			},
