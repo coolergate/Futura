@@ -21,9 +21,7 @@ function Manager(index: number, mode: 'RemoteFunction' | 'RemoteEvent'): RemoteE
 	return instance;
 }
 
-//=============================================================================
-// Remote constructor defined by NetworkMode
-//=============================================================================
+// ANCHOR Remotes
 class Remote<headers extends unknown[]> {
 	private Instance: RemoteEvent;
 
@@ -65,42 +63,65 @@ class Remote<headers extends unknown[]> {
 	}
 }
 
+// ANCHOR Function
 class Function<headers extends unknown[], response> {
-	private Instance: RemoteFunction;
+	Instance: RemoteFunction;
 
-	// * Server
 	OnServerInvoke = undefined as ((user: Player, ...args: headers) => response) | undefined;
-	InvokeClient(user: Player, ...data: headers) {
-		return new Promise<response>(resolve => {
-			resolve(this.Instance.InvokeClient(user, ...data) as response);
-		});
-	}
-
-	// * Client
 	OnClientInvoke = undefined as ((...args: headers) => response) | undefined;
-	InvokeServer(...args: headers) {
-		return new Promise<response>(resolve => {
-			resolve(this.Instance.InvokeServer(...args));
-		});
-	}
 
 	constructor() {
 		this.Instance = Manager(next_index, 'RemoteFunction') as RemoteFunction;
 		next_index++;
 
-		if (Services.RunService.IsServer())
-			this.Instance.OnServerInvoke = function (player, ...data) {
-				assert(this.OnServerInvoke, 'OnServerInvoke has not been declared!' + ' (' + tostring(this.Name) + ')');
-				return this.OnServerInvoke(player, ...(data as headers)) as response;
-			};
-		else
-			this.Instance.OnClientInvoke = (...data: headers) => {
-				assert(
-					this.OnClientInvoke,
-					'OnClientInvoke has not been declared!' + ' (' + tostring(this.Instance.Name) + ')',
-				);
-				return this.OnClientInvoke(...(data as headers));
-			};
+		Services.RunService.IsServer()
+			? (this.Instance.OnServerInvoke = (player, ...args) => {
+					assert(this.OnServerInvoke, `OnServerPost has not been declared! ${this.Instance.Name}`);
+					return this.OnServerInvoke(player, ...(args as headers));
+			  })
+			: (this.Instance.OnClientInvoke = (...args) => {
+					assert(this.OnClientInvoke, `OnClientPost has not been declared! ${this.Instance.Name}`);
+					return this.OnClientInvoke(...(args as headers));
+			  });
+	}
+
+	InvokeServer(...args: headers) {
+		assert(Services.RunService.IsClient(), 'InvokeServer cannot be called from the server!');
+		let response: response;
+		coroutine.wrap(() => {
+			response = this.Instance.InvokeServer(...args) as response;
+		})();
+		return {
+			await: function () {
+				while (response === undefined) task.wait();
+				return response;
+			},
+			andthen: function (callback: (response: response) => unknown) {
+				coroutine.wrap(() => {
+					while (response === undefined) task.wait();
+					callback(response);
+				});
+			},
+		};
+	}
+	InvokeClient(player: Player, ...args: headers) {
+		assert(Services.RunService.IsServer(), 'InvokeClient cannot be called from the client!');
+		let response: response;
+		coroutine.wrap(() => {
+			response = this.Instance.InvokeClient(player, ...args) as response;
+		})();
+		return {
+			await: function () {
+				while (response === undefined) task.wait();
+				return response;
+			},
+			then: function (callback: (response: response) => unknown) {
+				coroutine.wrap(() => {
+					while (response === undefined) task.wait();
+					callback(response);
+				});
+			},
+		};
 	}
 }
 
@@ -122,7 +143,9 @@ const Network = {
 		Character: {
 			LocalInfoUpdate: new Remote<[Angle: Vector2, Position: Vector3]>(), // contains both Angle and Position
 			LocalInfoChanged: new Remote<[Info: CharacterLocalInfo]>(),
+
 			ReplicatedInfoChanged: new Remote<[Info: CharacterReplicatedInfo]>(),
+			GetCurrentReplicated: new Function<[], CharacterReplicatedInfo[]>(),
 		},
 	},
 

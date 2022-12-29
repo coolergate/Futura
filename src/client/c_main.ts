@@ -34,13 +34,12 @@ const client_commands = new Map<string, Callback>();
 const server_commands = new Array<string>();
 
 function update_server_commands() {
-	network_console_get.InvokeServer().andThen(list => {
-		list.forEach(str => {
-			if (!server_commands.includes(str)) server_commands.insert(0, str);
-		});
-		server_commands.forEach((str, index) => {
-			if (!list.includes(str)) server_commands.remove(index);
-		});
+	const list = network_console_get.InvokeServer().await();
+	list.forEach(str => {
+		if (!server_commands.includes(str)) server_commands.insert(0, str);
+	});
+	server_commands.forEach((str, index) => {
+		if (!list.includes(str)) server_commands.remove(index);
 	});
 }
 
@@ -206,7 +205,7 @@ function Handle_Command(content: string) {
 
 	// check if it's an server command
 	if (server_commands.includes(command)) {
-		const [server_recieved, response] = network_console_arg.InvokeServer(args).await();
+		const response = network_console_arg.InvokeServer(args).await();
 		if (response !== undefined) {
 			std_print('Info', tostring(response));
 			return;
