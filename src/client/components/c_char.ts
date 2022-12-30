@@ -98,7 +98,7 @@ class Component implements BaseClientComponent {
 	Start(): void {
 		coroutine.wrap(() => {
 			while (game) {
-				task.wait(0.25);
+				//task.wait(0.25);
 				this.UpdateCharacters();
 
 				if (Values.Character !== undefined) {
@@ -137,7 +137,7 @@ class Component implements BaseClientComponent {
 				if (Values.Character?.CollisionBox === EquivalentInfo.CollisionBox)
 					EquivalentInfo.Model.GetDescendants().forEach(inst => {
 						if (!inst.IsA('BasePart')) return;
-						inst.LocalTransparencyModifier = 1;
+						//inst.LocalTransparencyModifier = 1;
 					});
 				else
 					EquivalentInfo.Model.GetDescendants().forEach(inst => {
@@ -150,11 +150,12 @@ class Component implements BaseClientComponent {
 	update_time_passed = 0;
 	Update(delta_time: number): void {
 		this.CreatedCharacterModels.forEach(info => {
-			const final_cframe = new CFrame(info.CollisionBox.Position).mul(
+			const final_cframe = new CFrame(info.CollisionBox.Position.add(new Vector3(0, 0.5, 0))).mul(
 				CFrame.Angles(0, math.rad(info.Orientation.X), 0),
 			);
 			info.Model.PivotTo(final_cframe);
-			info.Orientation = info.Orientation.Lerp(info.TargetOrientation, 0.25);
+			//info.Orientation = info.Orientation.Lerp(info.TargetOrientation, 0.5);
+			info.Orientation = info.TargetOrientation;
 		});
 	}
 	FixedUpdate(dt: number): void {}
