@@ -50,6 +50,7 @@ DefaultCharacterModel.GetChildren().forEach(inst => {
 interface CharacterModelInfo {
 	Model: R6_Character;
 	Orientation: Vector3;
+	TargetOrientation: Vector3;
 	CollisionBox: CharacterCollision;
 }
 
@@ -124,12 +125,13 @@ class Component implements BaseClientComponent {
 					clone.Parent = Folders.CharacterModels;
 					EquivalentInfo = {
 						Model: clone,
-						Orientation: info.Orientation,
+						Orientation: Vector3.zero,
+						TargetOrientation: info.Orientation,
 						CollisionBox: info.CollisionBox,
 					};
 					this.CreatedCharacterModels.insert(0, EquivalentInfo);
 				}
-				EquivalentInfo.Orientation = info.Orientation;
+				EquivalentInfo.TargetOrientation = info.Orientation;
 
 				// hide our own character
 				if (Values.Character?.CollisionBox === EquivalentInfo.CollisionBox)
@@ -152,6 +154,7 @@ class Component implements BaseClientComponent {
 				CFrame.Angles(0, math.rad(info.Orientation.X), 0),
 			);
 			info.Model.PivotTo(final_cframe);
+			info.Orientation = info.Orientation.Lerp(info.TargetOrientation, 0.25);
 		});
 	}
 	FixedUpdate(dt: number): void {}
