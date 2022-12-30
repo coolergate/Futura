@@ -44,7 +44,7 @@ class Remote<headers extends unknown[]> {
 	// * Client
 	OnClientPost = undefined as ((...args: headers) => void) | undefined;
 	PostServer(...args: headers) {
-		assert(Services.RunService.IsServer(), 'client-side only.' + ' (' + tostring(this.Instance.Name) + ')');
+		assert(Services.RunService.IsClient(), 'client-side only.' + ' (' + tostring(this.Instance.Name) + ')');
 		this.Instance.FireServer(...args);
 	}
 
@@ -146,7 +146,7 @@ const Network = {
 	// entities
 	Entities: {
 		Character: {
-			LocalInfoUpdate: new Remote<[Angle: Vector2, Position: Vector3]>(), // contains both Angle and Position
+			LocalInfoUpdate: new Remote<[Orientation: Vector3, Position: Vector3]>(), // contains both Angle and Position
 			LocalInfoChanged: new Remote<[Info: CharacterLocalInfo]>(),
 
 			ReplicatedInfoChanged: new Remote<[Info: CharacterReplicatedInfo]>(),

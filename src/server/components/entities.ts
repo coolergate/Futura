@@ -20,6 +20,15 @@ const Command_RespawnEntity = new Server_ConCommand('char_respawn');
 const HumanoidDescription_Default = new Instance('HumanoidDescription', Folder_HumanoidDescriptions);
 HumanoidDescription_Default.Name = 'DefaultHumanoidDescription';
 
+Services.PhysicsService.CreateCollisionGroup('CharacterEntity');
+Services.PhysicsService.RegisterCollisionGroup('CharacterEntity');
+Services.PhysicsService.CreateCollisionGroup('CharacterModel');
+Services.PhysicsService.RegisterCollisionGroup('CharacterModel');
+
+Services.PhysicsService.CollisionGroupSetCollidable('CharacterEntity', 'CharacterModel', false);
+Services.PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'CharacterModel', false);
+Services.PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'Default', false);
+
 //ANCHOR CVars
 const cvar_default_maxhealth = new CVar('char_starting_maxhealth', 150, '');
 const cvar_default_health = new CVar('char_starting_health', cvar_default_maxhealth.value, '');
@@ -39,15 +48,9 @@ declare global {
 	interface CharacterReplicatedInfo {
 		Alive: boolean;
 		CollisionBox: CharacterCollision;
-		Angle: Vector2;
+		Orientation: Vector3;
 		Position: Vector3;
-		AppliedSkin: string;
-	}
-
-	// sent from client
-	interface CharacterInfoReport {
-		Angle: Vector2;
-		Position: Vector3;
+		HumanoidDescription: HumanoidDescription;
 	}
 }
 
@@ -70,7 +73,7 @@ class CharacterController {
 		Health: 0,
 		HealthMax: cvar_default_maxhealth.value,
 
-		Angles: new Vector2(0, 0),
+		Orientation: new Vector3(0, 0, 0),
 	};
 
 	// signals
@@ -81,10 +84,15 @@ class CharacterController {
 		const cbox = new Instance('Part', Folder_CharacterCollisions) as CharacterCollision;
 		cbox.Size = new Vector3(2, 5, 2);
 		cbox.Transparency = 0.5;
+		cbox.CastShadow = false;
 		cbox.CustomPhysicalProperties = new PhysicalProperties(1, 1, 0, 0, 100);
 		cbox.Anchored = true;
 		cbox.CFrame = new CFrame(0, 10e8, 0);
 		cbox.Name = this.PInfo.identifier;
+
+		const gyro = new Instance('BodyGyro', cbox);
+		gyro.CFrame = new CFrame();
+		gyro.MaxTorque = new Vector3(10e99, 10e99, 10e99);
 
 		// vforce attachment
 		const main_attach = new Instance('Attachment', cbox);
@@ -94,6 +102,8 @@ class CharacterController {
 		const cam_attach = new Instance('Attachment', cbox);
 		cam_attach.Position = new Vector3(0, 2, 0);
 		cam_attach.Name = 'CameraAttachment';
+
+		Services.PhysicsService.SetPartCollisionGroup(cbox, 'CharacterEntity');
 
 		return cbox;
 	}
@@ -199,13 +209,7 @@ class CharacterController {
 	}
 
 	NotifyReplicated() {
-		Network.Entities.Character.ReplicatedInfoChanged.PostAllClients([], {
-			Alive: this.Info.Alive,
-			CollisionBox: this.collisionbox,
-			Angle: this.Info.Angles,
-			Position: this.collisionbox.CFrame.Position,
-			AppliedSkin: '', // TODO Handle different skins
-		});
+		Network.Entities.Character.ReplicatedInfoChanged.PostAllClients([], this.GenerateReplicatedInfo());
 	}
 
 	GenerateLocalInfo(): CharacterLocalInfo {
@@ -221,9 +225,9 @@ class CharacterController {
 		return {
 			Alive: this.Info.Alive,
 			CollisionBox: this.collisionbox,
-			Angle: this.Info.Angles,
+			Orientation: this.Info.Orientation,
 			Position: this.collisionbox.CFrame.Position,
-			AppliedSkin: '', // TODO Handle different skins
+			HumanoidDescription: HumanoidDescription_Default, // TODO Handle different skins
 		};
 	}
 }
@@ -239,7 +243,7 @@ for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
 	});
 }
 List_CharacterControllers.sort((a, b) => {
-	return a.id > b.id;
+	return a.id < b.id;
 });
 
 //ANCHOR Character respawning
@@ -271,17 +275,25 @@ Command_RespawnEntity.OnInvoke = MonitorData => {
 	controller.Spawn();
 };
 
-Network.Entities.Character.LocalInfoUpdate.OnServerPost = (user, Angle, Position) => {
+Network.Entities.Character.LocalInfoUpdate.OnServerPost = (user, Orientation, Position) => {
 	const user_data = Signals.GetDataFromPlayerId.Call(user.UserId);
-	if (!user_data || Angle === undefined || Position === undefined) return;
+	if (!user_data || Orientation === undefined || Position === undefined) return;
 
 	const user_controller = List_CharacterControllers.find(controller => {
-		return controller.Info.Controlling === user_data;
+		return controller.Info.Controlling?.UserId === user_data.UserId;
 	});
 	if (!user_controller) return;
 
-	user_controller.Info.Angles = Angle;
+	user_controller.Info.Orientation = Orientation;
 	user_controller.NotifyReplicated();
+};
+
+Network.Entities.Character.GetCurrentReplicated.OnServerInvoke = player => {
+	const list: CharacterReplicatedInfo[] = [];
+	List_CharacterControllers.forEach(controller => {
+		list.insert(0, controller.GenerateReplicatedInfo());
+	});
+	return list;
 };
 //!SECTION
 

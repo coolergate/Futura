@@ -40,3 +40,4 @@ export const CharacterEntity = {
 	Collision: GetFolder('CharacterCollision', Entities),
 	Skins: GetFolder('CharacterSkins', Models),
 };
+export const CharacterModels = GetFolder('CharacterModels', Entities);

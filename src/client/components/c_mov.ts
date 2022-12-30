@@ -52,12 +52,7 @@ class Component implements BaseClientComponent {
 				? collisionbox.AssemblyLinearVelocity.Lerp(world_direction.mul(walkspeed), 0.15)
 				: collisionbox.AssemblyLinearVelocity;
 	}
-	Update(delta_time: number): void {
-		if (!Values.Character) return;
-
-		// keep it upright
-		Values.Character.CollisionBox.CFrame = new CFrame(Values.Character.CollisionBox.CFrame.Position);
-	}
+	Update(delta_time: number): void {}
 
 	is_grounded(): boolean {
 		if (!Values.Character) return false;
