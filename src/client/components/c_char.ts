@@ -137,7 +137,7 @@ class Component implements BaseClientComponent {
 				if (Values.Character?.CollisionBox === EquivalentInfo.CollisionBox)
 					EquivalentInfo.Model.GetDescendants().forEach(inst => {
 						if (!inst.IsA('BasePart')) return;
-						//inst.LocalTransparencyModifier = 1;
+						inst.LocalTransparencyModifier = 1;
 					});
 				else
 					EquivalentInfo.Model.GetDescendants().forEach(inst => {
