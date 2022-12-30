@@ -51,6 +51,9 @@ class Component implements BaseClientComponent {
 			ground_check && velocity.Magnitude <= walkspeed + 5
 				? collisionbox.AssemblyLinearVelocity.Lerp(world_direction.mul(walkspeed), 0.15)
 				: collisionbox.AssemblyLinearVelocity;
+
+		if (ground_check)
+			collisionbox.AssemblyLinearVelocity = collisionbox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1));
 	}
 	Update(delta_time: number): void {}
 
@@ -61,7 +64,7 @@ class Component implements BaseClientComponent {
 		const cbox_cframe = Values.Character.CollisionBox.CFrame;
 
 		const checkcframe = new CFrame(cbox_cframe.Position).sub(new Vector3(0, cbox_size.Y / 2, 0));
-		const checksize = new Vector3(cbox_size.X - 0.125, 0.175, cbox_size.Z - 0.125);
+		const checksize = new Vector3(cbox_size.X - 0.125, 0.25, cbox_size.Z - 0.125);
 
 		const cast = Services.Workspace.GetPartBoundsInBox(checkcframe, checksize, this.gc_params);
 		return cast.size() > 0 ? true : false;
