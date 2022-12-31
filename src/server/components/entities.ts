@@ -111,10 +111,9 @@ class CharacterController {
 	constructor() {
 		this.collisionbox = this.CreateCollisionBox();
 
-		// if the collision box gets deleted, we'll make sure to create a replacement
-		// probably will only happen when it falls of the world and gets deleted
 		this.collisionbox.Destroying.Connect(() => {
 			this.Kill();
+			this.collisionbox = this.CreateCollisionBox();
 		});
 	}
 
