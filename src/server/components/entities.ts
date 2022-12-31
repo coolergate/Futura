@@ -203,7 +203,7 @@ class CharacterController {
 		if (this.Info.Controlling === undefined) return;
 		Network.Entities.Character.LocalInfoChanged.PostClient(
 			[this.Info.Controlling.Instance],
-			this.GenerateLocalInfo(),
+			this.Info.Alive ? this.GenerateLocalInfo() : undefined,
 		);
 	}
 

@@ -147,7 +147,7 @@ const Network = {
 	Entities: {
 		Character: {
 			LocalInfoUpdate: new Remote<[Orientation: Vector3, Position: Vector3]>(), // contains both Angle and Position
-			LocalInfoChanged: new Remote<[Info: CharacterLocalInfo]>(),
+			LocalInfoChanged: new Remote<[Info?: CharacterLocalInfo]>(),
 
 			ReplicatedInfoChanged: new Remote<[Info: CharacterReplicatedInfo]>(),
 			GetCurrentReplicated: new Function<[], CharacterReplicatedInfo[]>(),

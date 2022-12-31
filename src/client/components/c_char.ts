@@ -62,17 +62,19 @@ class Component implements BaseClientComponent {
 		Network.Entities.Character.LocalInfoChanged.OnClientPost = NewInfo => {
 			const PreviousInfo = Values.Character;
 
-			if (NewInfo === undefined && PreviousInfo !== undefined) {
-				GetCVar('cam_mode')!.value = 0;
-				Signals.Character.Died.Fire(NewInfo);
-				Values.Character = NewInfo;
+			if (NewInfo === undefined) {
+				if (PreviousInfo !== undefined) {
+					GetCVar('cam_mode')!.value = 0;
+					Signals.Character.Died.Fire();
+					Values.Character = undefined;
+				}
 				return;
 			}
 
 			// when we spawn in
 			if (PreviousInfo === undefined) {
 				Values.Character = NewInfo;
-				Signals.Character.Spawned.Fire(NewInfo);
+				Signals.Character.Spawned.Fire();
 				GetCVar('cam_mode')!.value = 1;
 				return;
 			}
@@ -80,7 +82,7 @@ class Component implements BaseClientComponent {
 			// health changes
 			if (NewInfo.Health !== PreviousInfo.Health) {
 				if (NewInfo.Health === 0) {
-					Signals.Character.Died.Fire(NewInfo);
+					Signals.Character.Died.Fire();
 					Values.Character = undefined;
 					GetCVar('cam_mode')!.value = 0;
 					return;
