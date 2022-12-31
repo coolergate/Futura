@@ -86,7 +86,19 @@ class Component implements BaseClientComponent {
 		Roact.mount(fps_meter_build, this.MainHolder);
 		//!SECTION
 	}
-	Start(): void {}
+
+	Start(): void {
+		this.MenuFrame.Visible = true;
+		this.GameplayFrame.Visible = false;
+
+		Signals.Character.Spawned.Connect(info => {
+			this.MenuFrame.Visible = false;
+		});
+		Signals.Character.Died.Connect(info => {
+			task.wait(3);
+			this.MenuFrame.Visible = true;
+		});
+	}
 
 	FixedUpdate(): void {}
 
