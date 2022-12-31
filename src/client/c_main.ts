@@ -239,7 +239,10 @@ client_commands.set('version', function (content: string) {
 });
 client_commands.set('setsize', function (content: string) {});
 
-Signals.Console_SendCommand.Connect(argument => Handle_Command(argument));
+Signals.Console_SendCommand.Connect(argument => {
+	if (RunService.IsStudio()) print('executing signal command:', argument);
+	Handle_Command(argument);
+});
 
 UserInputService.InputBegan.Connect((input, unavaiable) => {
 	if (
