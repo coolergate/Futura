@@ -2,6 +2,7 @@
 // Purpose:
 
 import * as Folders from 'shared/folders';
+import * as Util from 'shared/util';
 import GenerateString from 'shared/randomstring';
 import Signals from 'client/providers/signals';
 import Network from 'shared/network';
@@ -164,5 +165,3 @@ class Component implements BaseClientComponent {
 export function Init() {
 	return new Component();
 }
-
-export const InitOrder = -5;

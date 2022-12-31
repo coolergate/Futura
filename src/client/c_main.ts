@@ -368,12 +368,10 @@ declare global {
 	}
 }
 interface BaseComponentBuilder {
-	InitOrder: number;
 	Init(): BaseClientComponent;
 }
 interface ComponentInfo {
 	Name: string;
-	InitOrder: number;
 	Module: BaseComponentBuilder;
 }
 
@@ -384,24 +382,17 @@ const BuiltComponents = new Array<BaseClientComponent>();
 // Add components
 Folder.GetChildren().forEach(inst => {
 	if (!inst.IsA('ModuleScript')) return;
-	std_print('Info', 'Adding component: ' + inst.Name);
-	print('Adding component:', inst.Name);
+	std_print('Info', `Adding component to list: ${inst.Name}`);
 	const module = require(inst) as BaseComponentBuilder;
 	const info: ComponentInfo = {
 		Name: inst.Name,
-		InitOrder: module.InitOrder,
 		Module: module,
 	};
 	Components.insert(0, info);
 });
-Components.sort((a, b) => {
-	return a.InitOrder < b.InitOrder;
-});
-
 // Init
 Components.forEach(v => {
-	std_print('Info', `Starting component ${v.Name}...`);
-	print('Starting component:', v.Name);
+	std_print('Info', `Initializing component: ${v.Name}`);
 	const build = v.Module.Init();
 	BuiltComponents.insert(0, build);
 });

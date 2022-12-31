@@ -11,5 +11,3 @@ class Component implements BaseClientComponent {
 export function Init() {
 	return new Component();
 }
-
-export const InitOrder = 0;
