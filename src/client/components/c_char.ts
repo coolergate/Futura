@@ -62,9 +62,10 @@ class Component implements BaseClientComponent {
 		Network.Entities.Character.LocalInfoChanged.OnClientPost = NewInfo => {
 			const PreviousInfo = Values.Character;
 
-			// if the server is just reminding us that we have no character
-			if (NewInfo === undefined) {
-				if (PreviousInfo !== undefined) GetCVar('cam_mode')!.value = 0;
+			if (NewInfo === undefined && PreviousInfo !== undefined) {
+				GetCVar('cam_mode')!.value = 0;
+				Signals.Character.Died.Fire(NewInfo);
+				Values.Character = NewInfo;
 				return;
 			}
 
@@ -80,6 +81,7 @@ class Component implements BaseClientComponent {
 			if (NewInfo.Health !== PreviousInfo.Health) {
 				if (NewInfo.Health === 0) {
 					Signals.Character.Died.Fire(NewInfo);
+					Values.Character = undefined;
 					GetCVar('cam_mode')!.value = 0;
 					return;
 				}
