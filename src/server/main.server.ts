@@ -207,12 +207,10 @@ declare global {
 	}
 }
 interface BaseComponentBuilder {
-	InitOrder: number;
 	Init(): BaseClientComponent;
 }
 interface ComponentInfo {
 	Name: string;
-	InitOrder: number;
 	Module: BaseComponentBuilder;
 }
 
@@ -225,13 +223,9 @@ Folder.GetChildren().forEach(inst => {
 	const module = require(inst) as BaseComponentBuilder;
 	const info: ComponentInfo = {
 		Name: inst.Name,
-		InitOrder: module.InitOrder,
 		Module: module,
 	};
 	Components.insert(0, info);
-});
-Components.sort((a, b) => {
-	return a.InitOrder < b.InitOrder;
 });
 
 // Init

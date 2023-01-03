@@ -9,5 +9,3 @@ class Component implements BaseServerComponent {
 export function Init() {
 	return new Component();
 }
-
-export const InitOrder = 0;

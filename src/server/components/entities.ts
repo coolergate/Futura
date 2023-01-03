@@ -305,10 +305,7 @@ class Component implements BaseServerComponent {
 	Start(): void {}
 }
 
-// ! Default args
 export function Init() {
 	return new Component();
 }
-export const InitOrder = 0;
-
 //!SECTION
