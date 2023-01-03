@@ -6,9 +6,12 @@ import GenerateString from 'shared/randomstring';
 import { LocalSignal } from 'shared/local_network';
 import { CVar, Server_ConCommand } from 'shared/vars';
 import Signals from 'server/providers/signals';
-import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import Network from 'shared/network';
+
+const PhysicsService = game.GetService('PhysicsService');
+const RunService = game.GetService('RunService');
+const Players = game.GetService('Players');
 
 // ANCHOR Folders
 const Folder_CharacterCollisions = Folders.CharacterEntity.Collision;
@@ -20,14 +23,14 @@ const Command_RespawnEntity = new Server_ConCommand('char_respawn');
 const HumanoidDescription_Default = new Instance('HumanoidDescription', Folder_HumanoidDescriptions);
 HumanoidDescription_Default.Name = 'DefaultHumanoidDescription';
 
-Services.PhysicsService.CreateCollisionGroup('CharacterEntity');
-Services.PhysicsService.RegisterCollisionGroup('CharacterEntity');
-Services.PhysicsService.CreateCollisionGroup('CharacterModel');
-Services.PhysicsService.RegisterCollisionGroup('CharacterModel');
+PhysicsService.CreateCollisionGroup('CharacterEntity');
+PhysicsService.RegisterCollisionGroup('CharacterEntity');
+PhysicsService.CreateCollisionGroup('CharacterModel');
+PhysicsService.RegisterCollisionGroup('CharacterModel');
 
-Services.PhysicsService.CollisionGroupSetCollidable('CharacterEntity', 'CharacterModel', false);
-Services.PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'CharacterModel', false);
-Services.PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'Default', false);
+PhysicsService.CollisionGroupSetCollidable('CharacterEntity', 'CharacterModel', false);
+PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'CharacterModel', false);
+PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'Default', false);
 
 //ANCHOR CVars
 const cvar_default_maxhealth = new CVar('char_starting_maxhealth', 150, '');
@@ -60,7 +63,7 @@ class CharacterController {
 	collisionbox: CharacterCollision;
 
 	private PInfo = {
-		identifier: Services.RunService.IsStudio()
+		identifier: RunService.IsStudio()
 			? 'character_' + tostring(Folder_CharacterCollisions.GetChildren().size() + 1)
 			: GenerateString(math.random(10, 20)),
 	};
@@ -103,7 +106,7 @@ class CharacterController {
 		cam_attach.Position = new Vector3(0, 2, 0);
 		cam_attach.Name = 'CameraAttachment';
 
-		Services.PhysicsService.SetPartCollisionGroup(cbox, 'CharacterEntity');
+		PhysicsService.SetPartCollisionGroup(cbox, 'CharacterEntity');
 
 		return cbox;
 	}
@@ -181,7 +184,7 @@ class CharacterController {
 		const description =
 			(Folder_HumanoidDescriptions.FindFirstChild(tostring(PlayerInfo.Instance)) as
 				| HumanoidDescription
-				| undefined) || Services.Players.GetHumanoidDescriptionFromUserId(PlayerInfo.UserId);
+				| undefined) || Players.GetHumanoidDescriptionFromUserId(PlayerInfo.UserId);
 		description.Parent = Folder_HumanoidDescriptions;
 		description.Name = tostring(PlayerInfo.UserId);
 
@@ -232,7 +235,7 @@ class CharacterController {
 }
 
 // create 5 controllers above maxplayers
-for (let index = 0; index < Services.Players.MaxPlayers + 5; index++) {
+for (let index = 0; index < Players.MaxPlayers + 5; index++) {
 	const Controller = new CharacterController();
 	List_CharacterControllers.insert(0, Controller);
 
