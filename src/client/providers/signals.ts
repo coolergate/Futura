@@ -1,3 +1,6 @@
+// Author: coolergate#2031
+// Reason: Communication between scripts using signals
+
 import Signal from '@rbxts/signal';
 import { LocalSignal, LocalFunction } from 'shared/local_network';
 

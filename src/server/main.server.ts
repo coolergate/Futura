@@ -3,7 +3,6 @@
 
 import * as Defined from 'shared/gamedefined';
 import * as Folders from 'shared/folders';
-import * as Services from '@rbxts/services';
 import Signals from './providers/signals';
 import Network from 'shared/network';
 import { CVar, CreatedVars, CreatedServerCommands } from 'shared/vars';
@@ -146,7 +145,7 @@ PlayerLogin.OnServerInvoke = player => {
 	if (cvar_joinlog.value) PlayerJoined.PostAllClients(undefined, monitor.Username);
 };
 
-Services.Players.PlayerRemoving.Connect(player => {
+Players.PlayerRemoving.Connect(player => {
 	const monitor = PlayerMonitors.find(monitor => {
 		return monitor.UserId === player.UserId;
 	});

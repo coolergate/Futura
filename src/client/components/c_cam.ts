@@ -1,12 +1,13 @@
 // Creator: coolergate#2031
 // Purpose:
 
-import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import Values from 'client/providers/values';
 import { CVar, GetCVar } from 'shared/vars';
 import { GetFolderInfo } from 'shared/network';
 import { Thumbstick2 } from 'client/providers/input';
+
+const UserInputService = game.GetService('UserInputService');
 
 // cvars
 const client_fov = new CVar('fov', 80, "Change player's FOV");
@@ -14,9 +15,9 @@ const menu_fov = new CVar('fov_menu', 70, '', ['Readonly']);
 const camera_mode = new CVar('cam_mode', 0, '', ['Hidden']);
 
 class Component implements BaseClientComponent {
-	Player = Services.Players.LocalPlayer;
+	Player = game.GetService('Players').LocalPlayer;
 
-	Camera = Services.Workspace.CurrentCamera!;
+	Camera = game.GetService('Workspace').CurrentCamera!;
 	CameraVerticalClamp = math.rad(90);
 	CameraRotation = new Vector2();
 
@@ -41,18 +42,18 @@ class Component implements BaseClientComponent {
 		// gameplay camera
 		if (current_cam_mode.value === 1) {
 			if (Values.Character === undefined || !Values.Camera_Unlock.isEmpty()) {
-				Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
+				UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 				return;
 			}
 
-			Services.UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
+			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
 			this.Gameplay_Cam(delta_time);
 			return;
 		}
 
 		// main menu camera
 		if (current_cam_mode.value === 0) {
-			Services.UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
+			UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 			this.MainMenu_Cam();
 			return;
 		}
@@ -64,7 +65,7 @@ class Component implements BaseClientComponent {
 
 		if (Values.Character === undefined) return;
 
-		const delta = new Vector2(Thumbstick2.X, Thumbstick2.Y).add(Services.UserInputService.GetMouseDelta());
+		const delta = new Vector2(Thumbstick2.X, Thumbstick2.Y).add(UserInputService.GetMouseDelta());
 
 		const rotation_x = this.CameraRotation.X - math.rad(delta.X);
 		const rotation_y = math.min(

@@ -1,10 +1,14 @@
 // Creator: coolergate#2031
 // Purpose: Game folders without manually searching the workspace
 
-import * as Services from '@rbxts/services';
+const ServerScriptService = game.GetService('ServerScriptService');
+const ReplicatedStorage = game.GetService('ReplicatedStorage');
+const RunService = game.GetService('RunService');
+const Workspace = game.GetService('Workspace');
+const Players = game.GetService('Players');
 
 export function GetFolder(Name: string, Parent: Instance): Folder {
-	const Folder = Services.RunService.IsClient()
+	const Folder = RunService.IsClient()
 		? (Parent.WaitForChild(Name) as Folder)
 		: (Parent.FindFirstChild(Name) as Folder | undefined) || new Instance('Folder', Parent);
 	Folder.Name = Name;
@@ -12,10 +16,10 @@ export function GetFolder(Name: string, Parent: Instance): Folder {
 }
 
 // base
-export const Entities = GetFolder('Entities', Services.Workspace);
-export const Objects = GetFolder('Objects', Services.Workspace);
-export const Network = GetFolder('Network', Services.ReplicatedStorage);
-export const Map = GetFolder('Map', Services.Workspace) as Folder & {
+export const Entities = GetFolder('Entities', Workspace);
+export const Objects = GetFolder('Objects', Workspace);
+export const Network = GetFolder('Network', ReplicatedStorage);
+export const Map = GetFolder('Map', Workspace) as Folder & {
 	func_entity: Folder;
 	func_filter: Folder;
 	ent_light: Folder;
@@ -25,14 +29,14 @@ export const Map = GetFolder('Map', Services.Workspace) as Folder & {
 };
 
 // storage
-export const Animations = GetFolder('Animations', Services.ReplicatedStorage);
-export const Interface = GetFolder('Interface', Services.ReplicatedStorage);
-export const Models = GetFolder('Models', Services.ReplicatedStorage);
-export const Sound = GetFolder('Sound', Services.ReplicatedStorage);
+export const Animations = GetFolder('Animations', ReplicatedStorage);
+export const Interface = GetFolder('Interface', ReplicatedStorage);
+export const Models = GetFolder('Models', ReplicatedStorage);
+export const Sound = GetFolder('Sound', ReplicatedStorage);
 
-export const MainScriptFolder = Services.RunService.IsClient()
-	? (Services.Players.LocalPlayer!.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder)
-	: (Services.ServerScriptService.FindFirstChild('TS') as Folder);
+export const MainScriptFolder = RunService.IsClient()
+	? (Players.LocalPlayer!.WaitForChild('PlayerScripts').FindFirstChild('TS') as Folder)
+	: (ServerScriptService.FindFirstChild('TS') as Folder);
 
 // custom
 export const CharacterEntity = {

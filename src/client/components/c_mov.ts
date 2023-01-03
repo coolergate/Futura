@@ -1,18 +1,20 @@
 // Creator: coolergate#2031
 // Purpose: Handle client-side movement
 
-import * as Services from '@rbxts/services';
 import * as Folders from 'shared/folders';
 import * as Input from '../providers/input';
 import Values from 'client/providers/values';
 import { CVar, GetCVar } from 'shared/vars';
+
+const StarterPlayer = game.GetService('StarterPlayer');
+const Workspace = game.GetService('Workspace');
 
 // cvar
 const cvar_grounded = new CVar('cmov_p_grounded', false, '', ['Hidden']);
 const cvar_duckmethod = new CVar('option_duck_method', 1, ''); // 0 = HOLD to duck, 1 = TOGGLE
 
 class Component implements BaseClientComponent {
-	Player = Services.Players.LocalPlayer;
+	Player = game.GetService('Players').LocalPlayer;
 
 	Input = {
 		Directions: new Map<Input.KeycodeEvent, Enum.NormalId>([
@@ -37,7 +39,7 @@ class Component implements BaseClientComponent {
 		if (!Values.Character) return;
 		const collisionbox = Values.Character.CollisionBox;
 
-		const walkspeed = Services.StarterPlayer.CharacterWalkSpeed;
+		const walkspeed = StarterPlayer.CharacterWalkSpeed;
 		const velocity = collisionbox.AssemblyLinearVelocity.mul(new Vector3(1, 0, 1));
 
 		let ground_check = this.is_grounded();
@@ -66,7 +68,7 @@ class Component implements BaseClientComponent {
 		const checkcframe = new CFrame(cbox_cframe.Position).sub(new Vector3(0, cbox_size.Y / 2, 0));
 		const checksize = new Vector3(cbox_size.X - 0.125, 0.25, cbox_size.Z - 0.125);
 
-		const cast = Services.Workspace.GetPartBoundsInBox(checkcframe, checksize, this.gc_params);
+		const cast = Workspace.GetPartBoundsInBox(checkcframe, checksize, this.gc_params);
 		return cast.size() > 0 ? true : false;
 	}
 
@@ -83,7 +85,7 @@ class Component implements BaseClientComponent {
 	}
 
 	GetCameraWorldDirection(wish_dir: Vector3): Vector3 {
-		const [, camera_y] = Services.Workspace.CurrentCamera!.CFrame.ToOrientation();
+		const [, camera_y] = Workspace.CurrentCamera!.CFrame.ToOrientation();
 		const cam_worlddir = new CFrame().mul(CFrame.Angles(0, camera_y, 0));
 
 		// world direction

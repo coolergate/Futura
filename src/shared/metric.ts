@@ -1,6 +1,6 @@
 // Creator: coolergate#2031
 
-import { Workspace } from '@rbxts/services';
+const Workspace = game.GetService('Workspace');
 
 // ROBLOX equivalent of 9.81 m/s^2
 const NORMAL_GRAVITY = 35;

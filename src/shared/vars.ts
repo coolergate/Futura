@@ -1,5 +1,6 @@
-import { RunService } from '@rbxts/services';
 import Signal from '@rbxts/signal';
+
+const RunService = game.GetService('RunService');
 
 export const CreatedVars = new Array<CVar<unknown>>();
 export class CVar<T> {
