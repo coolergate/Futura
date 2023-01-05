@@ -18,20 +18,15 @@ const StarterGui = game.GetService('StarterGui');
 const Workspace = game.GetService('Workspace');
 const Players = game.GetService('Players');
 
-// Create collision groups
-PhysicsService.CreateCollisionGroup('GBaseCharacters');
-PhysicsService.CreateCollisionGroup('CViewmodels');
-PhysicsService.RegisterCollisionGroup('GBaseCharacters');
-PhysicsService.RegisterCollisionGroup('CViewmodels');
-PhysicsService.CollisionGroupSetCollidable('GBaseCharacters', 'CViewmodels', false);
-PhysicsService.CollisionGroupSetCollidable('GBaseCharacters', 'GBaseCharacters', false);
-PhysicsService.CollisionGroupSetCollidable('CViewmodels', 'Default', false);
-
 StarterGui.GetChildren().forEach(inst => {
 	if (inst.IsA('ScreenGui')) {
 		inst.Enabled = false;
 		inst.Parent = Folders.Interface;
 	}
+});
+
+Workspace.GetChildren().forEach(inst => {
+	if (inst.Name.sub(1, 1) === '_' || (!inst.IsA('Folder') && !inst.IsA('Terrain'))) inst.Destroy();
 });
 
 //====================================================================

@@ -148,12 +148,18 @@ const Network = {
 	// entities
 	Entities: {
 		Character: {
-			LocalInfoUpdate: new Remote<[Orientation: Vector3, Position: Vector3]>(), // contains both Angle and Position
+			LocalInfoUpdate: new Remote<[Angle: Vector2, Position: Vector3]>(),
 			LocalInfoChanged: new Remote<[Info?: CharacterLocalInfo]>(),
 
 			ReplicatedInfoChanged: new Remote<[Info: CharacterReplicatedInfo]>(),
 			GetCurrentReplicated: new Function<[], CharacterReplicatedInfo[]>(),
 		},
+	},
+
+	Items: {
+		EquipWeapon: new Remote<[WeaponId: string]>(),
+		Fire_Weapon: new Remote<[Orientation: CFrame]>(),
+		ReloadWeapon: new Remote(),
 	},
 
 	// Loading data

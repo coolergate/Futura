@@ -8,6 +8,7 @@ import Signals from 'client/providers/signals';
 import Network from 'shared/network';
 import Values from 'client/providers/values';
 import { CVar, GetCVar } from 'shared/vars';
+import { KeycodeEvents } from 'client/providers/input';
 
 const Players = game.GetService('Players');
 const PhysicsService = game.GetService('PhysicsService');
@@ -45,13 +46,13 @@ DefaultCharacterModel.Name = 'DefaultCharacter';
 DefaultCharacterModel.Parent = Folders.CharacterModels;
 DefaultCharacterModel.PrimaryPart = DefaultCharacterModel.HumanoidRootPart;
 DefaultCharacterModel.GetChildren().forEach(inst => {
-	if (inst.IsA('BasePart')) PhysicsService.SetPartCollisionGroup(inst, 'CharacterModel');
+	if (inst.IsA('BasePart')) inst.CollisionGroup = 'CharacterModel';
 });
 
 interface CharacterModelInfo {
 	Model: R6_Character;
-	Orientation: Vector3;
-	TargetOrientation: Vector3;
+	Orientation: Vector2;
+	TargetOrientation: Vector2;
 	CollisionBox: CharacterCollision;
 }
 
@@ -105,17 +106,25 @@ class Component implements BaseClientComponent {
 			while (game) {
 				//task.wait(0.25);
 				this.UpdateCharacters();
-
-				if (Values.Character !== undefined) {
-					const [y, x] = Values.Camera_CFrame.ToOrientation();
-					const Orientation = new Vector3(math.round(math.deg(x)), math.round(math.deg(y)), 0);
-					Network.Entities.Character.LocalInfoUpdate.PostServer(
-						Orientation,
-						Values.Character.CollisionBox.Position,
-					);
-				}
+				this.NotifyServer();
 			}
 		})();
+
+		//STUB - Temporary weapon activate code
+		KeycodeEvents.attack1.Activated.Connect(() => {
+			this.NotifyServer();
+			Network.Items.Fire_Weapon.PostServer(Values.Camera_CFrame.Rotation);
+		});
+	}
+
+	// Update server with the latest
+	NotifyServer() {
+		if (!Values.Character) return;
+
+		const [y, x] = Values.Camera_CFrame.ToOrientation();
+		const Angle = new Vector2(math.deg(x), math.deg(y));
+		const Position = Values.Character.CollisionBox.CFrame.Position;
+		Network.Entities.Character.LocalInfoUpdate.PostServer(Angle, Position);
 	}
 
 	UpdateCharacters() {
@@ -130,13 +139,13 @@ class Component implements BaseClientComponent {
 					clone.Parent = Folders.CharacterModels;
 					EquivalentInfo = {
 						Model: clone,
-						Orientation: Vector3.zero,
-						TargetOrientation: info.Orientation,
+						Orientation: Vector2.zero,
+						TargetOrientation: info.Angle,
 						CollisionBox: info.CollisionBox,
 					};
 					this.CreatedCharacterModels.insert(0, EquivalentInfo);
 				}
-				EquivalentInfo.TargetOrientation = info.Orientation;
+				EquivalentInfo.TargetOrientation = info.Angle;
 
 				// hide our own character
 				if (Values.Character?.CollisionBox === EquivalentInfo.CollisionBox)

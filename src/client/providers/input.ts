@@ -111,7 +111,8 @@ bind_key('A', 'move_left');
 bind_key('D', 'move_right');
 
 // weapons
-bind_key('MouseButton1', 'attack1');
+//bind_key('MouseButton1', 'attack1');
+bind_key('E', 'attack1');
 bind_key('ButtonR2', 'attack1');
 
 bind_key('MouseButton2', 'attack2');
