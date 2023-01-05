@@ -192,6 +192,14 @@ Console_GetCmds.OnServerInvoke = player => {
 	return names;
 };
 
+Signals.ConsoleDebug.Connect((...content) => {
+	let message = '';
+	content.forEach(element => {
+		message = message + element + ' ';
+	});
+	Network.ServerDebugMessage.PostAllClients([], message);
+});
+
 // Startup scripts
 declare global {
 	interface BaseServerComponent {

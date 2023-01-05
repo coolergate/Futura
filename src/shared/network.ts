@@ -171,5 +171,8 @@ const Network = {
 	// Character
 	CharacterRespawn: new Function<[], string | void>(),
 	CharacterReplicatedInfoChanged: new Remote<[CharacterReplicatedInfo]>(),
+
+	// Network debugging
+	ServerDebugMessage: new Remote<[message: string]>(),
 };
 export = Network;

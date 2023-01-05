@@ -23,7 +23,7 @@ StarterGui.SetCoreGuiEnabled('All', false);
 
 //SECTION Console
 declare global {
-	type ConsoleMessageType = 'Info' | 'Error' | 'Warn' | 'UserInput';
+	type ConsoleMessageType = 'Info' | 'Error' | 'Warn' | 'UserInput' | 'ServerDebug';
 }
 
 const network_console_arg = Network.console_sendarg;
@@ -107,6 +107,11 @@ export function std_print(Mode: ConsoleMessageType, Content: string) {
 		}
 		case 'UserInput': {
 			FinalMessage = '> ';
+			break;
+		}
+		case 'ServerDebug': {
+			Color = Color3.fromRGB(180, 255, 180);
+			FinalMessage = '[$] ';
 			break;
 		}
 		default: {
@@ -284,6 +289,14 @@ ConsoleInput.FocusLost.Connect(enterPressed => {
 });
 
 update_server_commands();
+
+//ANCHOR - Rendering server debug messages
+const server_debug_logging = new CVar('sv_debug', 0, 'Recieve debug messages from server');
+Network.ServerDebugMessage.OnClientPost = message => {
+	if (server_debug_logging.value === 0) return;
+	std_print('ServerDebug', message);
+	if (RunService.IsStudio()) print(message);
+};
 //!SECTION Console
 
 //ANCHOR Interface
@@ -424,7 +437,7 @@ task.wait(1);
 Loading_InfoText.Text = 'Press <font color="rgb(255,58,41)">SPACE</font> to continue';
 let wait_for_input = true;
 const input_connection = UserInputService.InputBegan.Connect(input => {
-	if (input.KeyCode.Name !== 'Space') return;
+	if (input.KeyCode.Name !== 'Space' && input.KeyCode.Name !== 'ButtonA') return;
 	wait_for_input = false;
 });
 while (wait_for_input) RunService.RenderStepped.Wait();

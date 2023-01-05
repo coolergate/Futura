@@ -179,7 +179,7 @@ class CharacterController {
 
 	Spawn() {
 		if (this.Info.Controlling === undefined || this.collisionbox.GetNetworkOwner() === undefined) {
-			warn('Spawn method requires one user controlling');
+			Signals.ConsoleDebug.Fire('Spawn method requires one user controlling');
 			print('ControllerId:', this.id);
 			return;
 		}
@@ -448,7 +448,7 @@ class WeaponController {
 						return controller.collisionbox === HitInstance;
 					});
 					if (!controller) {
-						warn('Unknown character controller', HitInstance);
+						Signals.ConsoleDebug.Fire('Unknown character controller', HitInstance.Name);
 						return;
 					}
 
@@ -512,7 +512,7 @@ Network.Items.Fire_Weapon.OnServerPost = (player, orientation) => {
 		return controller.Id === EquippedWeaponId;
 	});
 	if (WeaponController) {
-		print('Activating weapon!');
+		Signals.ConsoleDebug.Fire('Activating weapon!');
 		WeaponController.Activate(orientation);
 	} else {
 		warn('No weapon controller');

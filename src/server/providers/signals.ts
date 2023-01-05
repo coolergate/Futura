@@ -1,3 +1,4 @@
+import Signal from '@rbxts/signal';
 import { LocalSignal, LocalFunction } from 'shared/local_network';
 
 const Signals = {
@@ -13,6 +14,8 @@ const Signals = {
 		[weapon_interface: BaseWeapon, owner: string | undefined | 'world'],
 		BaseWeapon | void
 	>(),
+
+	ConsoleDebug: new LocalSignal<[...content: string[]]>(),
 };
 
 export = Signals;
