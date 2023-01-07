@@ -96,9 +96,12 @@ export const KeycodeEvents = {
 	attack2: new KeycodeEvent('attack2', 'Secondary Fire'),
 	attack3: new KeycodeEvent('attack3', 'Special Fire'),
 	reload: new KeycodeEvent('reload', 'Reload Weapon'),
+	slot1: new KeycodeEvent('slot1', 'Primary weapon'),
+	slot2: new KeycodeEvent('slot2', 'Secondary weapon'),
+	slot3: new KeycodeEvent('slot3', 'Melee weapon'),
 
 	use: new KeycodeEvent('use', 'Use / Activate'),
-	zoom: new KeycodeEvent('zoom', 'Camera zoom'),
+	//zoom: new KeycodeEvent('zoom', 'Camera zoom'),
 };
 
 // ANCHOR Assign default keycodes
@@ -110,9 +113,10 @@ bind_key('S', 'move_back');
 bind_key('A', 'move_left');
 bind_key('D', 'move_right');
 
+bind_key('E', 'use');
+
 // weapons
-//bind_key('MouseButton1', 'attack1');
-bind_key('E', 'attack1');
+bind_key('MouseButton1', 'attack1');
 bind_key('ButtonR2', 'attack1');
 
 bind_key('MouseButton2', 'attack2');
@@ -124,4 +128,3 @@ bind_key('ButtonR3', 'zoom');
 bind_key('One', 'slot1');
 bind_key('Two', 'slot2');
 bind_key('Three', 'slot3');
-bind_key('Four', 'slot4');
