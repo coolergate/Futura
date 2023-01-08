@@ -21,3 +21,36 @@ export class ToggleableSignal<BaseArgs extends unknown[]> {
 		if (this.CanActivate) this.Signal.Fire(...args);
 	}
 }
+
+export class CacheInstance<InstanceType extends Instance> {
+	constructor(inst: InstanceType, PacketSize = 60) {
+		const StoredCopies = new Array<CachedInstanceInfo>();
+
+		interface CachedInstanceInfo {
+			InUse: boolean;
+			Instance: InstanceType;
+		}
+
+		for (; StoredCopies.size() < PacketSize; ) {
+			StoredCopies.insert(0, { InUse: false, Instance: inst.Clone() });
+		}
+
+		return {
+			GetAvailable: function () {
+				let AvaiableInstance = StoredCopies.find(copy => {
+					return copy.InUse === false;
+				});
+				if (!AvaiableInstance) {
+					AvaiableInstance = { InUse: true, Instance: inst.Clone() };
+					StoredCopies.insert(0, AvaiableInstance);
+				}
+				return {
+					Instance: AvaiableInstance.Instance,
+					Release: function () {
+						AvaiableInstance!.InUse = false;
+					},
+				};
+			},
+		};
+	}
+}

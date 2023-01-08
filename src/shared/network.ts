@@ -157,9 +157,18 @@ const Network = {
 	},
 
 	Items: {
-		EquipWeapon: new Remote<[WeaponId: string]>(),
-		Fire_Weapon: new Remote<[Orientation: CFrame]>(),
-		ReloadWeapon: new Remote(),
+		Weapons: {
+			Change: new Function<[Slot: WeaponSlot], BaseWeaponInfo | undefined>(),
+			ReloadWeapon: new Function<[ItemId: string], boolean>(),
+			FiredWeapon: new Remote<[Orientation: CFrame]>(),
+			RegisterHits: new Function<[ItemId: string, Hits: BulletRaycastInfo[]], void>(),
+		},
+
+		GetCameraCFrme: new Function<[], CFrame>(),
+
+		Replicated: {
+			WeaponFired: new Remote<[CharacterId: string, Direction: Vector2]>(),
+		},
 	},
 
 	// Loading data

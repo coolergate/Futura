@@ -46,7 +46,11 @@ DefaultCharacterModel.Name = 'DefaultCharacter';
 DefaultCharacterModel.Parent = Folders.CharacterModels;
 DefaultCharacterModel.PrimaryPart = DefaultCharacterModel.HumanoidRootPart;
 DefaultCharacterModel.GetChildren().forEach(inst => {
-	if (inst.IsA('BasePart')) inst.CollisionGroup = 'CharacterModel';
+	if (inst.IsA('BasePart')) {
+		inst.CollisionGroup = 'CharacterModel';
+		inst.CanCollide = false;
+		inst.CanQuery = false;
+	}
 });
 
 interface CharacterModelInfo {
@@ -109,12 +113,6 @@ class Component implements BaseClientComponent {
 				this.NotifyServer();
 			}
 		})();
-
-		//STUB - Temporary weapon activate code
-		KeycodeEvents.attack1.Activated.Connect(() => {
-			this.NotifyServer();
-			Network.Items.Fire_Weapon.PostServer(Values.Camera_CFrame.Rotation);
-		});
 	}
 
 	// Update server with the latest
@@ -131,30 +129,30 @@ class Component implements BaseClientComponent {
 		Network.Entities.Character.GetCurrentReplicated.InvokeServer()
 			.await()
 			.forEach(info => {
-				let EquivalentInfo = this.CreatedCharacterModels.find(ModelInfo => {
+				let ModelInfo = this.CreatedCharacterModels.find(ModelInfo => {
 					return ModelInfo.CollisionBox === info.CollisionBox;
 				});
-				if (!EquivalentInfo) {
+				if (!ModelInfo) {
 					const clone = DefaultCharacterModel.Clone();
 					clone.Parent = Folders.CharacterModels;
-					EquivalentInfo = {
+					ModelInfo = {
 						Model: clone,
 						Orientation: Vector2.zero,
 						TargetOrientation: info.Angle,
 						CollisionBox: info.CollisionBox,
 					};
-					this.CreatedCharacterModels.insert(0, EquivalentInfo);
+					this.CreatedCharacterModels.insert(0, ModelInfo);
 				}
-				EquivalentInfo.TargetOrientation = info.Angle;
+				ModelInfo.TargetOrientation = info.Angle;
 
 				// hide our own character
-				if (Values.Character?.CollisionBox === EquivalentInfo.CollisionBox)
-					EquivalentInfo.Model.GetDescendants().forEach(inst => {
+				if (Values.Character?.CollisionBox === ModelInfo.CollisionBox)
+					ModelInfo.Model.GetDescendants().forEach(inst => {
 						if (!inst.IsA('BasePart')) return;
 						inst.LocalTransparencyModifier = 1;
 					});
 				else
-					EquivalentInfo.Model.GetDescendants().forEach(inst => {
+					ModelInfo.Model.GetDescendants().forEach(inst => {
 						if (!inst.IsA('BasePart')) return;
 						inst.LocalTransparencyModifier = 0;
 					});

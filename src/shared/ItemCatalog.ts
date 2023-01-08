@@ -11,7 +11,7 @@ declare global {
 	type WeaponSlot = 'Primary' | 'Secondary' | 'Melee';
 	type WeaponMode = 'Semi' | 'Auto' | 'Safe';
 	type WeaponType = 'Pistol';
-	interface BaseWeapon extends BaseItem {
+	interface BaseWeaponInfo extends BaseItem {
 		Slot: WeaponSlot;
 		Type: WeaponType;
 		Mode: WeaponMode;
@@ -33,13 +33,26 @@ declare global {
 		AmmoType: WeaponAmmoType;
 		SpecialToWeapon: ''; // if it only applies to a single weapon
 	}
+
+	/** interface for sharing weapon events */
+	interface BaseWeaponReplicated {
+		Name: string;
+		DisplayName: string;
+
+		CurrentAnimation: string;
+		Orientation: Vector2;
+		Origin: Vector3;
+	}
+
+	/** Type interface for sending weapon requests */
+	type NetWeaponRequest = 'Reload' | 'Fire';
 }
 
 //* THIS IS ON PURPOSE, creating alist every time it's called mostly
 //* prevents from exploiters from messing with the weapon list.
 //! Although not 100% safe.
-export function GetDefaultWeaponList(): Array<BaseWeapon> {
-	const list = new Array<BaseWeapon>();
+export function GetDefaultWeaponList(): Array<BaseWeaponInfo> {
+	const list = new Array<BaseWeaponInfo>();
 
 	list.insert(0, {
 		Id: '',
