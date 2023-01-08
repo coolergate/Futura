@@ -3,23 +3,24 @@
 //==================================================================//
 
 import GenerateString from 'shared/randomstring';
+import Signals from 'server/providers/signals';
+import Network from 'shared/network';
+import * as Folders from 'shared/folders';
+import * as Util from 'shared/util';
+import { GetDefaultWeaponList } from 'shared/ItemCatalog';
 import { LocalSignal } from 'shared/local_network';
 import { CVar, Server_ConCommand } from 'shared/vars';
-import Signals from 'server/providers/signals';
-import * as Folders from 'shared/folders';
-import Network from 'shared/network';
-import { GetDefaultWeaponList } from 'shared/ItemCatalog';
 
 const PhysicsService = game.GetService('PhysicsService');
 const RunService = game.GetService('RunService');
 const Workspace = game.GetService('Workspace');
 const Players = game.GetService('Players');
 
-// ANCHOR Folders
+//ANCHOR - Folders
 const Folder_CharacterCollisions = Folders.CharacterEntity.Collision;
 const Folder_HumanoidDescriptions = Folders.GetFolder('HumanoidDescriptions', Folders.Entities);
 
-//SECTION Character entity
+//SECTION - Character entity
 const List_CharacterControllers = new Array<CharacterController>();
 const Command_RespawnEntity = new Server_ConCommand('char_respawn');
 const HumanoidDescription_Default = new Instance('HumanoidDescription', Folder_HumanoidDescriptions);
@@ -32,21 +33,53 @@ PhysicsService.CollisionGroupSetCollidable('CharacterEntity', 'CharacterModel', 
 PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'CharacterModel', false);
 PhysicsService.CollisionGroupSetCollidable('CharacterModel', 'Default', false);
 
-//ANCHOR CVars
+//ANCHOR - CVars
 const cvar_default_maxhealth = new CVar('char_starting_maxhealth', 150, '');
 const cvar_default_health = new CVar('char_starting_health', cvar_default_maxhealth.value, '');
+
+const DefaultCharacterCollision = new Instance('Part') as CharacterCollision;
+DefaultCharacterCollision.Size = new Vector3(2, 5, 2);
+DefaultCharacterCollision.Transparency = 0.5;
+DefaultCharacterCollision.CastShadow = false;
+DefaultCharacterCollision.CustomPhysicalProperties = new PhysicalProperties(1, 1, 0, 0, 100);
+DefaultCharacterCollision.Anchored = true;
+DefaultCharacterCollision.CFrame = new CFrame(0, 10e8, 0);
+DefaultCharacterCollision.Name = '';
+DefaultCharacterCollision.CollisionGroup = 'CharacterEntity';
+
+const gyro = new Instance('BodyGyro', DefaultCharacterCollision);
+gyro.CFrame = new CFrame();
+gyro.MaxTorque = new Vector3(10e99, 10e99, 10e99);
+
+// vforce attachment
+const main_attach = new Instance('Attachment', DefaultCharacterCollision);
+main_attach.Name = 'MainAttachment';
+
+// camera attachment
+const cam_attach = new Instance('Attachment', DefaultCharacterCollision);
+cam_attach.Position = new Vector3(0, 2, 0);
+cam_attach.Name = 'CameraAttachment';
+
+const foot_attach = new Instance('Attachment', DefaultCharacterCollision);
+foot_attach.Position = new Vector3(0, 4.5, 0);
+foot_attach.Name = 'FootAttachment';
 
 declare global {
 	interface CharacterCollision extends Part {
 		CameraAttachment: Attachment;
 		MainAttachment: Attachment;
+		FootAttachment: Attachment;
 	}
 	interface CharacterLocalInfo {
 		CollisionBox: CharacterCollision;
 		Alive: boolean;
 		Health: number;
 		MaxHealth: number;
-		Inventory: Client_CharacterInventoryInfo;
+		Inventory: {
+			Weapons: BaseWeaponInfo[];
+			Generic: BaseItem[];
+		};
+		EquippedWeapon: string | undefined;
 	}
 
 	interface CharacterReplicatedInfo {
@@ -55,40 +88,57 @@ declare global {
 		Angle: Vector2;
 		Position: Vector3;
 		HumanoidDescription: HumanoidDescription;
+
+		EquippedWeapon: BaseWeaponInfo | undefined;
 	}
 
-	interface CharacterServerInfo {
-		Id: string;
-		CollisionBox: CharacterCollision;
+	interface BaseCharacterController {
+		readonly id: string;
 		Info: {
 			Controlling: PlayerMonitor | undefined;
 			Description: HumanoidDescription | undefined;
+			CollisionBox: CharacterCollision;
 
 			Alive: boolean;
 			Health: number;
 			HealthMax: number;
-
 			Angle: Vector2;
 
 			Inventory: {
-				Weapons: WeaponController[];
+				Weapons: BaseWeaponInfo[];
 				Generic: BaseItem[];
-				CurrentEquipped: string;
 			};
+			EquippedWeapon: string | undefined;
 		};
+
+		Events: {
+			Damaged: LocalSignal<[amount: number]>;
+			Died: LocalSignal<[Player: PlayerMonitor | undefined]>;
+		};
+
+		Damage(amount: number): void;
+		Kill(): void;
+		Spawn(): void;
+		Assign(Info: PlayerMonitor): void;
+		Unassign(): void;
+
+		// network
+		NotifyController(): void;
+		NotifyReplicated(): void;
+		GenerateLocalInfo(): CharacterLocalInfo;
+		GenerateReplicatedInfo(): CharacterReplicatedInfo;
 	}
 
-	interface Client_CharacterInventoryInfo {
-		Weapons: BaseWeapon[];
+	interface ClinetInventoryInfo {
+		Weapons: BaseWeaponInfo[];
 		Generic: BaseItem[];
-		CurrentEquipped: string;
+		EquippedWeapon: string | undefined;
 	}
 }
 
-// ANCHOR CharacterController
-class CharacterController {
+//ANCHOR - CharacterController
+class CharacterController implements BaseCharacterController {
 	readonly id = tostring(Folder_CharacterCollisions.GetChildren().size() + 1); //GenerateString(math.random(10, 20));
-	collisionbox: CharacterCollision;
 
 	private PInfo = {
 		identifier: RunService.IsStudio()
@@ -99,6 +149,7 @@ class CharacterController {
 	Info = {
 		Controlling: undefined as PlayerMonitor | undefined,
 		Description: HumanoidDescription_Default as HumanoidDescription | undefined,
+		CollisionBox: this.CreateCollisionBox(),
 
 		Alive: false,
 		Health: 0,
@@ -107,58 +158,39 @@ class CharacterController {
 		Angle: new Vector2(),
 
 		Inventory: {
-			Weapons: [] as WeaponController[],
+			Weapons: [] as BaseWeaponInfo[],
 			Generic: [] as BaseItem[],
-			CurrentEquipped: '',
 		},
+		EquippedWeapon: undefined as string | undefined,
 	};
 
-	// signals
-	signal_damaged = new LocalSignal<[amount: number]>();
-	signal_died = new LocalSignal<[Controller: PlayerMonitor | undefined]>();
+	Events = {
+		Damaged: new LocalSignal<[amount: number]>(),
+		Died: new LocalSignal<[Controller: PlayerMonitor | undefined]>(),
+	};
 
 	private CreateCollisionBox() {
-		const cbox = new Instance('Part', Folder_CharacterCollisions) as CharacterCollision;
-		cbox.Size = new Vector3(2, 5, 2);
-		cbox.Transparency = 0.5;
-		cbox.CastShadow = false;
-		cbox.CustomPhysicalProperties = new PhysicalProperties(1, 1, 0, 0, 100);
-		cbox.Anchored = true;
-		cbox.CFrame = new CFrame(0, 10e8, 0);
+		const cbox = DefaultCharacterCollision.Clone() as CharacterCollision;
+		cbox.Parent = Folder_CharacterCollisions;
 		cbox.Name = this.PInfo.identifier;
-		cbox.CollisionGroup = 'CharacterEntity';
 
-		const gyro = new Instance('BodyGyro', cbox);
-		gyro.CFrame = new CFrame();
-		gyro.MaxTorque = new Vector3(10e99, 10e99, 10e99);
-
-		// vforce attachment
-		const main_attach = new Instance('Attachment', cbox);
-		main_attach.Name = 'MainAttachment';
-
-		// camera attachment
-		const cam_attach = new Instance('Attachment', cbox);
-		cam_attach.Position = new Vector3(0, 2, 0);
-		cam_attach.Name = 'CameraAttachment';
+		cbox.Destroying.Connect(() => {
+			Signals.ConsoleDebug.Fire(cbox.Name, 'Died.');
+			this.Kill();
+			this.Info.CollisionBox = this.CreateCollisionBox();
+		});
 
 		return cbox;
 	}
 
-	constructor() {
-		this.collisionbox = this.CreateCollisionBox();
-
-		this.collisionbox.Destroying.Connect(() => {
-			this.Kill();
-			this.collisionbox = this.CreateCollisionBox();
-		});
-	}
+	constructor() {}
 
 	Damage(amount: number) {
 		if (this.Info.Controlling === undefined) return;
 		this.Info.Health = math.clamp(this.Info.Health - amount, 0, this.Info.HealthMax);
 		if (this.Info.Health <= 0 && this.Info.Alive) this.Kill();
 		else {
-			this.signal_damaged.Fire(amount);
+			this.Events.Damaged.Fire(amount);
 			this.NotifyController();
 		}
 	}
@@ -166,25 +198,25 @@ class CharacterController {
 	Kill() {
 		this.Info.Alive = false;
 		this.Info.Health = 0;
-		this.signal_died.Fire(this.Info.Controlling);
+		this.Events.Died.Fire(this.Info.Controlling);
 
 		this.NotifyController();
 		this.NotifyReplicated();
 
 		this.Unassign();
 
-		this.collisionbox.Anchored = true;
-		this.collisionbox.CFrame = new CFrame(0, 10e8, 0);
+		this.Info.CollisionBox.Anchored = true;
+		this.Info.CollisionBox.CFrame = new CFrame(0, 10e8, 0);
 	}
 
 	Spawn() {
-		if (this.Info.Controlling === undefined || this.collisionbox.GetNetworkOwner() === undefined) {
+		if (this.Info.Controlling === undefined || this.Info.CollisionBox.GetNetworkOwner() === undefined) {
 			Signals.ConsoleDebug.Fire('Spawn method requires one user controlling');
 			print('ControllerId:', this.id);
 			return;
 		}
 
-		this.collisionbox.Anchored = true;
+		this.Info.CollisionBox.Anchored = true;
 
 		// Random spawn location
 		const spawn_children = Folders.Map.func_spawn.GetChildren();
@@ -201,28 +233,26 @@ class CharacterController {
 			} while (Found === false);
 		}
 
-		this.collisionbox.CFrame = Spawn_Location;
-		this.collisionbox.Anchored = false;
-		if (this.Info.Controlling !== undefined) this.collisionbox.SetNetworkOwner(this.Info.Controlling.Instance);
+		this.Info.CollisionBox.CFrame = Spawn_Location;
+		this.Info.CollisionBox.Anchored = false;
+		if (this.Info.Controlling !== undefined) this.Info.CollisionBox.SetNetworkOwner(this.Info.Controlling.Instance);
 
 		this.Info.HealthMax = cvar_default_maxhealth.value;
 		this.Info.Health = math.clamp(cvar_default_health.value, 1, cvar_default_maxhealth.value);
 		this.Info.Alive = true;
 
-		this.NotifyController();
-		this.NotifyReplicated();
-
-		//STUB - Starting weapon;
-		const BaseTestWeapon = new WeaponController(
+		//STUB - Give weapon
+		const TestWeapon = Signals.Entities.CreateWeaponController.Call(
 			GetDefaultWeaponList().find(info => {
 				return info.Name === 'glock17';
 			})!,
 		);
-		BaseTestWeapon.Carrier = this;
-		BaseTestWeapon.Active = true;
-		BaseTestWeapon.Info.StoredAmmo = 99;
-		this.Info.Inventory.Weapons.insert(0, BaseTestWeapon);
-		this.Info.Inventory.CurrentEquipped = BaseTestWeapon.Id;
+		TestWeapon.StoredAmmo = 99;
+		this.Info.Inventory.Weapons.insert(0, TestWeapon);
+		this.Info.EquippedWeapon = TestWeapon.Id;
+
+		this.NotifyController();
+		this.NotifyReplicated();
 	}
 
 	Assign(PlayerInfo: PlayerMonitor) {
@@ -235,15 +265,15 @@ class CharacterController {
 
 		this.Info.Description = description;
 		this.Info.Controlling = PlayerInfo;
-		this.collisionbox.Anchored = false;
-		this.collisionbox.SetNetworkOwner(PlayerInfo.Instance);
+		this.Info.CollisionBox.Anchored = false;
+		this.Info.CollisionBox.SetNetworkOwner(PlayerInfo.Instance);
 	}
 
 	Unassign() {
 		this.Info.Controlling = undefined;
 		this.Info.Description = HumanoidDescription_Default;
-		this.collisionbox.Anchored = false;
-		this.collisionbox.SetNetworkOwner();
+		this.Info.CollisionBox.Anchored = false;
+		this.Info.CollisionBox.SetNetworkOwner();
 	}
 
 	//SECTION - Controller networking
@@ -260,24 +290,13 @@ class CharacterController {
 	}
 
 	GenerateLocalInfo(): CharacterLocalInfo {
-		const WeaponsInfo: BaseWeapon[] = [];
-		this.Info.Inventory.Weapons.forEach(controller => {
-			WeaponsInfo.insert(0, controller.Info);
-		});
-
-		const GenericInfo: BaseItem[] = [];
-		//TODO - Generic items info list
-
 		const Info: CharacterLocalInfo = {
 			Alive: this.Info.Alive,
 			Health: this.Info.Health,
 			MaxHealth: this.Info.HealthMax,
-			CollisionBox: this.collisionbox,
-			Inventory: {
-				Weapons: WeaponsInfo,
-				Generic: GenericInfo,
-				CurrentEquipped: this.Info.Inventory.CurrentEquipped,
-			},
+			CollisionBox: this.Info.CollisionBox,
+			Inventory: this.Info.Inventory,
+			EquippedWeapon: this.Info.EquippedWeapon,
 		};
 		return Info;
 	}
@@ -285,18 +304,13 @@ class CharacterController {
 	GenerateReplicatedInfo(): CharacterReplicatedInfo {
 		return {
 			Alive: this.Info.Alive,
-			CollisionBox: this.collisionbox,
+			CollisionBox: this.Info.CollisionBox,
 			Angle: this.Info.Angle,
-			Position: this.collisionbox.CFrame.Position,
+			Position: this.Info.CollisionBox.CFrame.Position,
 			HumanoidDescription: HumanoidDescription_Default, // TODO Handle different skins
-		};
-	}
-
-	GenerateServerInfo(): CharacterServerInfo {
-		return {
-			Id: this.PInfo.identifier,
-			CollisionBox: this.collisionbox,
-			Info: this.Info,
+			EquippedWeapon: this.Info.Inventory.Weapons.find(info => {
+				return info.Id === this.Info.EquippedWeapon;
+			}),
 		};
 	}
 	//!SECTION
@@ -307,16 +321,16 @@ for (let index = 0; index < Players.MaxPlayers + 5; index++) {
 	const Controller = new CharacterController();
 	List_CharacterControllers.insert(0, Controller);
 
-	Controller.signal_died.Connect(Monitor => {
+	Controller.Events.Died.Connect(Monitor => {
 		if (Monitor === undefined) return;
-		print(Monitor.Instance, 'died.');
+		Signals.ConsoleDebug.Fire(Monitor.Instance.DisplayName, 'died.');
 	});
 }
 List_CharacterControllers.sort((a, b) => {
 	return a.id < b.id;
 });
 
-//ANCHOR Character respawning
+//ANCHOR - Respawning
 Command_RespawnEntity.OnInvoke = MonitorData => {
 	// search if the player already has a controller assigned
 	if (
@@ -337,7 +351,7 @@ Command_RespawnEntity.OnInvoke = MonitorData => {
 	controller.Kill();
 	controller.Unassign();
 	controller.Assign(MonitorData);
-	controller.collisionbox.SetNetworkOwner(MonitorData.Instance); // needs to be set manually for some reason
+	controller.Info.CollisionBox.SetNetworkOwner(MonitorData.Instance); // needs to be set manually for some reason
 	controller.Spawn();
 };
 
@@ -362,165 +376,28 @@ Network.Entities.Character.GetCurrentReplicated.OnServerInvoke = player => {
 	return list;
 };
 
-Signals.GetCharacterFromUserId.Handle = userid => {
-	const equivalent_controller = List_CharacterControllers.find(controller => {
+Signals.Entities.GetCharacterFromUserId.Handle = userid => {
+	return List_CharacterControllers.find(controller => {
 		return controller.Info.Controlling?.UserId === userid;
 	});
-	return equivalent_controller !== undefined ? equivalent_controller.GenerateServerInfo() : undefined;
+};
+
+const CachedCharacterCollisions = new Util.CacheInstance<CharacterCollision>(
+	DefaultCharacterCollision,
+	List_CharacterControllers.size(),
+);
+Signals.Entities.GetCharacterCollisionBoxClone.Handle = () => {
+	return CachedCharacterCollisions;
+};
+
+Signals.Entities.GetCharacterFromCollision.Handle = Part => {
+	return List_CharacterControllers.find(controller => {
+		return controller.Info.CollisionBox === Part;
+	});
 };
 //!SECTION
 
-//SECTION - Weapons
-const WorldWeaponsList = new Map<string, BaseWeapon>();
-const WorldWeaponAmmoList = new Map<string, BaseWeaponAmmo>();
-const List_WeaponController = new Array<WeaponController>();
-
-const WeaponRaycastParams = new RaycastParams();
-WeaponRaycastParams.FilterDescendantsInstances = [
-	Folders.Map.func_filter,
-	Folders.Map.ent_light,
-	Folders.Map.func_spawn,
-];
-WeaponRaycastParams.FilterType = Enum.RaycastFilterType.Blacklist;
-WeaponRaycastParams.IgnoreWater = true;
-
-class WeaponController {
-	readonly Id: string;
-
-	Active = false;
-	CanShootAgain = true;
-	Carrier = undefined as CharacterController | undefined;
-	Info: BaseWeapon;
-
-	constructor(WeaponInfo: BaseWeapon) {
-		let GeneratedId = GenerateString(20);
-		while (WorldWeaponsList.has(GeneratedId)) GeneratedId = GenerateString(20);
-
-		this.Id = GeneratedId;
-		this.Info = table.clone(WeaponInfo) as BaseWeapon;
-		this.Info.Id = this.Id;
-	}
-
-	Activate(Orientation: CFrame) {
-		if (!this.Carrier || !this.CanShootAgain) return;
-
-		const Magazine = WorldWeaponAmmoList.get(this.Info.UsingMagazine);
-
-		for (this.Info.StoredAmmo; this.Info.StoredAmmo > 0; this.Info.StoredAmmo--) {
-			this.CanShootAgain = false;
-			this.ShootBullet(Orientation);
-
-			if (this.Info.StoredAmmo === 0) {
-				if (Magazine !== undefined && this.Info.Type === 'Pistol') {
-					Magazine.StoredBullets--;
-					this.Info.StoredAmmo++;
-				} else {
-					this.CanShootAgain = true;
-					return;
-				}
-			}
-
-			task.wait(this.Info.Delay);
-			this.CanShootAgain = true;
-			if (this.Info.Mode !== 'Auto') break;
-		}
-	}
-
-	private ShootBullet(Direction: CFrame) {
-		const Origin = this.Carrier!.collisionbox.CameraAttachment.WorldPosition;
-		for (let index = 0; index < this.Info.BulletsPerShot; index++) {
-			const [x, y] = [
-				this.Info.Spread > 0 ? math.random(-this.Info.Spread, this.Info.Spread) : 0,
-				this.Info.Spread > 0 ? math.random(-this.Info.Spread, this.Info.Spread) : 0,
-			];
-			const spread = CFrame.Angles(math.rad(y), 0, 0).mul(CFrame.Angles(0, math.rad(x), 0));
-			const LookVector = Direction.mul(spread).LookVector.Unit;
-			const raycast = Workspace.Raycast(Origin, LookVector.mul(10e8), WeaponRaycastParams);
-
-			if (raycast) {
-				const HitInstance = raycast.Instance;
-				const Position = raycast.Position;
-				const Material = raycast.Material;
-				const Normal = raycast.Normal;
-
-				if (HitInstance.CollisionGroup === 'CharacterEntity') {
-					const controller = List_CharacterControllers.find(controller => {
-						return controller.collisionbox === HitInstance;
-					});
-					if (!controller) {
-						Signals.ConsoleDebug.Fire('Unknown character controller', HitInstance.Name);
-						return;
-					}
-
-					controller.Damage(this.Info.Damage);
-				}
-
-				//STUB - Part on bullet hit position
-				const EndPart = new Instance('Part', Folders.Map.func_filter);
-				EndPart.Size = Vector3.one.mul(0.125);
-				EndPart.Anchored = true;
-				EndPart.Transparency = 0.5;
-				EndPart.CanCollide = false;
-				EndPart.CanQuery = false;
-				EndPart.Position = Position;
-
-				const Trace = new Instance('Part', Folders.Map.func_filter);
-				Trace.Anchored = true;
-				Trace.Transparency = 0.75;
-				Trace.Material = Enum.Material.Neon;
-				Trace.Color = new Color3(1, 1, 0);
-				Trace.CanCollide = false;
-				Trace.CanQuery = false;
-				Trace.Size = new Vector3(0.1, 0.1, Origin.sub(Position).Magnitude);
-				Trace.CFrame = CFrame.lookAt(Origin, Position).mul(
-					new CFrame(0, 0, -Origin.sub(Position).Magnitude / 2),
-				);
-			}
-		}
-	}
-}
-
-Network.Items.EquipWeapon.OnServerPost = (player, WeaponId) => {
-	const CharacterController = List_CharacterControllers.find(char => {
-		return char.Info.Controlling?.UserId === player.UserId;
-	});
-	if (!CharacterController) {
-		warn('No Character controller');
-		return;
-	}
-
-	const WeaponInfo = CharacterController.Info.Inventory.Weapons.find(controller => {
-		return controller.Id === WeaponId;
-	});
-	if (WeaponInfo) {
-		WeaponInfo.Active = true;
-		CharacterController.Info.Inventory.CurrentEquipped = WeaponId;
-	}
-};
-
-Network.Items.Fire_Weapon.OnServerPost = (player, orientation) => {
-	const CharacterController = List_CharacterControllers.find(char => {
-		return char.Info.Controlling?.UserId === player.UserId;
-	});
-	if (!CharacterController) {
-		warn('No Character controller');
-		return;
-	}
-
-	const EquippedWeaponId = CharacterController.Info.Inventory.CurrentEquipped;
-	const WeaponController = CharacterController.Info.Inventory.Weapons.find(controller => {
-		return controller.Id === EquippedWeaponId;
-	});
-	if (WeaponController) {
-		Signals.ConsoleDebug.Fire('Activating weapon!');
-		WeaponController.Activate(orientation);
-	} else {
-		warn('No weapon controller');
-	}
-};
-//!SECTION
-
-//SECTION Default component stuff
+//SECTION - Default component stuff
 class Component implements BaseServerComponent {
 	constructor() {}
 	Start(): void {}
