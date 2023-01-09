@@ -249,7 +249,7 @@ class CharacterController implements BaseCharacterController {
 		);
 		TestWeapon.StoredAmmo = 99;
 		this.Info.Inventory.Weapons.insert(0, TestWeapon);
-		this.Info.EquippedWeapon = TestWeapon.Id;
+		//this.Info.EquippedWeapon = TestWeapon.Id;
 
 		this.NotifyController();
 		this.NotifyReplicated();
