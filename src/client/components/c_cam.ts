@@ -41,12 +41,9 @@ class Component implements BaseClientComponent {
 
 		// gameplay camera
 		if (current_cam_mode.value === 1) {
-			if (Values.Character === undefined || !Values.Camera_Unlock.isEmpty()) {
-				UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
-				return;
-			}
-
-			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
+			Values.Character === undefined || Values.Camera_Unlock.isEmpty()
+				? (UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter)
+				: (UserInputService.MouseBehavior = Enum.MouseBehavior.Default);
 			this.Gameplay_Cam(delta_time);
 			return;
 		}
