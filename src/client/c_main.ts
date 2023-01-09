@@ -59,7 +59,8 @@ const ConsoleHolder = Folders.Interface.FindFirstChild('Console') as ScreenGui;
 const ConsoleWindow = ConsoleHolder.FindFirstChild('Window') as Frame;
 const ConsoleContent = ConsoleWindow.FindFirstChild('Content') as ScrollingFrame;
 const ConsoleLogPrefab = ConsoleContent.FindFirstChild('LogPrefab') as TextLabel;
-const ConsoleInput = ConsoleWindow.WaitForChild('Input').FindFirstChildOfClass('TextBox')!;
+const ConsoleInput = ConsoleWindow.FindFirstChild('TextBox') as TextBox;
+const ConsoleCloseBtn = ConsoleWindow.FindFirstChild('CloseBTN', true) as TextButton;
 
 ConsoleHolder.Parent = PlayerGui;
 ConsoleHolder.Enabled = false;
@@ -234,10 +235,10 @@ client_commands.set('echo', function (content: string) {
 	std_print('Info', content);
 });
 client_commands.set('close', function (content: string) {
-	ConsoleWindow.Visible = false;
+	ConsoleHolder.Enabled = false;
 });
 client_commands.set('exit', function (content: string) {
-	ConsoleWindow.Visible = false;
+	ConsoleHolder.Enabled = false;
 });
 client_commands.set('version', function (content: string) {
 	std_print('Info', `Game: "${placeinfo.name}" ver. ${placeinfo.version}`);
@@ -287,6 +288,8 @@ ConsoleInput.FocusLost.Connect(enterPressed => {
 		ConsoleInput.Text = '';
 	}
 });
+
+ConsoleCloseBtn.Activated.Connect(() => (ConsoleHolder.Enabled = false));
 
 update_server_commands();
 
