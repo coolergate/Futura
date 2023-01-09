@@ -7,61 +7,71 @@ Semi-Engine made for [**Roblox-TS**](https://roblox-ts.com/)
 
 Client components must have the following functions:
 
-- `Init(): void`
-- `InitOrder: const number`
-- Component class
-- `Start(): void`
-- `Update(): void`
+- `Init(): void` - Called when the module is loaded, required to build the class
+- `Start(): void` - Called in sync with other components at the same time
+- `Update(): void` - Called every frame
+- `FixedUpdate(): void` - Called every frame at a locked 60fps rate
 
-`Init()` is called accordingly to InitOrder, required to build the class
+> `Update()` and `FixedUpdate()` might be called at a slower rate depending on the device's performance.\
+> Prefab file at `shared\misc\c_prefab.ts`
 
-`Start()` is called in sync with other components, starting them all at the same time
+---
 
-`Update()` is called in a fixed 60FPS rate, devices with lower framerates will increase the time between calls
+### Server components
 
-> More info at `client/component/prefab.ts`
+Server components must have the following functions:
+
+- `Init(): void` - Called when the module is loaded, required to build the class
+- `Start(): void` - Called in sync with other components after everything is loaded
 
 ---
 
 ### Network
 
-`shared/network.ts` houses all the networking components.
-Components can be created with the classes:
+`shared/network.ts` houses all the networking remotes & functions.
 
-- `Remote<headers extends unknown[]>`
-- `Function<headers extends unknown[], response>`
+#### Remotes:
+`class Remote<headers extends unknown[]>`
 
-Remotes are handled like HTTP calls.
+Functions:
+- `PostServer(headers): void`. (Client only)
+- `PostClient(players: Player[], headers): void`. (Server only)
+- `PostAllClients(ignore: Player[], headers): void`. (Server only)
 
-- (type) `NetworkMode` 'ClientToServer' or 'ServerToClient'
-- (property) `OnServerPost` Handles all data sent from client -> server
-- (property) `OnClientPost` Handles all data sent from server -> client
-
-These are made on purpose so that you don't connect multiple callbacks to the same remote.
+Properties:
+- `OnServerPost` - Called upon `Remote.PostServer()`
+- `OnClientPost` - Called upon `Remote.PostClient()`
 
 Example:
 
 ```ts
-export const variable_name = new Remote<[]>('ClientToServer');
+export const variable_name = new Remote<[name: string]>('ClientToServer');
 
 // server
-variable_name.OnServerPost = (user, data) => {};
+variable_name.OnServerPost = (user, name) => {};
 
 // server (another script)
-variable_name.OnServerPost = (user, data) => {}; // overwrites previous definition
+variable_name.OnServerPost = (user, name) => {}; // overwrites previous definition
 
 // client
-variable_name.PostServer(data);
+variable_name.PostServer('username');
 ```
 
-> More info at `shared/network.ts`
+#### Functions:
 
-Functions are bi-directional and returns a Promise when Invoked.
+`Function<headers extends unknown[], response>`
 
-- (property) `OnServerInvoke` Handles all data sent from client -> server
-- (property) `OnClientInvoke` Handles all data sent from client -> server
+Functions:
+- `InvokeServer(...headers): response`. (Client only)
+- `InvokeClient(player: Player, ...headers): response`. (Server only)
 
-Also made on purpose so that you don't connect multiple callbacks to the same Function.
+These invoke methods return the following functions:
+- `await(): response` - Yields the script until the response is given
+- `andthen(response => void)` - Calls the given function upon recieving the response (doesn't yield)
+
+Properties:
+- `OnServerInvoke: (user, ...headers) => response` - Server callback that must return a `response`
+- `OnClientInvoke: (...headers) => response` - Client callback that must return a `response`
 
 Example:
 
@@ -69,24 +79,27 @@ Example:
 export const variable_name = new Function<[username: string], boolean>();
 
 // server
-variable_name.OnServerInvoke = (user, data) => {}
+variable_name.OnServerInvoke = (user, username) => {
+	return true;
+}
 
 // client
-variable_name.InvokeServer(args).await() // .await() for it being a promise
+variable_name.InvokeServer(args).await() // yields
+variable_name.InvokeServer(args).andthen(response => {}) // doesn't yield
 ```
+
+> More info at `shared\network.ts`
 
 ---
 
-### Client commands
+### Client console commands
 
-You can create server-side commands by using the `client_command` class in `server/providers/client_cmds.ts`.
+Server commands can be created by using the `Server_ConCommand` class in `shared\vars.ts`.
 
-Example: `const respawn_req = new client_command<[]>('char_respawn');`
-> Taken from `server/components/entities.ts`
+Properties:
+- `OnInvoke: (player: PlayerMonitor, ...args: string[]) => string | void)` ;
 
-Then when called on the client's console it would return "command callback has not been defined!".
-You can define a callback by setting the `callback` property
-
+Example:
 ```ts
 const respawn_req = new client_command<[]>('char_respawn');
 
