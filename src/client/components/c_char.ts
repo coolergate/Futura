@@ -69,7 +69,7 @@ class Component implements BaseClientComponent {
 
 			if (NewInfo === undefined) {
 				if (PreviousInfo !== undefined) {
-					GetCVar('cam_mode')!.value = 0;
+					Values.CameraMode = 'Menu';
 					Signals.Character.Died.Fire();
 					Values.Character = undefined;
 				}
@@ -80,7 +80,7 @@ class Component implements BaseClientComponent {
 			if (PreviousInfo === undefined) {
 				Values.Character = NewInfo;
 				Signals.Character.Spawned.Fire();
-				GetCVar('cam_mode')!.value = 1;
+				Values.CameraMode = 'Gameplay';
 				return;
 			}
 
@@ -89,7 +89,7 @@ class Component implements BaseClientComponent {
 				if (NewInfo.Health === 0) {
 					Signals.Character.Died.Fire();
 					Values.Character = undefined;
-					GetCVar('cam_mode')!.value = 0;
+					Values.CameraMode = 'Menu';
 					return;
 				}
 

@@ -9,6 +9,7 @@ const Values = {
 	Camera_Delta: new Vector2(),
 	Camera_Enable: true,
 	Camera_Unlock: new Map<string, boolean>(),
+	CameraMode: 'Menu' as C_CameraMode,
 };
 
 export = Values;

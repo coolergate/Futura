@@ -12,7 +12,10 @@ const UserInputService = game.GetService('UserInputService');
 // cvars
 const client_fov = new CVar('fov', 80, "Change player's FOV");
 const menu_fov = new CVar('fov_menu', 70, '', ['Readonly']);
-const camera_mode = new CVar('cam_mode', 0, '', ['Hidden']);
+
+declare global {
+	type C_CameraMode = 'Gameplay' | 'Menu' | 'Custom';
+}
 
 class Component implements BaseClientComponent {
 	Player = game.GetService('Players').LocalPlayer;
@@ -26,21 +29,13 @@ class Component implements BaseClientComponent {
 	TargetRecoil = new Vector3();
 	RecoverTime = 0.25;
 
-	LastCameraMode = 0;
-
 	constructor() {}
 	Start(): void {}
 	FixedUpdate(): void {}
 
 	Update(delta_time: number): void {
-		const current_cam_mode = camera_mode;
-		if (this.LastCameraMode !== current_cam_mode.value) {
-			this.LastCameraMode = current_cam_mode.value;
-			this.CameraRotation = new Vector2();
-		}
-
 		// gameplay camera
-		if (current_cam_mode.value === 1) {
+		if (Values.CameraMode === 'Gameplay') {
 			Values.Character === undefined || Values.Camera_Unlock.isEmpty()
 				? (UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter)
 				: (UserInputService.MouseBehavior = Enum.MouseBehavior.Default);
@@ -49,8 +44,9 @@ class Component implements BaseClientComponent {
 		}
 
 		// main menu camera
-		if (current_cam_mode.value === 0) {
+		if (Values.CameraMode === 'Menu') {
 			UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
+			this.CameraRotation = Vector2.zero;
 			this.MainMenu_Cam();
 			return;
 		}
@@ -91,7 +87,7 @@ class Component implements BaseClientComponent {
 		this.Camera.FieldOfView = menu_fov.value;
 
 		const base_part = Folders.Map.func_entity.FindFirstChild('Camera_Menu') as BasePart | undefined;
-		if (base_part) this.Camera.CFrame = this.Camera.CFrame.Lerp(base_part.CFrame, 0.05);
+		this.Camera.CFrame = base_part ? base_part.CFrame : new CFrame();
 	}
 }
 
