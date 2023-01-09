@@ -14,6 +14,7 @@ const UserInputService = game.GetService('UserInputService');
 
 const Player = Players.LocalPlayer;
 const PlayerGui = Player.WaitForChild('PlayerGui') as PlayerGui;
+const TweenService = game.GetService('TweenService');
 
 class Component implements BaseClientComponent {
 	Player = Players.LocalPlayer;
@@ -40,6 +41,10 @@ class Component implements BaseClientComponent {
 			Amount: TextLabel;
 		};
 		Crosshair: ImageLabel;
+	};
+	GameplayOverlay = this.MainHolder.FindFirstChild('GameOverlay') as Frame & {
+		QuitMessage: Frame;
+		Damage: ImageLabel;
 	};
 	MenuFrame = this.MainHolder.FindFirstChild('Menu') as Frame & {
 		Panel: Frame & {
@@ -98,6 +103,10 @@ class Component implements BaseClientComponent {
 			task.wait(3);
 			this.MenuFrame.Visible = true;
 		});
+		Signals.Character.TookDamage.Connect(() => {
+			this.GameplayOverlay.Damage.ImageTransparency = 0;
+			TweenService.Create(this.GameplayOverlay.Damage, new TweenInfo(0.15), { ImageTransparency: 1 }).Play();
+		});
 	}
 
 	FixedUpdate(): void {}
@@ -130,6 +139,19 @@ class Component implements BaseClientComponent {
 			1,
 			Character.Health / Character.MaxHealth,
 		);
+
+		const weapon = Character.Inventory.Weapons.find(info => {
+			return info.Id === Character.EquippedWeapon;
+		});
+
+		if (weapon) {
+			this.GameplayFrame.Weapon.Visible = true;
+			this.GameplayFrame.Weapon.AmmoIcon.Foreground.Size = UDim2.fromOffset(
+				1,
+				math.clamp(weapon.StoredAmmo / weapon.MaxStoredAmmo, 0, 1),
+			);
+			this.GameplayFrame.Weapon.Amount.Text = tostring(weapon.StoredAmmo);
+		} else this.GameplayFrame.Weapon.Visible = false;
 	}
 }
 
