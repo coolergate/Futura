@@ -12,7 +12,8 @@ Client components must have the following functions:
 - `Update(): void` - Called every frame
 - `FixedUpdate(): void` - Called every frame at a locked 60fps rate
 
-> `Update()` and `FixedUpdate()` might be called at a slower rate depending on the device's performance.\
+> `Update()` and `FixedUpdate()` might be called at a slower rate depending on the device's performance.
+
 > Prefab file at `shared\misc\c_prefab.ts`
 
 ---
@@ -23,6 +24,8 @@ Server components must have the following functions:
 
 - `Init(): void` - Called when the module is loaded, required to build the class
 - `Start(): void` - Called in sync with other components after everything is loaded
+
+> Prefab file at `shared\misc\s_prefab.ts`
 
 ---
 
