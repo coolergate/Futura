@@ -1,4 +1,4 @@
-// Author: coolergate#2031
+// Author:
 // Purpose:
 
 class Component implements BaseClientComponent {
